@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>uMeds case study versions | jessyux</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..800&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--ink:#042b38;--ink2:#2f5660;--teal:#078A72;--paper:rgba(255,247,230,.92);--line:rgba(120,84,40,.22);--shadow:0 18px 34px -22px rgba(110,72,28,.5)}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(#edd4b6,#fae1c1 30%,#f3d9b4);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-weight:350;line-height:1.5;-webkit-font-smoothing:antialiased}
+header,main{max-width:1240px;margin:0 auto;padding:0 24px}
+header{padding-top:40px}
+h1,h2,h3{font-family:'Gabarito',sans-serif;margin:0;letter-spacing:-.025em}
+h1{font-weight:600;font-size:clamp(2rem,4.4vw,3.2rem);line-height:1.05}
+h2{font-weight:600;font-size:clamp(1.4rem,2.6vw,1.9rem);margin:56px 0 6px}
+h3{font-weight:500;font-size:1.25rem}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink2)}
+.lead{max-width:68ch;color:var(--ink2);margin:12px 0 0}
+.rec{margin-top:22px;padding:16px 20px;border:1px solid rgba(7,138,114,.45);background:var(--paper);border-radius:12px;box-shadow:var(--shadow);max-width:78ch}
+.rec b{color:var(--teal)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:18px;margin-top:18px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.card.cur{outline:2px solid rgba(7,138,114,.6);outline-offset:-2px}
+.tag{display:inline-block;font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink2);background:#fff7}
+.tag.live{color:#fff;background:var(--teal);border-color:var(--teal)}
+.tag.keep{color:#7a4b00;background:#ffe9c2;border-color:#e7c27d}
+.head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.card p{margin:0;font-size:.95rem}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:.85rem;margin:0}
+.facts dt{color:var(--ink2)}
+.facts dd{margin:0;word-break:break-all}
+.view{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#06283a;height:360px}
+.view iframe{position:absolute;left:0;top:0;width:1280px;height:900px;border:0;transform-origin:0 0}
+.open{align-self:flex-start;font:500 13px 'Hanken Grotesk',sans-serif;color:var(--teal);text-decoration:none;border:1px solid rgba(7,138,114,.5);padding:6px 14px;border-radius:999px;background:#fff8}
+.open:hover{background:#fff}
+.assets{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:14px}
+.asset{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.asset .im{height:150px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#e9dcc3 0 25%,#f3e8d2 0 50%) 0 0/14px 14px;border-radius:6px;overflow:hidden}
+.asset img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.asset code{font:400 11px 'IBM Plex Mono',monospace;word-break:break-all;color:var(--ink2)}
+.note{font-size:.9rem;color:var(--ink2);max-width:80ch}
+footer{max-width:1240px;margin:60px auto 80px;padding:0 24px}
+</style>
+</head>
+<body>
+<header>
+  <p class="mono">Project audit · C archived, nothing deleted</p>
+  <h1>Every uMeds case study in the project</h1>
+  <p class="lead">There are four distinct versions of the study, plus one duplicate set of images. Each version is shown live below with the facts you need to pick one. Choose the main one for the home page and I will archive the rest into an <code>archive/</code> folder. Archiving moves files. It never deletes them.</p>
+  <div class="rec"><b>My recommendation: version A.</b> It is the one the home page already opens, it has the rewritten story, the depth map with section titles, and Previous and Next. The others are earlier stages of the same study.</div>
+</header>
+
+<main>
+  <h2>The four versions</h2>
+  <p class="note">Each preview is a live copy at full width, scaled down. Open any of them in its own tab to read it properly.</p>
+
+  <div class="grid">
+    <section class="card cur">
+      <div class="head"><h3>A · Current study (rewritten)</h3><span><span class="tag live">Used by the home page</span></span></div>
+      <p>The new HTML study with the story rewrite, Gabarito titles, the side depth map, and Previous and Next. The uMeds floatie on the home page opens this file.</p>
+      <div class="view" data-src="redesign-2026/work/multi-shipping-options.html"></div>
+      <dl class="facts"><dt>File</dt><dd>redesign-2026/work/multi-shipping-options.html</dd><dt>Size</dt><dd>31.7 KB, 27 Oct 2026 20:26</dd><dt>Images</dt><dd>redesign-2026/assets/img/case/multi-shipping/ (3 files)</dd></dl>
+      <a class="open" href="redesign-2026/work/multi-shipping-options.html" target="_blank">Open A</a>
+    </section>
+
+    <section class="card">
+      <div class="head"><h3>B · Backup, original copy</h3><span class="tag keep">Backup, always kept</span></div>
+      <p>The same page as A before the story rewrite. Same design, original wording. You asked me to keep this one, so it stays where it is.</p>
+      <div class="view" data-src="redesign-2026/work/multi-shipping-options.before-rewrite.html"></div>
+      <dl class="facts"><dt>File</dt><dd>redesign-2026/work/multi-shipping-options.before-rewrite.html</dd><dt>Size</dt><dd>31.3 KB, 27 Oct 2026 19:24</dd></dl>
+      <a class="open" href="redesign-2026/work/multi-shipping-options.before-rewrite.html" target="_blank">Open B</a>
+    </section>
+
+    <section class="card">
+      <div class="head"><h3>C · Earlier standalone "dive" study</h3><span class="tag keep">Archived</span></div>
+      <p>The first single-page version of the study, with its own folder and its own copies of the three images. A was built from this one.</p>
+      <div class="view" data-src="archive/case-study-dive/dive.html"></div>
+      <dl class="facts"><dt>File</dt><dd>archive/case-study-dive/dive.html (archived)</dd><dt>Size</dt><dd>51.4 KB, 27 Oct 2026 13:39</dd><dt>Images</dt><dd>archive/case-study-dive/img/ (3 files, archived)</dd></dl>
+      <a class="open" href="archive/case-study-dive/dive.html" target="_blank">Open C</a>
+    </section>
+
+    <section class="card">
+      <div class="head"><h3>D · Original study in the first site</h3><span class="tag">Oldest</span></div>
+      <p>The uMeds study from the first version of the site (pink and purple), opened by its route. The Westpac Youth and Montu admin studies on the home page still come from this same inline code.</p>
+      <div class="view" data-src="index.old.html#/multi-shipping-options"></div>
+      <dl class="facts"><dt>File</dt><dd>index.old.html (whole old site)</dd><dt>Size</dt><dd>2.76 MB, 19 Oct 2026</dd><dt>Also in</dt><dd>index.html and index.pre-beach.html, as inline code for all three studies</dd></dl>
+      <a class="open" href="index.old.html#/multi-shipping-options" target="_blank">Open D</a>
+    </section>
+  </div>
+
+  <p class="note" style="margin-top:18px"><b>Generated copies, not versions:</b> <code>dist/redesign/work/multi-shipping-options.html</code> is a one-file build of A (341 KB). <code>dist/index.html</code> is a copy of the home page. Both are rebuilt by the build scripts, so they never need archiving.</p>
+
+  <h2>Images used by the uMeds study</h2>
+  <p class="note">The three screens in folder C and folder A have identical file sizes but different checksums, so they are not byte-for-byte copies. Check the pairs below. If they look the same, the folder C copies are safe to archive.</p>
+  <div class="assets">
+    <div class="asset"><div class="im"><img src="redesign-2026/assets/img/case/multi-shipping/shipping-options-angled.webp" alt=""></div><b>A · angled screens</b><code>redesign-2026/assets/img/case/multi-shipping/shipping-options-angled.webp</code><span>58.3 KB</span></div>
+    <div class="asset"><div class="im"><img src="archive/case-study-dive/img/shipping-options-angled.webp" alt=""></div><b>C · angled screens</b><code>archive/case-study-dive/img/shipping-options-angled.webp</code><span>58.3 KB</span></div>
+    <div class="asset"><div class="im"><img src="redesign-2026/assets/img/case/multi-shipping/shipping-options-screen.webp" alt=""></div><b>A · options screen</b><code>redesign-2026/assets/img/case/multi-shipping/shipping-options-screen.webp</code><span>44.7 KB</span></div>
+    <div class="asset"><div class="im"><img src="archive/case-study-dive/img/shipping-options-screen.webp" alt=""></div><b>C · options screen</b><code>archive/case-study-dive/img/shipping-options-screen.webp</code><span>44.7 KB</span></div>
+    <div class="asset"><div class="im"><img src="redesign-2026/assets/img/case/multi-shipping/ixd-process-map.webp" alt=""></div><b>A · process map</b><code>redesign-2026/assets/img/case/multi-shipping/ixd-process-map.webp</code><span>95.9 KB</span></div>
+    <div class="asset"><div class="im"><img src="archive/case-study-dive/img/ixd-process-map.webp" alt=""></div><b>C · process map</b><code>archive/case-study-dive/img/ixd-process-map.webp</code><span>95.9 KB</span></div>
+  </div>
+
+  <h2>uMeds icons and floaties</h2>
+  <p class="note">These are brand and navigation art, not part of any study version. The home page uses the vinyl "u" from <code>img/floaties/</code>.</p>
+  <div class="assets">
+    <div class="asset"><div class="im"><img src="img/floaties/umeds.webp" alt=""></div><b>Vinyl floatie (used on home)</b><code>img/floaties/umeds.webp</code></div>
+    <div class="asset"><div class="im"><img src="portfolio-assets/2-main-page-floaties/umeds-floatie.png" alt=""></div><b>Original floatie art</b><code>portfolio-assets/2-main-page-floaties/umeds-floatie.png</code></div>
+    <div class="asset"><div class="im"><img src="icons/uMeds icon.png" alt=""></div><b>uMeds icon</b><code>icons/uMeds icon.png</code></div>
+  </div>
+</main>
+
+<footer class="mono">Decision made: <b>A is the main study</b>, used by the home page. <b>C</b> and its images are archived in <b>archive/case-study-dive/</b>. A, B and D stay where they are.</footer>
+
+<script>
+/* scale each full-width preview down to fit its box */
+function fit(){document.querySelectorAll('.view').forEach(function(v){
+  var f=v.querySelector('iframe'); if(!f){f=document.createElement('iframe');f.src=v.dataset.src;f.loading='lazy';f.title=v.dataset.src;v.appendChild(f)}
+  var s=v.clientWidth/1280; f.style.transform='scale('+s+')'; v.style.height=Math.round(900*s*0.6)+'px';
+});}
+addEventListener('load',fit);addEventListener('resize',fit);
+</script>
+</body>
+</html>

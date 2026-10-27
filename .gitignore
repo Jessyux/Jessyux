@@ -1,0 +1,7 @@
+# built output: regenerate with  node build-home.mjs && node redesign-2026/build.mjs
+dist/
+node_modules/
+.wrangler/
+.claude/settings.local.json
+Thumbs.db
+.DS_Store

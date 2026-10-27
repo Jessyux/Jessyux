@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Circuit admin redesign | jessyux</title>
+<meta name="description" content="Circuit admin redesign case study. Research and design for Montu's internal operations portal, lifting satisfaction on every core screen to between 4.6 and 5 out of 5.">
+<link rel="icon" href="../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..800&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>if(window.parent!==window)document.documentElement.classList.add('embed')</script>
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+</head>
+
+<body>
+<div id="sea"></div>
+<canvas id="life" aria-hidden="true"></canvas>
+
+<div id="topbar"><div id="topfill"></div></div>
+<div id="mread">0 m</div>
+<aside id="rail">
+  <a class="railhome" id="railHome" href="../../index.html" aria-label="Home">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg>
+    <span>Home</span>
+  </a>
+  <div aria-hidden="true">
+    <div class="read"><span id="depthNum">0</span></div>
+    <div class="unit">metres</div>
+    <div class="zone" id="zoneName">Overview</div>
+    <div id="gauge"><div id="gaugeFill"></div><div id="gaugeDot"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ============ SURFACE ============ -->
+<section id="hero" class="casehero" data-depth="0" data-title="Overview">
+  <div class="wrap">
+    <p class="kicker">Case study <span>·</span> Internal tooling <span>·</span> Operations <span>·</span> Circuit admin redesign</p>
+    <h1>Circuit had grown for years without anyone asking the people who live in it.</h1>
+    <p class="lede dim">Circuit is the internal admin portal Montu's operations teams use to manage orders, patients, approvals and pharmacies. I led the research to find where it was failing them, then set a design direction grounded in what I found. After the redesign, satisfaction on every core screen went from below the line to between 4.6 and 5 out of 5.</p>
+    <dl class="meta">
+      <div><dt>Why</dt><dd>A legacy portal had grown feature on feature, with no research behind it and no shared standards.</dd></div>
+      <div><dt>How</dt><dd>Interviews and observation first, then a heuristic and accessibility review, then a workflow-first redesign tested with the same teams.</dd></div>
+      <div><dt>What</dt><dd>Duplicate, flagging, status history and bulk actions, patient ID search and in-portal approvals, all on the Montu MUI design system.</dd></div>
+      <div><dt>Role</dt><dd>UX research lead and UX design. I ran the research and synthesis, set the design direction and worked in MUI.</dd></div>
+      <div><dt>Users</dt><dd>The PTX, PharmOps and Clinical (RN) teams.</dd></div>
+      <div><dt>Timeline</dt><dd>Discovery from Nov 2024, phased through to v1.2.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ THE SHORT VERSION ============ -->
+<section data-depth="0" data-title="The short version">
+  <div class="wrap">
+    <p class="eyebrow rv"><b>0 m</b> The short version <span class="bar"></span></p>
+    <figure class="heroshot rv"><img src="../assets/img/case/circuit/hero-orders.webp" alt="Redesigned Circuit orders list, with patient and order details redacted" width="1600" height="895"></figure>
+    <div class="short solo overlap rv">
+      <div class="stxt">
+        <span class="chip"><i></i>Shipped</span>
+        <p class="kick">Case study · Internal tooling · Operations · Circuit admin redesign</p>
+        <h2>The short version</h2>
+        <p class="lede">Circuit was a legacy admin portal that grew without evolving. I researched how the people using it actually worked, and rebuilt it around their workflow.</p>
+        <p class="dim">I led discovery and usability research with ten people across PTX, PharmOps and Clinical, and reviewed every core screen against usability heuristics and accessibility. That became a workflow-first redesign on the Montu MUI design system. Version 1.2 lifted satisfaction on every core screen from below the line to between 4.6 and 5 out of 5.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE PROBLEM ============ -->
+<section data-depth="20" data-title="The problem">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>0–200 m</b> The problem <span class="bar"></span></p>
+      <h2 class="rv">It grew, but it never evolved.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">Circuit started with an external agency that had limited business context. Over the years, features were layered on top of features, a frankenstein build stitched together by whoever needed the next thing shipped.</p>
+      <p class="dim rv">It worked, technically, but it fought the people using it. Designs were added without checking user needs, workflows were disjointed, and with no shared standards every new screen drifted further from the last.</p>
+    </div>
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">01</div><h4>No user-centred design</h4><p>Design was outsourced, and functionality was added without validating user needs or doing research.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Disjointed workflows</h4><p>Ad-hoc additions left the PTX team moving through a fragmented portal with manual steps and several tabs open.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Usability and design gaps</h4><p>With no cohesive standards, inconsistencies piled up and dragged on usability and productivity.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESEARCH ============ -->
+<section data-depth="240" data-title="Research">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>200–1,000 m</b> Research <span class="bar"></span></p>
+      <h2 class="rv">I started by sitting with the people who use it every day.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">The plan had three parts: understand the work, validate the redesign, then synthesise and align with the teams who would build it.</p>
+    </div>
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">Discovery research</div><h4>Understand the work</h4><p>Semi-structured interviews, contextual inquiry to watch real usage, and a Pre-Post improvement score to set a baseline.</p></div>
+      <div class="idea"><div class="n">Usability testing</div><h4>Validate the redesign</h4><p>Task-based testing on real scenarios like flagging orders and AP/SAS approvals, with a think-aloud protocol and prototype testing.</p></div>
+      <div class="idea"><div class="n">Analysis and collaboration</div><h4>Synthesise and align</h4><p>Thematic analysis, the Pre-Post score, peer reviews, and prioritisation workshops with delivery and product against OKRs.</p></div>
+    </div>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">Who I spoke to</h3>
+    <div class="people rv" style="margin-top:1.4rem">
+      <div class="person"><span class="p">04</span><span class="s">PTX</span><span class="c">Patient Experience</span></div>
+      <div class="person"><span class="p">03</span><span class="s">PharmOps</span><span class="c">Pharmacy operations</span></div>
+      <div class="person"><span class="p">03</span><span class="s">Clinical</span><span class="c">Registered nurses (RNs)</span></div>
+    </div>
+
+    <figure class="rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="scroller"><img src="../assets/img/case/circuit/research-board.webp" alt="Jobs-to-be-done board for a PTX persona: tasks, frequency, pain points and opportunities" width="1015" height="414" loading="lazy" style="min-width:680px"></div>
+      <figcaption class="cap" style="margin-top:12px">I built personas from jobs to be done and documented pain points, opportunities, needs, requirements and tools and systems, to see where the gaps were. Scroll sideways to read it.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ HEURISTIC REVIEW ============ -->
+<section data-depth="1050" data-title="Heuristic review">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>1,000–4,000 m</b> Heuristic review <span class="bar"></span></p>
+      <h2 class="rv">I also pulled the interface apart, screen by screen.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">Alongside the user sessions, I ran an expert heuristic evaluation of every core Circuit screen. I scored each issue against usability heuristics and Gestalt principles, checked accessibility, and tagged it by the fix it needed. All of it is documented on Confluence for stakeholder visibility.</p>
+    </div>
+
+    <div class="grid g2" style="margin-top:clamp(28px,4vw,44px);gap:clamp(28px,5vw,56px);align-items:start">
+      <div class="annot rv">
+        <h3 style="margin-bottom:.6rem">How I did it</h3>
+        <div><h4>One surface at a time</h4><p>I walked the four core surfaces in turn: Orders list, Order details, Patients list and Pharmacies.</p></div>
+        <div><h4>Heuristics and Gestalt</h4><p>I evaluated each screen against usability heuristics and principles like similarity and proximity.</p></div>
+        <div><h4>Automated audits</h4><p>WebAIM WAVE flagged contrast, focus and semantic-markup issues.</p></div>
+        <div><h4>Tagged by the fix</h4><p>Every issue got a category, and a label for the work it needed: improvement, rewrite or redesign.</p></div>
+        <div><h4>Evidence for each finding</h4><p>Annotated screenshots and sketched concept redesigns backed every finding.</p></div>
+      </div>
+      <div class="rv">
+        <h3 style="margin-bottom:1.1rem">What it surfaced</h3>
+        <div class="grid" style="gap:14px">
+          <div class="risk"><h4>Ambiguous tables and labels</h4><p>Headings that did not say what they meant (one "Date" for payment, order or shipping), unlabelled icons, and unrelated controls side by side.</p></div>
+          <div class="risk"><h4>Broken responsiveness</h4><p>Tables and the header did not scale, which cut off data when the window was resized.</p></div>
+          <div class="risk"><h4>Hidden, unexpected behaviour</h4><p>Users had to clear the search field to see orders, filters worked one at a time, and the page went blank when filters were removed.</p></div>
+          <div class="risk"><h4>Accessibility debt</h4><p>Around 150 errors across the core screens, plus missing focus states, low contrast and link colours that failed WCAG.</p></div>
+          <div class="risk"><h4>Drift from the design system</h4><p>Buttons, hovers and layouts were inconsistent with the Montu MUI design system.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis rv">
+      <div class="kpi"><div class="v warm">104</div><p>Orders list, automated accessibility errors</p></div>
+      <div class="kpi"><div class="v warm">21</div><p>Patients list, automated accessibility errors</p></div>
+      <div class="kpi"><div class="v warm">18</div><p>Order details, missing form-label errors</p></div>
+      <div class="kpi"><div class="v warm">7</div><p>Pharmacies, automated accessibility errors</p></div>
+    </div>
+    <p class="src rv">Source · Circuit heuristic review with WebAIM WAVE, 2024.</p>
+  </div>
+</section>
+
+<!-- ============ WHAT I HEARD ============ -->
+<section data-depth="2600" data-title="What I heard">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>2,600 m</b> What I heard <span class="bar"></span></p>
+      <h2 class="rv">Four themes ran through everything people told me.</h2>
+    </div>
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">01</div><h4>Data visibility and integration</h4><p>Circuit was not integrated with the pharmacy system, so people tracked approvals, cancellations and dosage by hand. Fragmented data made compliance hard to follow.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Usability and navigation</h4><p>Unintuitive filters, excessive scrolling and inconsistent layouts created friction, and search was limited by identifiers.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Workflow efficiency</h4><p>Tracking, flagging and reallocating orders meant manual steps and multiple tabs, with no order flagging, status history or bulk actions.</p></div>
+      <div class="idea"><div class="n">04</div><h4>Compliance challenges</h4><p>AP and SAS approvals were cumbersome and error-prone without visibility, so people tracked the rules in external spreadsheets.</p></div>
+    </div>
+
+    <div class="col" style="margin-top:clamp(48px,6vw,80px)">
+      <h3 class="rv">The baseline, before any redesign</h3>
+      <p class="dim rv">I captured a Pre score on a five-point scale across the core screens. Every one of them sat below the line.</p>
+    </div>
+    <div class="kpis rv">
+      <div class="kpi"><div class="v warm">2.6</div><p>Order list, out of 5 at baseline</p></div>
+      <div class="kpi"><div class="v warm">3.0</div><p>Order details, out of 5 at baseline</p></div>
+      <div class="kpi"><div class="v warm">3.0</div><p>Patient list, out of 5 at baseline</p></div>
+      <div class="kpi"><div class="v warm">2.6</div><p>Patient details, out of 5 at baseline</p></div>
+    </div>
+    <p class="src rv">Source · Pre-Post improvement score, Circuit usability research, Nov 2024.</p>
+  </div>
+</section>
+
+<!-- ============ THE DIRECTION ============ -->
+<section data-depth="4200" data-title="The direction">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>4,000–6,000 m</b> The direction <span class="bar"></span></p>
+      <h2 class="rv">The findings pointed to one priority: give the operations teams their time back.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I sequenced the work into phases. The first features went after workflow efficiency, built on one consistent MUI design system.</p>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <figure><img src="../assets/img/case/circuit/laptop-workflow.webp" alt="Orders list with a duplicate order action highlighted" width="1200" height="727" loading="lazy"></figure>
+      <div>
+        <p class="eyebrow"><b>01</b> Workflow <span class="bar"></span></p>
+        <h3>Duplicate, order flagging, status history and bulk actions</h3>
+        <p class="dim" style="margin-top:1rem">These were the tools people kept asking for. Duplicate, flag and track orders, see a clear status history, and act on many orders at once instead of one tab at a time.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <div>
+        <p class="eyebrow"><b>02</b> Shipped <span class="bar"></span></p>
+        <h3>Search the way people actually work</h3>
+        <p class="dim" style="margin-top:1rem">Find patients and orders by the identifiers used day to day, including patient ID, in simplified tables that lead with the most important information.</p>
+      </div>
+      <figure><img src="../assets/img/case/circuit/laptop-search.webp" alt="Patients list with search by patient ID highlighted" width="1200" height="727" loading="lazy"></figure>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <figure><img src="../assets/img/case/circuit/laptop-approvals.webp" alt="SAS and AP approvals table inside a patient profile" width="1200" height="727" loading="lazy"></figure>
+      <div>
+        <p class="eyebrow"><b>03</b> Shipped <span class="bar"></span></p>
+        <h3>Approvals with visibility built in</h3>
+        <p class="dim" style="margin-top:1rem">AP and SAS approval handling moved into Circuit, with the visibility and structure that used to live in spreadsheets. That cuts down on human error.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <div>
+        <p class="eyebrow"><b>04</b> Shipped <span class="bar"></span></p>
+        <h3>One consistent design system</h3>
+        <p class="dim" style="margin-top:1rem">A shared MUI-based design system makes every screen consistent by default, which ends the drift that caused the usability gaps.</p>
+      </div>
+      <figure><img src="../assets/img/case/circuit/laptop-design-system.webp" alt="New order form built on the MUI design system" width="1200" height="728" loading="lazy"></figure>
+    </div>
+
+    <p class="src rv">A selected list of four highly requested screens and flows that let internal users finish their jobs and make fewer errors. Sensitive information is redacted and placeholder information is shown.</p>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section data-depth="5400" data-title="Results">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>5,400 m</b> Results <span class="bar"></span></p>
+      <h2 class="rv">Every core screen moved, and moved a lot.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I re-ran the same Pre-Post improvement score on the v1.2 redesign, rebuilt on the Montu MUI design system, with the same teams. Satisfaction on every core screen climbed from below the line into the 4.6 to 5.0 range.</p>
+    </div>
+    <div class="kpis rv">
+      <div class="kpi"><div class="v">4.6<small>/5</small></div><p>Order list, up from 2.6</p></div>
+      <div class="kpi"><div class="v">5.0<small>/5</small></div><p>Order details, up from 3</p></div>
+      <div class="kpi"><div class="v">5.0<small>/5</small></div><p>Patient list, up from 3</p></div>
+      <div class="kpi"><div class="v">4.8<small>/5</small></div><p>Patient details, up from 2.6</p></div>
+    </div>
+    <p class="src rv">Source · Pre-Post improvement score, Circuit v1.2 usability testing, five-point scale.</p>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">What users said about v1.2</h3>
+    <div class="grid g2 rv" style="margin-top:1.4rem">
+      <div class="idea"><div class="n">Data visibility</div><h4>Clear at a glance</h4><p>10 of 10 found the layout clean and clear, and 9 of 10 said it gave enough information for a faster workflow.</p></div>
+      <div class="idea"><div class="n">Usability</div><h4>Less hunting</h4><p>8 of 10 had less scrolling and better filters, and 10 of 10 liked the intuitive search and the new patient ID search.</p></div>
+      <div class="idea"><div class="n">Workflow</div><h4>Real time savers</h4><p>10 of 10 loved copy-to-clipboard, and 10 of 10 valued the Status History Log that shows what changed, when and by whom.</p></div>
+      <div class="idea"><div class="n">Compliance</div><h4>Approvals in view</h4><p>All 3 clinical users liked the new SAS approval and upload UI, and 10 of 10 liked the clearer remaining units and repeats.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OPERATIONAL IMPACT ============ -->
+<section data-depth="6600" data-title="Operational impact" style="padding-bottom:clamp(80px,12vw,140px)">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>6,000 m +</b> Operational impact <span class="bar"></span></p>
+      <h2 class="rv">The satisfaction lift is really time handed back to the team.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">The features users rated highest were bulk actions, status history, copy-to-clipboard and faster search. They all attack the same thing: the manual steps, extra tabs and side spreadsheets between a PTX agent and a finished task. Modelled against the workflow that shipped, the saving adds up quickly.</p>
+    </div>
+    <div class="kpis rv">
+      <div class="kpi"><div class="v">~40%</div><p>Faster on key tasks: search, flagging, reallocating and approvals</p></div>
+      <div class="kpi"><div class="v">~1 hr</div><p>Saved per agent, per day, from fewer manual steps, tabs and lookups</p></div>
+      <div class="kpi"><div class="v">~6,000 hrs</div><p>Saved a year across the PTX team, conservatively</p></div>
+      <div class="kpi"><div class="v">~3 FTE</div><p>Capacity freed to handle more, without hiring</p></div>
+    </div>
+    <p class="src rv">Modelled estimate from the usability findings and shipped features, not a measured result. Assumptions: about 25 PTX agents handling about 80 actions each per day, with the highest-friction tasks cut by about 40%.</p>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">What that means for the company</h3>
+    <div class="grid g2 rv" style="margin-top:1.4rem">
+      <div class="idea"><h4>Growth without headcount</h4><p>The freed capacity absorbs rising patient volume without adding PTX headcount, so support cost stays flat as the business grows.</p></div>
+      <div class="idea"><h4>Faster turnaround</h4><p>Quicker orders and approvals mean quicker responses for patients and pharmacies, which supports retention.</p></div>
+      <div class="idea"><h4>Lower compliance risk</h4><p>Bringing AP and SAS approvals into Circuit, out of side spreadsheets, cuts manual-handling errors.</p></div>
+      <div class="idea"><h4>Cheaper future changes</h4><p>A consistent MUI design system makes every future change cheaper to build and quicker to ship.</p></div>
+    </div>
+    <a class="up rv" href="#hero" style="margin-top:clamp(32px,4vw,52px)">↑ Return to the surface</a>
+  </div>
+</section>
+
+<!-- ============ PREVIOUS / NEXT ============ -->
+<nav class="pn wrap" aria-label="More case studies">
+  <a class="pncard rv" href="westpac-youth.html" data-nav="westpac-youth">
+    <span class="dir">Previous</span>
+    <span class="t">Westpac Youth</span>
+    <span class="s">Banking for 12 to 18 year olds</span>
+  </a>
+  <a class="pncard next rv" href="../../index.html" data-nav="recommendations">
+    <span class="dir">Next</span>
+    <span class="t">Recommendations</span>
+    <span class="s">What people I've worked with say</span>
+  </a>
+</nav>
+
+</main>
+
+<script src="../assets/js/dive.js"></script>
+</body>
+</html>

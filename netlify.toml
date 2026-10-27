@@ -1,0 +1,21 @@
+# jessyux portfolio - static single-file site
+[build]
+  publish = "dist"
+  command = "node build-home.mjs && node redesign-2026/build.mjs"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

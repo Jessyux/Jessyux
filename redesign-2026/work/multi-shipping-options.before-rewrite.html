@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Multi shipping options | jessyux</title>
+<meta name="description" content="uMeds multi shipping options case study. A same-day delivery option that cut patient-initiated churn 19% and protected an estimated $13.7M a year.">
+<link rel="icon" href="../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..800&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>if(window.parent!==window)document.documentElement.classList.add('embed')</script>
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+</head>
+
+<body>
+<header class="topnav">
+  <div class="wrap">
+    <a class="mark" href="../index.html">jessy<span>ux</span></a>
+    <nav>
+      <a href="../index.html#work">Work</a>
+      <a href="../index.html#about">About</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<div id="sea"></div>
+<canvas id="life" aria-hidden="true"></canvas>
+
+<div id="topbar"><div id="topfill"></div></div>
+<div id="mread">0 m</div>
+<aside id="rail">
+  <a class="railhome" id="railHome" href="../index.html" aria-label="Home">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg>
+    <span>Home</span>
+  </a>
+  <div aria-hidden="true">
+    <div class="read"><span id="depthNum">0</span></div>
+    <div class="unit">metres</div>
+    <div class="zone" id="zoneName">Overview</div>
+    <div id="gauge"><div id="gaugeFill"></div><div id="gaugeDot"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ============ SURFACE ============ -->
+<section id="hero" class="casehero" data-depth="0" data-title="Overview">
+  <div class="wrap">
+    <p class="kicker">Case study <span>·</span> Health tech <span>·</span> B2C ecommerce <span>·</span> uMeds multi shipping options</p>
+    <h1>Patients kept walking out the door. We gave them a reason to stay.</h1>
+    <p class="lede dim">uMeds delivers medication to patients across Australia. Every month, around a thousand of them asked to take their script elsewhere. This is why, what we built about it, and the honest result: a 19% drop in patient-initiated churn, an estimated $13.7M a year protected, and two launch targets we missed.</p>
+    <dl class="meta">
+      <div><dt>Why</dt><dd>Standard delivery did not fit how patients wanted their medication, so they left.</dd></div>
+      <div><dt>How</dt><dd>Research with real patients, then a shipping experience built around choice and trust.</dd></div>
+      <div><dt>What</dt><dd>Same-day, weekend, 3-hour and click-and-collect, shipped inside the existing flow.</dd></div>
+      <div><dt>Role</dt><dd>Scoping, research, interaction design, prototyping, testing, stakeholder management, change management, post-implementation tracking.</dd></div>
+      <div><dt>Timeline</dt><dd>Research Q2 2025, launch Nov 2025, continuous review to Jun 2026.</dd></div>
+      <div><dt>Surface</dt><dd>uMeds B2C ordering and checkout (web). Shipped.</dd></div>
+    </dl>
+    <div class="cue"><i></i> Scroll to descend</div>
+  </div>
+</section>
+
+<!-- ============ THE SHORT VERSION ============ -->
+<section data-depth="0" data-title="The short version">
+  <div class="wrap col">
+    <p class="eyebrow rv"><b>0 m</b> <span class="bar"></span> The short version</p>
+    <div class="plate tldr rv">
+      <p class="lede">Patients were leaving because standard delivery did not fit how they wanted their medication. We gave them more ways to receive it.</p>
+      <p class="dim" style="margin:0">It missed both launch targets as written, yet cut patient-initiated churn 19% and protected an estimated $13.7M a year in a declining market. Size the market before you set the metric.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EPIPELAGIC ============ -->
+<section data-depth="20" data-title="Before">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>0–200 m</b> <span class="bar"></span> Before</p>
+      <h2 class="rv">Every month, about 1,050 patients asked to leave.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">When a patient requests a script release, they take their prescription to a pharmacy themselves instead of ordering through uMeds. We were not guessing why. Patients told us, in two datasets.</p>
+    </div>
+
+    <div class="chart rv" data-draw>
+      <h4>Why patients requested a script release</h4>
+      <div class="sub">Discharge survey · share of respondents</div>
+      <div class="bars">
+        <div class="row"><div class="lab"><span>I wanted to pick up in person</span><b>59%</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+        <div class="row"><div class="lab"><span>I needed it urgently</span><b>27.5%</b></div><div class="track"><div class="fill" style="--w:46.6%"></div></div></div>
+        <div class="row"><div class="lab"><span>I had delivery issues before</span><b>20.3%</b></div><div class="track"><div class="fill" style="--w:34.4%"></div></div></div>
+        <div class="row"><div class="lab"><span>I preferred a pharmacy I know</span><b>19.4%</b></div><div class="track"><div class="fill" style="--w:32.9%"></div></div></div>
+        <div class="row"><div class="lab"><span>Lower prices elsewhere</span><b>10.4%</b></div><div class="track"><div class="fill" style="--w:17.6%"></div></div></div>
+        <div class="row"><div class="lab"><span>Ordering process was difficult</span><b>9.2%</b></div><div class="track"><div class="fill" style="--w:15.6%"></div></div></div>
+        <div class="row"><div class="lab"><span>Other</span><b>6.9%</b></div><div class="track"><div class="fill" style="--w:11.7%"></div></div></div>
+      </div>
+      <p class="src">Source 4 · Survicate discharge survey, script-release reasons. Bars scaled to the top answer; respondents could select more than one.</p>
+    </div>
+
+    <div class="chart rv" data-draw>
+      <h4>What shipping options patients actually wanted</h4>
+      <div class="sub">Requests counted across post-delivery feedback</div>
+      <div class="cols">
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:100%"><b>5,524</b></div></div><span class="cname">Shipping offers / discounts</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:78.9%"><b>4,360</b></div></div><span class="cname">Same day delivery</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:62.8%"><b>3,469</b></div></div><span class="cname">Weekend delivery</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:37.4%"><b>2,067</b></div></div><span class="cname">Delivery within 3 hours</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:35.9%"><b>1,984</b></div></div><span class="cname">Click and collect</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:23%"><b>1,270</b></div></div><span class="cname">None of these</span></div>
+        <div class="colwrap"><div class="barbox"><div class="colbar" style="--h:10.5%"><b>580</b></div></div><span class="cname">Other</span></div>
+      </div>
+      <p class="src">Source 5 · Google Looker, uMeds Post Delivery NPS, CSat and Awaiting Collection / Delivery Attempted.</p>
+    </div>
+
+    <div class="col" style="margin-top:clamp(32px,5vw,56px)">
+      <p class="lede rv">59% wanted to pick up in person. The demand was specific: same-day (4,360), weekend (3,469), 3-hour (2,067) and click-and-collect (1,984). <em>Doing nothing meant keeping the leak open.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE ALTERNATIVE ============ -->
+<section data-depth="170" data-title="The alternative">
+  <div class="wrap">
+    <div class="grid g2" style="align-items:center;gap:clamp(28px,5vw,60px)">
+      <div class="rv">
+        <p class="eyebrow"><b>After</b> Imagine the alternative</p>
+        <h3>A patient notices their medication is running low. They open uMeds and, for the first time, they actually have a choice.</h3>
+        <p class="dim" style="margin-top:1.3rem">Same-day if it is urgent, collect it nearby, or pick a day that suits them. The reason to walk out the door is gone.</p>
+        <p class="dim">That is the world we were designing toward. Not a faster version of the old experience, but a different one, where how the medication arrives bends to the patient instead of the other way around.</p>
+      </div>
+      <figure class="rv" style="justify-self:center">
+        <img class="shot" id="float1" src="../assets/img/case/multi-shipping/shipping-options-angled.webp" alt="The new uMeds shipping options screen showing same-day, standard and click-and-collect side by side" width="560" height="699">
+        <figcaption class="cap" style="margin-top:12px">Shipped shipping options screen. Product name masked.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MESOPELAGIC ============ -->
+<section data-depth="240" data-title="Bridge">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>200–1,000 m</b> <span class="bar"></span> Bridge</p>
+      <h2 class="rv">First understand the patient, then design for trust, not just speed.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I ran moderated, task-based usability sessions with seven patients on a prototype of the new shipping experience. The sample leans rural, the group with the most to gain and the least margin for a failed delivery.</p>
+    </div>
+
+    <div class="people rv" style="margin-top:clamp(28px,4vw,40px)">
+      <div class="person"><span class="p">P1</span><span class="s">Metro</span><span class="c">Only uses mobile and wants the quickest option</span></div>
+      <div class="person"><span class="p">P2</span><span class="s">Rural</span><span class="c">Would drive around 50 km to collect if an item is unavailable locally</span></div>
+      <div class="person"><span class="p">P3</span><span class="s">Rural</span><span class="c">Orders on a laptop, found the mobile screen confusing</span></div>
+      <div class="person"><span class="p">P4</span><span class="s">Rural</span><span class="c">Chose same-day over 3-hour for a marginal cost saving</span></div>
+      <div class="person"><span class="p">P5</span><span class="s">Rural</span><span class="c">Ranks speed lowest, behind quality, value and cost</span></div>
+      <div class="person"><span class="p">P6</span><span class="s">Metro</span><span class="c">Avoids click-and-collect over personal-safety concerns</span></div>
+      <div class="person"><span class="p">P7</span><span class="s">Rural</span><span class="c">Leans on SMS and AusPost alerts to track orders</span></div>
+    </div>
+    <p class="src rv">Source 6 · Q2 2025 Shipping Options: Data and Insights (FigJam), 7 de-identified participants.</p>
+
+    <div class="col" style="margin-top:clamp(44px,6vw,76px)">
+      <h3 class="rv">The scorecard told me where the design would struggle</h3>
+      <div class="plate rv" style="margin-top:1.4rem">
+        <div class="task"><span class="st pass">Passed</span><div><h4>Select a shipping option</h4><p>Finds the section, reads each option, picks the one that matches intent.</p></div></div>
+        <div class="task"><span class="st part">Partial</span><div><h4>Confirm availability and present valid ID</h4><p>A patient questioned a valid-ID banner on a standard express order.</p></div></div>
+        <div class="task"><span class="st fail">Failed</span><div><h4>Understand availability based on location</h4><p>Could not tell which options were available or unavailable, with drop-off risk.</p></div></div>
+      </div>
+    </div>
+
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,40px)">
+      <blockquote>“I'd rather unavailable options just disappear than sit there greyed out.”<footer>Participant 5 · Rural</footer></blockquote>
+      <blockquote>“Why is it asking me for valid ID? I only picked standard express.”<footer>Participant 2 · Rural</footer></blockquote>
+    </div>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">The three ideas that shaped the design</h3>
+    <div class="grid g3 rv" style="margin-top:1.4rem">
+      <div class="idea"><div class="n">01</div><h4>Make availability legible</h4><p>Greyed-out options read as noise. Patients need to see what their address actually supports, or a faster option silently disappears.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Match trust cues to the choice</h4><p>An ID banner on a standard order broke trust. Verification messaging has to be conditional on the option chosen.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Design for control, not just speed</h4><p>Rural patients rank speed below value and reliability. The win is choice, not raw velocity.</p></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:clamp(48px,6vw,80px);gap:clamp(28px,5vw,56px);align-items:center">
+      <figure class="rv"><img src="../assets/img/case/multi-shipping/shipping-options-screen.webp" alt="Shipping options screen with address review, same-day, standard and click-and-collect options" width="480" height="990" style="max-width:300px;margin:0 auto"></figure>
+      <div class="annot rv">
+        <h3 style="margin-bottom:.6rem">The screen those ideas became</h3>
+        <div><h4>Choice up front</h4><p>Same-day, standard and collect sit side by side, each leading with price and a plain-language ETA.</p></div>
+        <div><h4>Conditional trust</h4><p>The valid-ID acknowledgement appears only on the option that needs it.</p></div>
+        <div><h4>Honest availability</h4><p>The biggest open problem from testing. Unavailable options must read as unavailable, not greyed out.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BATHYPELAGIC ============ -->
+<section class="chainhead" data-depth="1050" data-title="Cross-functional delivery">
+  <div class="wrap col">
+    <p class="eyebrow rv"><b>1,000–4,000 m</b> <span class="bar"></span> Cross-functional delivery</p>
+    <h2 class="rv">Choosing “Same Day” looks like a single tap. Underneath it is a chain of real-world handoffs.</h2>
+    <p class="lede dim rv" style="margin-top:1.4rem">No light reaches this part of the product. A tap triggers a tightly timed, regulated sequence, and no single team owns it end to end, which is exactly where it can break.</p>
+  </div>
+</section>
+
+<section id="chain" class="pin">
+  <div class="sticky">
+    <div class="wrap chainlabel">1,000–4,000 m · the chain beneath one tap</div>
+    <div class="rail-track" id="track">
+      <div class="link"><div class="n">01</div><h4>Serviceability check</h4><p>Does this address support a same-day route at all, right now.</p><span class="owner">Delivery</span></div>
+      <div class="link"><div class="n">02</div><h4>Script and ID compliance</h4><p>Regulated checks clear before anything can be dispensed.</p><span class="owner">Pharmacy ops</span></div>
+      <div class="link"><div class="n">03</div><h4>Dispense within cut-off</h4><p>The window is the promise. Miss it and the option was never real.</p><span class="owner">Pharmacy ops</span></div>
+      <div class="link"><div class="n">04</div><h4>Pick and pack</h4><p>Live stock, cold-chain handling, packing constraints per item.</p><span class="owner">Fulfilment</span></div>
+      <div class="link"><div class="n">05</div><h4>Courier collection</h4><p>A physical handoff on a clock set hours earlier in checkout.</p><span class="owner">Delivery</span></div>
+      <div class="link"><div class="n">06</div><h4>Same-day route</h4><p>Routing, re-attempts and exceptions the patient never sees.</p><span class="owner">Delivery</span></div>
+      <div class="link"><div class="n">07</div><h4>Status message back</h4><p>What the patient is told, and when, decides whether it felt same-day.</p><span class="owner">Marketing comms</span></div>
+    </div>
+  </div>
+</section>
+
+<section data-depth="2600" data-title="Mapping the operation">
+  <div class="wrap">
+    <div class="col">
+      <p class="lede rv">Before a pixel was finalised I ran a cross-functional mapping workshop with Fulfilment, Pharmacy Operations, Delivery, Engineering, Data and Marketing Comms. The goal was deliberately not “review my designs”. It was one shared map of the operation, so every scenario, edge case, risk and dependency had a named owner, and so the decisions in checkout reflected what operations could actually honour.</p>
+    </div>
+    <figure class="rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="scroller"><img src="../assets/img/case/multi-shipping/ixd-process-map.webp" alt="Workshopped interaction design process map of the same-day delivery operation, mapping dependencies, edge cases and owners across teams" width="2256" height="1136" style="min-width:760px"></div>
+      <figcaption class="cap" style="margin-top:12px">Workshopped IxD process map. Dependencies, edge cases, considerations, opportunities and operations in one view. Scroll sideways to read it.</figcaption>
+    </figure>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">Scenarios and risks the workshop put on the table</h3>
+    <p class="dim rv" style="max-width:68ch">Mapping the operation together surfaced the cross-cutting scenarios a checkout mock alone would never expose. Each one got an owner and a fallback instead of becoming a live incident.</p>
+    <div class="grid g3 rv" style="margin-top:1.4rem">
+      <div class="risk"><div class="n">01</div><h4>Cut-off missed</h4><p>Order placed after the same-day dispatch window. Who downgrades the option, and how is the patient told before they pay?</p></div>
+      <div class="risk"><div class="n">02</div><h4>Out-of-zone after address change</h4><p>A faster option silently drops when the address updates. Engineering recompute plus a visible message, owned jointly.</p></div>
+      <div class="risk"><div class="n">03</div><h4>Script not yet released</h4><p>Pharmacy cannot dispense until the script clears. Comms holds the SMS rather than promising a window that cannot be met.</p></div>
+      <div class="risk"><div class="n">04</div><h4>Stock mismatch</h4><p>Online availability disagrees with the shelf. Fulfilment feeds live stock into eligibility so same-day never shows for an item that is not there.</p></div>
+      <div class="risk"><div class="n">05</div><h4>Cold-chain item</h4><p>Temperature-sensitive products constrain packing and carrier. Flagged at eligibility, not discovered at pick.</p></div>
+      <div class="risk"><div class="n">06</div><h4>Failed delivery or re-attempt</h4><p>Re-attempt logic, PTX follow-up and proactive comms agreed up front, so a missed drop does not read to the patient as a lost order.</p></div>
+    </div>
+    <div class="col" style="margin-top:clamp(32px,4vw,48px)">
+      <p class="lede rv">I treat what happens after handoff as part of the design. Aligning six teams on one map is what turned a clean shipping options flow into a promise the product team could keep. <em>It is also where the eligible-market blind spot behind Target 1 first became visible.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABYSSOPELAGIC ============ -->
+<section data-depth="4200" data-title="What we shipped">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>4,000–6,000 m</b> <span class="bar"></span> What we shipped</p>
+      <h2 class="rv">More ways to receive medication. Two missed targets. One real win.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">Same Day Delivery launched in November 2025, with Click &amp; Collect following in March 2026. Against the two launch targets the literal numbers are a miss. Against the thing that mattered, retention, it is a clear win.</p>
+    </div>
+
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="target">
+        <h4><span class="badge">Missed</span>Target 1: 25% SDD conversion</h4>
+        <p>Result: 8.5% by May 2026, peaking at 10.8% in Feb.</p>
+        <ul><li>The 25% was set against all orders, before sizing how many were even same-day eligible.</li><li>Greyed-out options were unreadable, so eligible patients sometimes missed same-day.</li></ul>
+      </div>
+      <div class="target">
+        <h4><span class="badge">Missed</span>Target 2: +1.5% total order uplift</h4>
+        <p>Result: −6.6% market-wide. The no-SDD control fell −19.3% like-for-like, while SDD adopters held at +0.6%, beating the market by about 15 points.</p>
+      </div>
+    </div>
+
+    <div class="col" style="margin-top:clamp(44px,6vw,72px)">
+      <h3 class="rv">The targets measured new growth. What same-day actually delivered was retention.</h3>
+    </div>
+
+    <div class="chart rv" data-draw>
+      <h4>SDD adoption vs the 25% target</h4>
+      <div class="sub">Monthly share, Sep 2025 to Jun 2026</div>
+      <div class="scroller"><div class="lineholder">
+        <svg viewBox="0 0 740 272" role="img" aria-label="Monthly same-day delivery share from September to June. On same-day enabled postcodes the share rises to about 25 to 27 percent from February. Blended across all orders it peaks at 10.8 percent in February and sits at 8.5 percent in May.">
+          <defs><linearGradient id="gEn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0ff" stop-opacity=".3"/><stop offset="1" stop-color="#6fd0ff" stop-opacity="0"/></linearGradient></defs>
+          <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6b8e9c">
+            <line x1="50" x2="664" y1="236" y2="236" stroke="rgba(255,255,255,.09)"/><text x="40" y="240" text-anchor="end">0%</text>
+            <line x1="50" x2="664" y1="201.7" y2="201.7" stroke="rgba(255,255,255,.06)"/><text x="40" y="205.7" text-anchor="end">5%</text>
+            <line x1="50" x2="664" y1="167.3" y2="167.3" stroke="rgba(255,255,255,.06)"/><text x="40" y="171.3" text-anchor="end">10%</text>
+            <line x1="50" x2="664" y1="133" y2="133" stroke="rgba(255,255,255,.06)"/><text x="40" y="137" text-anchor="end">15%</text>
+            <line x1="50" x2="664" y1="98.7" y2="98.7" stroke="rgba(255,255,255,.06)"/><text x="40" y="102.7" text-anchor="end">20%</text>
+            <line x1="50" x2="664" y1="64.3" y2="64.3" stroke="rgba(255,255,255,.06)"/><text x="40" y="68.3" text-anchor="end">25%</text>
+            <line x1="50" x2="664" y1="30" y2="30" stroke="rgba(255,255,255,.06)"/><text x="40" y="34" text-anchor="end">30%</text>
+            <text x="50" y="256" text-anchor="middle">Sep</text><text x="118.2" y="256" text-anchor="middle">Oct</text><text x="186.4" y="256" text-anchor="middle">Nov</text><text x="254.7" y="256" text-anchor="middle">Dec</text><text x="322.9" y="256" text-anchor="middle">Jan</text><text x="391.1" y="256" text-anchor="middle">Feb</text><text x="459.3" y="256" text-anchor="middle">Mar</text><text x="527.6" y="256" text-anchor="middle">Apr</text><text x="595.8" y="256" text-anchor="middle">May</text><text x="664" y="256" text-anchor="middle">Jun</text>
+            <line x1="186.4" x2="186.4" y1="24" y2="236" stroke="#9db9c4" stroke-dasharray="3 4" stroke-opacity=".55"/><text x="186.4" y="19" text-anchor="middle" fill="#9db9c4">SDD launch</text>
+            <line x1="50" x2="664" y1="64.3" y2="64.3" stroke="#ffb26b" stroke-dasharray="6 5" stroke-width="1.5"/><text x="56" y="56" fill="#ffb26b">25% target</text>
+          </g>
+          <path class="area" d="M50,236 L50,236 118.2,236 186.4,194.8 254.7,126.1 322.9,101.4 391.1,60.9 459.3,59.5 527.6,71.2 595.8,65.7 664,52 L664,236 Z" fill="url(#gEn)"/>
+          <polyline class="ln" pathLength="1" points="50,236 118.2,236 186.4,194.8 254.7,126.1 322.9,101.4 391.1,60.9 459.3,59.5 527.6,71.2 595.8,65.7 664,52" fill="none" stroke="#6fd0ff" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <polyline class="ln" pathLength="1" points="50,236 118.2,236 186.4,218.8 254.7,189.3 322.9,179.7 391.1,161.8 459.3,172.8 527.6,183.8 595.8,177.6 664,172.8" fill="none" stroke="#5ef2c8" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <g class="dot">
+            <circle cx="391.1" cy="161.8" r="4.5" fill="#5ef2c8" stroke="#06283a" stroke-width="2"/>
+            <circle cx="595.8" cy="177.6" r="4.5" fill="#5ef2c8" stroke="#06283a" stroke-width="2"/>
+            <text x="391.1" y="152" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#5ef2c8">10.8%</text>
+            <text x="595.8" y="168" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#5ef2c8">8.5%</text>
+          </g>
+        </svg>
+      </div></div>
+      <div class="legend">
+        <span><i style="background:#6fd0ff"></i>SDD-enabled postcodes (illustrative, around 40% of orders)</span>
+        <span><i style="background:#5ef2c8"></i>Blended, all orders</span>
+        <span><i style="background:#ffb26b"></i>25% target</span>
+      </div>
+      <p class="src">Sources 1 and 2 · Measured on all orders, adoption peaked at 10.8%. On same-day eligible postcodes it tracks near the 25% target.</p>
+    </div>
+
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="plate">
+        <h4>Patient-initiated churn</h4>
+        <div class="sub" style="font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);letter-spacing:.09em;margin:.4rem 0 1.4rem">Monthly average, pre vs post same-day</div>
+        <div class="swing">
+          <div><div class="t">Pre</div><div class="a">1,050</div></div>
+          <div><div class="t">Post</div><div class="b" data-count="847">847</div></div>
+          <div><div class="t">Feb low</div><div class="a" style="text-decoration:none">643</div></div>
+        </div>
+        <p class="dim" style="margin:1.4rem 0 0;font-size:.9rem">A 19% fall in the monthly average after same-day launched, in a market where the no-SDD control group fell 19.3% in orders like-for-like.</p>
+      </div>
+      <div class="plate">
+        <h4>Revenue per customer, 30 days</h4>
+        <div class="sub" style="font-family:var(--mono);font-size:.68rem;color:var(--ink-faint);letter-spacing:.09em;margin:.4rem 0 1.2rem">By segment vs baseline</div>
+        <div class="bars" data-draw>
+          <div class="row"><div class="lab"><span>Baseline</span><b>$253</b></div><div class="track"><div class="fill" style="--w:84.6%;background:linear-gradient(90deg,rgba(157,185,196,.3),#9db9c4)"></div></div></div>
+          <div class="row"><div class="lab"><span>S1</span><b>$196</b></div><div class="track"><div class="fill" style="--w:65.6%"></div></div></div>
+          <div class="row"><div class="lab"><span>S2 multi-modal</span><b>$299</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+          <div class="row"><div class="lab"><span>S3 control</span><b>$152</b></div><div class="track"><div class="fill" style="--w:50.8%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpis rv">
+      <div class="kpi"><div class="v" data-count="-19" data-suffix="%">−19%</div><p>Patient-initiated churn, 1,050 to 847 a month</p></div>
+      <div class="kpi"><div class="v">+$147</div><p>Extra revenue per multi-modal customer per month vs control</p></div>
+      <div class="kpi"><div class="v">0.55%</div><p>Hard-churn rate for multi-modal (S2), against 0.66% baseline</p></div>
+      <div class="kpi"><div class="v">+$13.7M</div><p>Annualised net impact estimate vs counterfactual</p></div>
+    </div>
+    <p class="src rv">Sources 1 to 3 · Same-day adoption is self-selected, so this is correlation, not proven causation. Figures 30-day normalised against an S3 counterfactual.</p>
+  </div>
+</section>
+
+<!-- ============ HADAL / ASCENT ============ -->
+<section data-depth="6100" data-title="So what">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>6,000 m +</b> <span class="bar"></span> So what</p>
+      <h2 class="rv">A success metric is only as good as the market definition under it.</h2>
+    </div>
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">01</div><h4>Recalibrate the target</h4><p>Re-base same-day conversion on same-day eligible orders, not all orders.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Fix availability legibility</h4><p>Remove or clearly explain unavailable options instead of greying them out.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Make option changes loud</h4><p>When an address change drops a faster option, say so.</p></div>
+      <div class="idea"><div class="n">04</div><h4>Lead with retention</h4><p>Frame same-day around churn protection and multi-modal value, not raw adoption.</p></div>
+    </div>
+  </div>
+</section>
+
+<section data-depth="9200" data-title="References" style="padding-bottom:clamp(80px,12vw,140px)">
+  <div class="wrap col">
+    <p class="eyebrow rv"><b>10,994 m</b> <span class="bar"></span> References</p>
+    <ol class="refs rv">
+      <li>SDD Portfolio Snapshot, Montu Product Analytics, 12 Jun 2026.</li>
+      <li>SDD Impact Tracker, 12 Jun 2026.</li>
+      <li>SDD Churn Infographic.</li>
+      <li>Survicate discharge survey, script-release reasons.</li>
+      <li>Google Looker, uMeds Post Delivery NPS, CSat and Awaiting Collection / Delivery Attempted.</li>
+      <li>Q2 2025 Shipping Options: Data and Insights (FigJam), 7 de-identified participants.</li>
+    </ol>
+    <p class="cap rv" style="margin-top:1.6rem">Internal Montu sources. Figures shown as reported in those documents. Product names masked in the design screens.</p>
+    <a class="up rv" href="#hero">↑ Return to the surface</a>
+  </div>
+</section>
+
+<!-- ============ PREVIOUS / NEXT ============ -->
+<nav class="pn wrap" aria-label="More case studies">
+  <a class="pncard rv" href="../index.html" data-nav="home">
+    <span class="dir">Previous</span>
+    <span class="t">Back to the beach</span>
+    <span class="s">Home</span>
+  </a>
+  <a class="pncard next rv" href="westpac-youth.html" data-nav="westpac-youth">
+    <span class="dir">Next</span>
+    <span class="t">Westpac Youth</span>
+    <span class="s">Banking for 12 to 18 year olds</span>
+  </a>
+</nav>
+
+</main>
+
+<script src="../assets/js/dive.js"></script>
+</body>
+</html>

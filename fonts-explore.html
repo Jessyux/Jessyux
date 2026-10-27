@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hero font options | jessyux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Instrument+Serif:ital@0;1&family=Young+Serif&family=Caprasimo&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Fredoka:wght@400..700&family=Gabarito:wght@400..800&family=Unbounded:wght@300..700&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#042b38;--ink2:#2f5660;--teal:#078A72;--sand:#f6e1c2;--paper:rgba(255,247,230,.9);--line:rgba(120,84,40,.22)}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(#edd4b6,#fae1c1 40%,#f3d9b4);color:var(--ink);font-family:'Hanken Grotesk',sans-serif;font-weight:350;line-height:1.5;-webkit-font-smoothing:antialiased}
+header{max-width:1180px;margin:0 auto;padding:40px 24px 8px}
+header h1{font:500 14px 'IBM Plex Mono',monospace;letter-spacing:.04em;color:var(--ink2);margin:0 0 6px}
+header p{margin:0;color:var(--ink2);max-width:62ch}
+main{max-width:1180px;margin:0 auto;padding:18px 24px 80px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,540px),1fr));gap:18px}
+.opt{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 26px 26px;box-shadow:0 18px 34px -22px rgba(110,72,28,.5)}
+.opt .meta{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2);margin-bottom:18px}
+.opt .meta b{font-weight:500;color:var(--ink)}
+.opt .meta .n{color:var(--teal)}
+.hero{margin:0;color:var(--ink);line-height:1.04;font-size:clamp(2.6rem,6.2vw,4.6rem);text-wrap:balance}
+.lead{margin:14px 0 0;font:450 clamp(16px,1.6vw,20px)/1.35 'Hanken Grotesk',sans-serif;color:#0a3a48;max-width:34ch}
+.lead em{font-style:normal;font-weight:700;color:var(--teal)}
+.why{margin:16px 0 0;font-size:13.5px;color:var(--ink2);max-width:52ch}
+.cur{outline:2px solid rgba(7,138,114,.55);outline-offset:-2px}
+
+.f1{font-family:'Fraunces',Georgia,serif;font-weight:400;letter-spacing:-.03em}
+.f2{font-family:'Instrument Serif',Georgia,serif;font-weight:400;letter-spacing:-.015em;font-size:clamp(3rem,7vw,5.2rem)}
+.f3{font-family:'Young Serif',Georgia,serif;font-weight:400;letter-spacing:-.02em}
+.f4{font-family:'Caprasimo',Georgia,serif;font-weight:400;letter-spacing:-.01em}
+.f5{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.035em;font-variation-settings:'opsz' 96}
+.f6{font-family:'Fredoka',sans-serif;font-weight:600;letter-spacing:-.02em}
+.f7{font-family:'Gabarito',sans-serif;font-weight:800;letter-spacing:-.03em}
+.f8{font-family:'Unbounded',sans-serif;font-weight:500;letter-spacing:-.04em;font-size:clamp(2.2rem,5.2vw,3.9rem)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hero font options · "Hi, I’m Jessy" on the sand</h1>
+  <p>Each card shows the hero at real size with the same lead line, in Hanken Grotesk, with the teal rotating word. The outlined one is the current Fraunces. Tell me the number you like, or a mix, for example one for the hero and a calmer one for the section headings.</p>
+</header>
+<main>
+  <section class="opt cur">
+    <div class="meta"><span><b class="n">1</b> · Fraunces (current)</span><span>400 · soft wonky serif</span></div>
+    <h2 class="hero f1">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Matches the case studies. Warm and editorial, but a little formal next to the toy-like art.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">2</b> · Instrument Serif</span><span>400 · tall, elegant, high contrast</span></div>
+    <h2 class="hero f2">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Fashion-magazine calm. Lets the beach and the 3D art carry the personality. Larger size, as it runs narrow.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">3</b> · Young Serif</span><span>400 · sturdy, friendly old-style</span></div>
+    <h2 class="hero f3">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Heavier and rounder than Fraunces. Reads confident and approachable, still serious enough for a PM portfolio.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">4</b> · Caprasimo</span><span>400 · chunky retro, beach-poster</span></div>
+    <h2 class="hero f4">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Fat, glossy letterforms that echo the vinyl inflatables. The boldest and most playful serif here.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">5</b> · Bricolage Grotesque</span><span>700 · quirky grotesque</span></div>
+    <h2 class="hero f5">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Modern and slightly odd, with ink-trap character. Feels like a product designer, less like an illustrator.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">6</b> · Fredoka</span><span>600 · soft, rounded, inflatable</span></div>
+    <h2 class="hero f6">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Puffy rounded ends like the pool toys. Friendliest option, and the most casual for a recruiter.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">7</b> · Gabarito</span><span>800 · geometric, bubbly</span></div>
+    <h2 class="hero f7">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Clean geometric shapes with round dots and soft joins. Playful and tidy, close to the floatie letters.</p>
+  </section>
+  <section class="opt">
+    <div class="meta"><span><b class="n">8</b> · Unbounded</span><span>500 · wide, rounded, techy</span></div>
+    <h2 class="hero f8">Hi, I’m Jessy</h2>
+    <p class="lead">A curious designer who creates experiences that <em>delight</em>.</p>
+    <p class="why">Wide and confident with a product-tech feel. Takes the most space, so the hero would need a smaller size.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,58 @@
+/* ==========================================================================
+   jessyux design tokens — "Descent"
+   The whole site is one dive: the surface is the home page, each case study
+   is a deeper zone. Depth is the organising idea, so depth drives colour.
+   Change a value here and it changes everywhere.
+   ========================================================================== */
+
+:root{
+  /* --- ink -------------------------------------------------------------- */
+  --ink:#eaf7f8;          /* foam. body copy on every depth */
+  --ink-dim:#9db9c4;      /* silt. secondary copy */
+  --ink-faint:#6b8e9c;    /* captions, axis labels, sources */
+
+  /* --- accents ---------------------------------------------------------- */
+  --glow:#5ef2c8;         /* bioluminescence. the win, the primary accent */
+  --signal:#ffb26b;       /* amber. misses, targets, warnings */
+  --beam:#6fd0ff;         /* sonar blue. second data series */
+
+  /* --- surfaces --------------------------------------------------------- */
+  --hull:rgba(255,255,255,.07);     /* hairline borders */
+  --hull-2:rgba(255,255,255,.14);   /* stronger borders, rules */
+  --plate:rgba(3,22,34,.44);        /* card fill. translucent so water shows through */
+  --bg:#0a4a66;                     /* fallback. dive.js paints the real gradient */
+
+  /* --- type ------------------------------------------------------------- */
+  --display:"Gabarito","Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;   /* playful titles, matches the home page */
+  --body:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* --- layout ----------------------------------------------------------- */
+  --r-plate:14px;         /* cards and plates, same as the About me cards on the home page */
+  --r-inner:10px;         /* images, icon tiles and anything nested inside a card */
+  --wrap:1060px;          /* max content width */
+  --col:68ch;             /* max reading measure */
+  --gutter:16px;          /* minimum side gutter at every width */
+
+  color-scheme:dark;
+}
+
+/* --------------------------------------------------------------------------
+   DEPTH STOPS
+   dive.js interpolates the page background between these as you scroll.
+   Keep them in sync with the `stops` array in assets/js/dive.js.
+     0 m      surface        home hero
+     200 m    epipelagic     still lit. the problem you can see
+     1000 m   mesopelagic    twilight. research
+     4000 m   bathypelagic   no light. the operation under the UI
+     6000 m   abyssopelagic  pressure. results
+     10994 m  hadal          Challenger Deep. references, contact
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   SINGLE THEME, ON PURPOSE
+   This design commits to one visual world (deep water). There is no light
+   theme: every colour is set explicitly and `color-scheme: dark` is pinned on
+   :root so native controls and scrollbars follow. Do not add a light palette
+   without redesigning the depth model, it is the whole concept.
+   -------------------------------------------------------------------------- */

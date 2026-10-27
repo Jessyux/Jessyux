@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>jessyux | Product designer</title>
+<meta name="description" content="Jessica Chappell. Product designer and product manager. I design experiences that move real numbers: acquisition, conversion, retention.">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..800&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<style>
+/* home-only composition -------------------------------------------------- */
+#hero{padding-block:clamp(120px,16vw,190px) clamp(56px,8vw,96px);min-height:auto}
+.herogrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);gap:clamp(24px,5vw,56px);align-items:center}
+@media(max-width:860px){.herogrid{grid-template-columns:1fr}.herogrid figure{order:-1;max-width:240px}}
+#hero h1{margin-bottom:1.5rem;max-width:15ch}
+.avail{
+  display:inline-flex;align-items:center;gap:.65em;font-family:var(--mono);font-size:.66rem;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--glow);
+  border:1px solid rgba(94,242,200,.3);border-radius:999px;padding:7px 14px;margin-bottom:1.8rem;
+}
+.avail i{width:6px;height:6px;border-radius:50%;background:var(--glow);box-shadow:0 0 10px var(--glow)}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:clamp(26px,4vw,38px)}
+.cue{display:flex;align-items:center;gap:.8em;margin-top:clamp(34px,5vw,54px);font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim)}
+.cue i{width:1px;height:46px;background:linear-gradient(180deg,var(--glow),transparent);display:block;animation:sink 2.6s ease-in-out infinite}
+@keyframes sink{0%,100%{opacity:.35;transform:translateY(-5px)}50%{opacity:1;transform:translateY(5px)}}
+@media(prefers-reduced-motion:reduce){.cue i{animation:none}}
+
+/* waterline: the hero sits above it, everything below is underwater ------- */
+.waterline{position:relative;height:1px;background:linear-gradient(90deg,transparent,var(--hull-2) 18%,var(--hull-2) 82%,transparent)}
+
+/* proof strip ------------------------------------------------------------- */
+.proof{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:1px;background:var(--hull);border:1px solid var(--hull);border-radius:4px;overflow:hidden}
+.proof div{background:var(--plate);padding:26px 24px;min-width:0}
+.proof .v{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,3.2vw,2.7rem);line-height:1;color:var(--glow);font-variant-numeric:tabular-nums}
+.proof p{margin:.7rem 0 0;font-size:.87rem;color:var(--ink-dim);line-height:1.45}
+.proof .sfx{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--ink-faint);display:block;margin-top:.6rem}
+
+/* dive sites (work index) ------------------------------------------------- */
+.sites{display:flex;flex-direction:column;gap:14px;margin-top:clamp(28px,4vw,44px)}
+.site{
+  display:grid;grid-template-columns:112px minmax(0,1fr) auto;gap:clamp(16px,3vw,32px);
+  background:var(--plate);border:1px solid var(--hull);border-radius:4px;
+  padding:clamp(20px,3vw,30px);text-decoration:none;color:inherit;align-items:start;
+  transition:border-color .35s ease,transform .35s cubic-bezier(.22,.9,.3,1),background .35s ease;
+}
+a.site:hover{border-color:rgba(94,242,200,.42);transform:translateY(-2px);background:rgba(5,30,44,.56)}
+.site .depth{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.site .depth b{display:block;font-size:1.35rem;font-weight:500;color:var(--glow);line-height:1}
+.site .depth span{display:block;font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin-top:.45rem;line-height:1.4}
+.site h3{margin-bottom:.5rem}
+.site .out{margin:0 0 .9rem;font-size:.95rem;color:var(--ink-dim);line-height:1.55}
+.tags{display:flex;gap:7px;flex-wrap:wrap}
+.tags span{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--hull);border-radius:999px;padding:3px 9px}
+.site .go{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--glow);white-space:nowrap;padding-top:.35rem}
+.site .go.soon{color:var(--ink-faint)}
+@media(max-width:760px){
+  .site{grid-template-columns:1fr;gap:14px}
+  .site .depth{display:flex;align-items:baseline;gap:.8em}
+  .site .depth span{margin-top:0}
+  .site .go{padding-top:0}
+}
+
+/* timeline ---------------------------------------------------------------- */
+.lore{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:1px;background:var(--hull);border:1px solid var(--hull);border-radius:4px;overflow:hidden;margin-top:clamp(26px,4vw,40px)}
+.lore div{background:var(--plate);padding:22px 20px;min-width:0}
+.lore img{height:26px;width:auto;max-width:120px;object-fit:contain;opacity:.92;display:block;margin-bottom:1rem}
+.lore b{display:block;font-weight:500;font-size:.92rem}
+.lore span{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-top:.35rem}
+
+/* praise ------------------------------------------------------------------ */
+.praise{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px;margin-top:clamp(26px,4vw,40px);align-items:start}
+.praise blockquote{font-size:1.02rem}
+.praise .who{display:flex;align-items:center;gap:10px;margin-top:1.1rem}
+.praise .ini{width:30px;height:30px;border-radius:50%;border:1px solid var(--hull-2);display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;color:var(--glow);flex:none}
+.praise .who b{display:block;font-weight:500;font-size:.84rem;font-family:var(--body)}
+.praise .who span{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+
+/* contact ----------------------------------------------------------------- */
+#contact h2{max-width:16ch}
+.reach{display:flex;gap:12px;flex-wrap:wrap;margin-top:clamp(24px,3vw,34px)}
+.foot{margin-top:clamp(48px,7vw,86px);padding-top:22px;border-top:1px solid var(--hull);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+
+<body data-max-depth="1200">
+<div id="sea"></div>
+<canvas id="life" aria-hidden="true"></canvas>
+
+<div id="topbar"><div id="topfill"></div></div>
+<div id="mread">0 m</div>
+<aside id="rail" aria-hidden="true">
+  <div class="read"><span id="depthNum">0</span></div>
+  <div class="unit">metres</div>
+  <div class="zone" id="zoneName">Surface</div>
+  <div id="gauge"><div id="gaugeFill"></div><div id="gaugeDot"></div></div>
+</aside>
+
+<header class="topnav">
+  <div class="wrap">
+    <a class="mark" href="#top">jessy<span>ux</span></a>
+    <nav>
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#praise">Praise</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ===================== 0 m · SURFACE ===================== -->
+<section id="hero" data-depth="0">
+  <div class="wrap">
+    <div class="herogrid">
+      <div>
+        <p class="avail"><i></i> Open to Product Manager and Senior Product Design roles</p>
+        <h1>A curious designer who creates experiences that <em>move real numbers</em>.</h1>
+        <p class="lede dim">I design for acquisition, conversion, retention and everyday life. Research rigour plus a whole-ecosystem view, which is how I find the opportunities other people walk past.</p>
+        <div class="cta">
+          <a class="btn" href="#work">See the work</a>
+          <a class="btn ghost" href="assets/Jessy-Chappell-CV.pdf">Resume</a>
+          <a class="btn ghost" href="https://www.linkedin.com/in/jessyux/">LinkedIn</a>
+        </div>
+      </div>
+      <figure data-float="0.05">
+        <img src="assets/img/brand/jessy-on-pool-ring.png" alt="Jessy floating on a pool ring at the surface" width="560" height="560">
+      </figure>
+    </div>
+    <div class="cue"><i></i> Scroll to dive deeper</div>
+  </div>
+</section>
+
+<div class="wrap"><div class="waterline"></div></div>
+
+<!-- ===================== 60 m · WHAT I MOVE ===================== -->
+<section data-depth="0">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>0&ndash;200 m</b> Epipelagic &middot; Sunlight <span class="bar"></span> What I move</p>
+      <h2 class="rv">Design that shows up in the numbers, not just the file.</h2>
+      <p class="lede dim rv" style="margin-top:1.3rem">I care about what happens after a design ships: adoption, change management, measurement. These are the outcomes I can show my working for.</p>
+    </div>
+    <div class="proof rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div>
+        <div class="v">&minus;19%</div>
+        <p>Patient-initiated churn at uMeds after shipping same-day delivery, 1,050 to 847 a month.</p>
+        <span class="sfx">Montu product analytics, Jun 2026</span>
+      </div>
+      <div>
+        <div class="v">+$13.7M</div>
+        <p>Annualised net impact protected against the counterfactual, in a declining market.</p>
+        <span class="sfx">SDD impact tracker, Jun 2026</span>
+      </div>
+      <div>
+        <div class="v">~6,000 hrs</div>
+        <p>A year handed back to the Montu patient support team by the Circuit admin redesign.</p>
+        <span class="sfx">Modelled estimate from usability findings</span>
+      </div>
+      <div>
+        <div class="v">2 awards</div>
+        <p>Westpac Youth banking won Canstar Outstanding Value and WeMoney Winner 2025.</p>
+        <span class="sfx">Canstar &middot; WeMoney</span>
+      </div>
+    </div>
+    <p class="src rv">Every number on this site links back to a named source inside its case study. Modelled figures are labelled as modelled.</p>
+  </div>
+</section>
+
+<!-- ===================== 200 m · SELECTED WORK ===================== -->
+<section id="work" data-depth="200">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>Dive sites</b> <span class="bar"></span> Selected work</p>
+      <h2 class="rv">Three dives. Each one goes to a different depth.</h2>
+      <p class="lede dim rv" style="margin-top:1.3rem">Every case study descends from the problem at the surface to the operation underneath it. The deeper the dive, the more of the system it touches.</p>
+    </div>
+
+    <div class="sites">
+      <a class="site rv" href="work/multi-shipping-options.html">
+        <div class="depth"><b>10,994</b><span>metres &middot; hadal</span></div>
+        <div>
+          <h3>Multi shipping options</h3>
+          <p class="out">How a same-day delivery option cut patient-initiated churn 19% and protected an estimated $13.7M a year, plus an honest read on the two launch targets we missed.</p>
+          <div class="tags"><span>Product design</span><span>Research</span><span>Health tech</span><span>Shipped</span></div>
+        </div>
+        <div class="go">Descend &rarr;</div>
+      </a>
+
+      <a class="site rv" href="work/admin-redesign.html">
+        <div class="depth"><b>6,000</b><span>metres &middot; abyssal</span></div>
+        <div>
+          <h3>Circuit admin redesign</h3>
+          <p class="out">A legacy admin portal that grew without evolving. A research-led redesign on a consistent design system, modelled to hand roughly 6,000 hours a year back to the support team.</p>
+          <div class="tags"><span>UX research</span><span>Design systems</span><span>Internal tool</span><span>Shipped</span></div>
+        </div>
+        <div class="go soon">Rebuilding &rarr;</div>
+      </a>
+
+      <a class="site rv" href="work/westpac-youth.html">
+        <div class="depth"><b>1,000</b><span>metres &middot; twilight</span></div>
+        <div>
+          <h3>Westpac Youth</h3>
+          <p class="out">Changing the way young Australians bank. A goal-based youth banking experience designed end to end with the Double Diamond, now award winning.</p>
+          <div class="tags"><span>UX research</span><span>UI design</span><span>Fintech</span><span>Award winning</span></div>
+        </div>
+        <div class="go soon">Rebuilding &rarr;</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 600 m · HOW I WORK ===================== -->
+<section id="about" data-depth="600">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>200&ndash;1,000 m</b> Mesopelagic &middot; Twilight <span class="bar"></span> How I work</p>
+      <h2 class="rv">I am the person who maps what is under the interface.</h2>
+      <p class="lede dim rv" style="margin-top:1.3rem">I am Jessica Chappell, a product designer and product manager at Montu, working on uMeds ordering and fulfilment. I pull from journey discovery, voice of customer and data before I make a call, and I think in systems and dependencies.</p>
+    </div>
+    <div class="grid g3 rv" style="margin-top:clamp(26px,4vw,40px)">
+      <div class="idea">
+        <div class="n">01</div>
+        <h4>Evidence before opinion</h4>
+        <p>Two datasets before a direction. Research discovery, VOC and analytics decide the brief, not the loudest person in the room.</p>
+      </div>
+      <div class="idea">
+        <div class="n">02</div>
+        <h4>Design the chain, not the screen</h4>
+        <p>A tap in checkout is a regulated operational sequence underneath. I map it with the teams who own each link, before the design is final.</p>
+      </div>
+      <div class="idea">
+        <div class="n">03</div>
+        <h4>Stay for the measurement</h4>
+        <p>Adoption, change management and post-implementation tracking are part of the design. I report the misses as clearly as the wins.</p>
+      </div>
+    </div>
+
+    <div class="col" style="margin-top:clamp(44px,6vw,72px)">
+      <h3 class="rv">Where I have been</h3>
+    </div>
+    <div class="lore rv">
+      <div><img src="assets/img/logos/logo-montu.png" alt="Montu"><b>Montu</b><span>Product design &middot; PM</span></div>
+      <div><img src="assets/img/logos/logo-miro.png" alt="Miro"><b>Miro</b><span>Product design</span></div>
+      <div><img src="assets/img/logos/logo-myob.png" alt="MYOB"><b>MYOB</b><span>Product design</span></div>
+      <div><img src="assets/img/logos/logo-westpac.png" alt="Westpac"><b>Westpac</b><span>UX research &middot; UI</span></div>
+      <div><img src="assets/img/logos/logo-idu-identification.png" alt="IDU Identification"><b>IDU</b><span>Design &middot; research</span></div>
+      <div><img src="assets/img/logos/logo-conversion-kings.png" alt="Conversion Kings"><b>Conversion Kings</b><span>Conversion design</span></div>
+    </div>
+    <p class="cap rv" style="margin-top:1rem">Full timeline and the pocket-sized version of me are coming back in the next pass.</p>
+  </div>
+</section>
+
+<!-- ===================== 900 m · PRAISE ===================== -->
+<section id="praise" data-depth="900">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>Deeper water</b> <span class="bar"></span> What people say</p>
+      <h2 class="rv">Fifteen people have put this in writing.</h2>
+    </div>
+    <div class="praise">
+      <blockquote class="rv">
+        &ldquo;Jessy is exceptionally skilled at handling the entire end-to-end product lifecycle. Whether she is leading user discovery, running UX testing and design sprints, or defining data metrics and evaluating post-launch performance, she brings rigorous structure and clarity to every stage.&rdquo;
+        <div class="who"><span class="ini">PN</span><div><b>Paul Nguyen</b><span>Senior Product Manager, Montu</span></div></div>
+      </blockquote>
+      <blockquote class="rv">
+        &ldquo;You would be hard pressed to find a more enthusiastic, friendly and talented designer. Jessy has strong skills in all the usual areas plus the rarer, more valuable ones: passion, humour, empathy and authenticity.&rdquo;
+        <div class="who"><span class="ini">MP</span><div><b>Matthew Peljic</b><span>Design Manager, Intuit QuickBooks</span></div></div>
+      </blockquote>
+      <blockquote class="rv">
+        &ldquo;Jessy helped our startup validate our MVP and redesign it for beta launch. She was attentive, active and enthusiastic, and I was especially impressed with her UX research and the way she ran the workshops.&rdquo;
+        <div class="who"><span class="ini">RP</span><div><b>Ryan Perera</b><span>Senior Product Manager, AI in Education</span></div></div>
+      </blockquote>
+    </div>
+    <div class="rv" style="margin-top:clamp(22px,3vw,32px)">
+      <a class="btn ghost" href="https://www.linkedin.com/in/jessyux/">Read all 15 on LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 1,200 m · CONTACT ===================== -->
+<section id="contact" data-depth="1200" style="padding-bottom:clamp(70px,10vw,120px)">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>Surface</b> <span class="bar"></span> Contact</p>
+      <h2 class="rv">Let's work together.</h2>
+      <p class="lede dim rv" style="margin-top:1.3rem">Open to Product Manager and Senior Product Design roles, and to collaborations. Brisbane based, working across Australian teams.</p>
+      <div class="reach rv">
+        <a class="btn" href="https://www.linkedin.com/in/jessyux/">LinkedIn &middot; jessyux</a>
+        <a class="btn ghost" href="assets/Jessy-Chappell-CV.pdf">Download resume</a>
+      </div>
+    </div>
+    <div class="foot">
+      <p class="cap">jessyux &middot; Jessica Chappell &middot; Brisbane, Australia</p>
+      <p class="cap">Designed and built by me. Case study figures sourced inside each study.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="assets/js/dive.js"></script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Westpac Youth | jessyux</title>
+<meta name="description" content="Westpac Youth case study. A goal-based youth banking experience for 12 to 18 year olds, designed end to end over a three-week sprint with the Double Diamond.">
+<link rel="icon" href="../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400..800&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>if(window.parent!==window)document.documentElement.classList.add('embed')</script>
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+</head>
+
+<body>
+<div id="sea"></div>
+<canvas id="life" aria-hidden="true"></canvas>
+
+<div id="topbar"><div id="topfill"></div></div>
+<div id="mread">0 m</div>
+<aside id="rail">
+  <a class="railhome" id="railHome" href="../../index.html" aria-label="Home">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg>
+    <span>Home</span>
+  </a>
+  <div aria-hidden="true">
+    <div class="read"><span id="depthNum">0</span></div>
+    <div class="unit">metres</div>
+    <div class="zone" id="zoneName">Overview</div>
+    <div id="gauge"><div id="gaugeFill"></div><div id="gaugeDot"></div></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ============ SURFACE ============ -->
+<section id="hero" class="casehero" data-depth="0" data-title="Overview">
+  <div class="wrap">
+    <p class="kicker">Case study <span>·</span> Banking <span>·</span> Youth <span>·</span> Westpac Youth</p>
+    <h1>A 200-year-old bank was losing the next generation. We built them a goal worth saving for.</h1>
+    <p class="lede dim">Westpac had won over millennials and barely registered with the generation behind them. In April 2021 I led the research and design for a youth banking experience, over a three-week sprint. We shipped a first slice built around Savings Goals, and the work later won two awards.</p>
+    <dl class="meta">
+      <div><dt>Why</dt><dd>Young people aged 12 to 18 had no reason to choose Westpac, and the bank wanted a 10% lift in new youth customers.</dd></div>
+      <div><dt>How</dt><dd>I ran the research with young people, facilitated a co-design workshop, then tested what we built with the team.</dd></div>
+      <div><dt>What</dt><dd>Savings Goals for your child: tasks that earn money, a progress tracker, a confetti finish and savings on autopilot.</dd></div>
+      <div><dt>Role</dt><dd>Team lead, UX research and design. I led the research, ran the workshop and built the wireframes with the team.</dd></div>
+      <div><dt>Team</dt><dd>A remote Westpac team of product managers, creative strategists and UX/UI designers.</dd></div>
+      <div><dt>Timeline</dt><dd>3 weeks, April 2021. Double Diamond.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ THE SHORT VERSION ============ -->
+<section data-depth="0" data-title="The short version">
+  <div class="wrap">
+    <p class="eyebrow rv"><b>0 m</b> The short version <span class="bar"></span></p>
+    <div class="short rv">
+      <div class="stxt">
+        <span class="chip"><i></i>Shipped</span>
+        <p class="kick">Case study · Banking · Youth · Westpac Youth</p>
+        <h2>The short version</h2>
+        <p class="lede">A 200-year-old bank was losing the next generation. After research with more than 60 young people, we co-designed, tested and shipped a goal-based first slice.</p>
+        <p class="dim">A parent assigns tasks that earn money toward their child's savings goal. A progress tracker shows how close they are, confetti marks the finish, and savings run on autopilot. The target was 10% more new youth customers and better money habits for life. We held the rest of the flows back for post-implementation research.</p>
+        <div class="awards">
+          <p class="awards-txt"><b>Canstar's Outstanding Value</b> for Junior and Youth Banking, 2024 to 2026<br><b>WeMoney Winner 2025</b> for Youth Account of the Year</p>
+          <div class="badges"><img src="../assets/img/case/westpac/award-wemoney.webp" alt="WeMoney Winner 2025 badge" width="188" height="188"><img src="../assets/img/case/westpac/award-canstar.webp" alt="Canstar Outstanding Value badge" width="186" height="240"></div>
+        </div>
+      </div>
+      <figure class="sshot"><img src="../assets/img/case/westpac/short-goal-complete.webp" alt="Goal reached screen with confetti and a prompt to set a new goal" width="680" height="849"></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE CHALLENGE ============ -->
+<section data-depth="20" data-title="The challenge">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>0–200 m</b> The challenge <span class="bar"></span></p>
+      <h2 class="rv">Westpac was the first bank in Australia. Young people still had no reason to choose it.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">Westpac opened more than 200 years ago as the Bank of New South Wales. Two centuries on, it had captured millennials well and barely registered with the generation behind them.</p>
+      <p class="dim rv">I worked with product managers, creative strategists and UX/UI designers to go after the youth segment, with a projected 10% uplift in new customers as the goal. Every element had to carry the brand promise: Westpac is remarkably helpful, in life's moments big and small.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DISCOVER ============ -->
+<section data-depth="240" data-title="Discover">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>200–1,000 m</b> Discover <span class="bar"></span></p>
+      <h2 class="rv">Before designing anything, I wanted to understand a generation the bank had never researched.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I led the research with a clear framework: a 5 C's analysis, a SWOT, a competitor review and 18 one-to-one interviews, with 60 young people aged 12 to 18 informing the work. A few findings shaped everything that followed. 59% had hit money worries, most parents banked with CBA or ANZ, and Gen Z favours bite-sized, expressive, social content.</p>
+    </div>
+
+    <h3 class="rv" style="margin-top:clamp(40px,5vw,64px)">What young people told us</h3>
+
+    <div class="chart rv" data-draw>
+      <h4>How do you receive this money?</h4>
+      <div class="sub">57 responses · free text, multiple answers possible</div>
+      <div class="bars">
+        <div class="row"><div class="lab"><span>Allowance</span><b>24 · 42.1%</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+        <div class="row"><div class="lab"><span>Job</span><b>17 · 29.8%</b></div><div class="track"><div class="fill" style="--w:70.8%"></div></div></div>
+        <div class="row"><div class="lab"><span>Gifts</span><b>10 · 17.5%</b></div><div class="track"><div class="fill" style="--w:41.7%"></div></div></div>
+        <div class="row"><div class="lab"><span>Parents</span><b>2 · 3.5%</b></div><div class="track"><div class="fill" style="--w:8.3%"></div></div></div>
+        <div class="row"><div class="lab"><span>I don't</span><b>2 · 3.5%</b></div><div class="track"><div class="fill" style="--w:8.3%"></div></div></div>
+        <div class="row"><div class="lab"><span>Other free-text answers</span><b>8 · 1.8% each</b></div><div class="track"><div class="fill" style="--w:33.3%"></div></div></div>
+      </div>
+      <p class="src">Bars scaled to the top answer. The long tail of single answers told the real story: parents when I ask, youth allowance (Centrelink), working for a parent, chores, and don't get any.</p>
+    </div>
+
+    <div class="grid g2" style="margin-top:clamp(8px,2vw,20px)">
+      <div class="chart rv" data-draw>
+        <h4>Do you have a bank account? Who opened it?</h4>
+        <div class="sub">57 responses</div>
+        <div class="bars">
+          <div class="row"><div class="lab"><span>A parent or guardian opened it</span><b>54.4%</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+          <div class="row"><div class="lab"><span>I opened it myself</span><b>26.3%</b></div><div class="track"><div class="fill" style="--w:48.3%"></div></div></div>
+          <div class="row"><div class="lab"><span>I don't have one</span><b>19.3%</b></div><div class="track"><div class="fill" style="--w:35.5%"></div></div></div>
+        </div>
+      </div>
+      <div class="chart rv" data-draw>
+        <h4>How much money do you receive each week?</h4>
+        <div class="sub">57 responses</div>
+        <div class="bars">
+          <div class="row"><div class="lab"><span>Less than $50</span><b>63.2%</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+          <div class="row"><div class="lab"><span>$51 to $100</span><b>22.8%</b></div><div class="track"><div class="fill" style="--w:36.1%"></div></div></div>
+          <div class="row"><div class="lab"><span>$200+</span><b>8.8%</b></div><div class="track"><div class="fill" style="--w:13.9%"></div></div></div>
+          <div class="row"><div class="lab"><span>$101 to $150</span><b>5.2%</b></div><div class="track"><div class="fill" style="--w:8.2%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart rv" data-draw>
+      <h4>Where does any money you have or earn usually go?</h4>
+      <div class="sub">31 responses</div>
+      <div class="bars">
+        <div class="row"><div class="lab"><span>Into my piggy bank at home</span><b>41.9%</b></div><div class="track"><div class="fill" style="--w:100%"></div></div></div>
+        <div class="row"><div class="lab"><span>Straight into my bank account</span><b>38.7%</b></div><div class="track"><div class="fill" style="--w:92.4%"></div></div></div>
+        <div class="row"><div class="lab"><span>Other: parents' account, invest, pocket, wallet, a mix, n/a</span><b>19.4%</b></div><div class="track"><div class="fill" style="--w:46.3%"></div></div></div>
+      </div>
+      <p class="src">Bars scaled to the top answer.</p>
+    </div>
+
+    <div class="col" style="margin-top:clamp(32px,5vw,56px)">
+      <p class="lede rv">Even among the kids who saved, nearly half still kept their cash in a piggy bank instead of a usable account. <em>That was the opening: make the bank the obvious, rewarding home for their money.</em></p>
+    </div>
+
+    <figure class="rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="scroller"><img src="../assets/img/case/westpac/affinity-map.webp" alt="Affinity map clustering research insights into themes" width="2192" height="720" loading="lazy" style="min-width:760px;background:#fff"></div>
+      <figcaption class="cap" style="margin-top:12px">Affinity mapping. I clustered hundreds of research insights and ideas into clear themes. Scroll sideways to read it.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ DEFINE ============ -->
+<section data-depth="1050" data-title="Define">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>1,000–4,000 m</b> Define <span class="bar"></span></p>
+      <h2 class="rv">Three people, one shared need: money that feels manageable.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">The research gave me three people to design for. Two of them were young and one was the parent trying to help.</p>
+    </div>
+
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea persona"><span class="pimg" style="aspect-ratio:421/600"><img class="f0" src="../assets/img/case/westpac/persona-sophie-idle.webp" alt="Sophie as a 3D vinyl toy figure" width="421" height="600"><img class="f1" src="../assets/img/case/westpac/persona-sophie-wave1.webp" alt="" aria-hidden="true" width="421" height="600" loading="lazy"><img class="f2" src="../assets/img/case/westpac/persona-sophie-wave2.webp" alt="" aria-hidden="true" width="421" height="600" loading="lazy"></span><h4>Sophie</h4><div class="n" style="margin-bottom:.7rem">17 · student, part-time at Woolworths</div><p>Juggling school and work and motivated to move out of home soon. She will need help managing a tighter budget if she cuts her hours.</p></div>
+      <div class="idea persona"><span class="pimg" style="aspect-ratio:432/600"><img class="f0" src="../assets/img/case/westpac/persona-liam-idle.webp" alt="Liam as a 3D vinyl toy figure" width="432" height="600"><img class="f1" src="../assets/img/case/westpac/persona-liam-wave1.webp" alt="" aria-hidden="true" width="432" height="600" loading="lazy"><img class="f2" src="../assets/img/case/westpac/persona-liam-wave2.webp" alt="" aria-hidden="true" width="432" height="600" loading="lazy"></span><h4>Liam</h4><div class="n" style="margin-bottom:.7rem">14 · student, no job yet, introverted</div><p>Overwhelmed balancing hobbies and homework. He wants a faster way to save for the latest gaming tech and keep up with friends.</p></div>
+      <div class="idea persona"><span class="pimg" style="aspect-ratio:363/600"><img class="f0" src="../assets/img/case/westpac/persona-emily-idle.webp" alt="Emily as a 3D vinyl toy figure" width="363" height="600"><img class="f1" src="../assets/img/case/westpac/persona-emily-wave1.webp" alt="" aria-hidden="true" width="363" height="600" loading="lazy"><img class="f2" src="../assets/img/case/westpac/persona-emily-wave2.webp" alt="" aria-hidden="true" width="363" height="600" loading="lazy"></span><h4>Emily</h4><div class="n" style="margin-bottom:.7rem">43 · parent of two, the household budgeter</div><p>Time-poor but family-focused. She wants a simple way to support her kids' financial goals, and she worries about their future.</p></div>
+    </div>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">Three questions to design against</h3>
+    <div class="grid g3 rv" style="margin-top:1.4rem">
+      <div class="idea"><div class="n">HMW 01</div><h4>Win the youth market</h4><p>How might we attract 10% more customers in the youth segment?</p></div>
+      <div class="idea"><div class="n">HMW 02</div><h4>Help Sophie cope</h4><p>How might we help her manage her money through high school and still enjoy life's moments?</p></div>
+      <div class="idea"><div class="n">HMW 03</div><h4>Help Liam and Emily</h4><p>How might we help them track money, work toward a goal and celebrate reaching it?</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEVELOP ============ -->
+<section data-depth="2600" data-title="Develop">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>2,600 m</b> Develop <span class="bar"></span></p>
+      <h2 class="rv">Then we got a lot of ideas on the table and narrowed them to a minimum viable product.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I facilitated a remote co-design workshop for Westpac on Miro. We ran Crazy 8's, then voted the features onto a high-value, low-effort quadrant. The features fell into six categories.</p>
+    </div>
+
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="risk"><div class="n">01</div><h4>Tasks</h4><p>Simple to-dos that build money habits.</p></div>
+      <div class="risk"><div class="n">02</div><h4>Mailbox and notifications</h4><p>Timely nudges, surfaced on the homepage.</p></div>
+      <div class="risk"><div class="n">03</div><h4>Customizability</h4><p>Self-expression with characters and emojis.</p></div>
+      <div class="risk"><div class="n">04</div><h4>Rewards hub</h4><p>Wins and incentives that keep momentum.</p></div>
+      <div class="risk"><div class="n">05</div><h4>Digiwallet</h4><p>Everyday payments, expenses and budgeting.</p></div>
+      <div class="risk"><div class="n">06</div><h4>Goals</h4><p>Visible targets to save toward.</p></div>
+    </div>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">Low-fidelity wireframes</h3>
+    <p class="dim rv" style="max-width:68ch">From the voted features and user flows, I built low-fidelity wireframes for the core screens. The team then expanded them into mid-fidelity together.</p>
+    <div class="grid g3 rv" style="margin-top:1.4rem;align-items:start">
+      <figure><img src="../assets/img/case/westpac/lofi-home.webp" alt="Low-fidelity home screen wireframe" width="600" height="1280" loading="lazy" style="max-width:240px;margin:0 auto"></figure>
+      <figure><img src="../assets/img/case/westpac/lofi-goal.webp" alt="Low-fidelity savings goal wireframe" width="600" height="1280" loading="lazy" style="max-width:240px;margin:0 auto"></figure>
+      <figure><img src="../assets/img/case/westpac/lofi-tasks.webp" alt="Low-fidelity tasks and earnings wireframe" width="600" height="1280" loading="lazy" style="max-width:240px;margin:0 auto"></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT WE SHIPPED ============ -->
+<section data-depth="4200" data-title="What we shipped">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>4,000–6,000 m</b> What we shipped <span class="bar"></span></p>
+      <h2 class="rv">A goal-based youth bank, shipped to production.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">The first slice was Savings Goals for your child. Pocket money became a goal that a parent and child share.</p>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <figure style="justify-self:center"><img class="shot" src="../assets/img/case/westpac/feature-savings-goal.webp" alt="Savings goal setup screen" width="620" height="774" loading="lazy"></figure>
+      <div>
+        <p class="eyebrow"><b>01</b> Shipped <span class="bar"></span></p>
+        <h3>Set up Savings Goals for your child</h3>
+        <p class="dim" style="margin-top:1rem">A parent creates a goal, sets the amount and date, then assigns tasks the child completes to earn money toward it.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <div>
+        <p class="eyebrow"><b>02</b> Shipped <span class="bar"></span></p>
+        <h3>A visual goal progress tracker</h3>
+        <p class="dim" style="margin-top:1rem">An outer ring shows how much is saved and an inner ring shows how much time has passed. A young saver can see at a glance whether they are on track.</p>
+      </div>
+      <figure style="justify-self:center"><img class="shot" src="../assets/img/case/westpac/feature-progress-tracker.webp" alt="Goal progress tracker with two rings" width="620" height="774" loading="lazy"></figure>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <figure style="justify-self:center"><img class="shot" src="../assets/img/case/westpac/feature-confetti.webp" alt="Goal reached screen with confetti" width="620" height="774" loading="lazy"></figure>
+      <div>
+        <p class="eyebrow"><b>03</b> Shipped <span class="bar"></span></p>
+        <h3>A confetti moment at the finish line</h3>
+        <p class="dim" style="margin-top:1rem">Reaching a goal sets off a burst of confetti and a warm prompt to set a new target. It is a small celebration that makes saving feel worth it.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 rv" style="align-items:center;gap:clamp(28px,5vw,60px);margin-top:clamp(36px,5vw,64px)">
+      <div>
+        <p class="eyebrow"><b>04</b> Shipped <span class="bar"></span></p>
+        <h3>Savings on autopilot</h3>
+        <p class="dim" style="margin-top:1rem">Recurring transfers move money to each goal every pay day, with tips on how much you can realistically afford to save.</p>
+      </div>
+      <figure style="justify-self:center"><img class="shot" src="../assets/img/case/westpac/feature-autopilot.webp" alt="Tasks and earnings screen with automatic transfers" width="620" height="774" loading="lazy"></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EARLY SIGNALS ============ -->
+<section data-depth="5400" data-title="Early signals">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>5,400 m</b> Early signals <span class="bar"></span></p>
+      <h2 class="rv">The early read on the first 90 days.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">I want to be upfront about these numbers. They are illustrative post-launch signals, representative of the early read. The formal post-implementation study was the agreed next step.</p>
+    </div>
+
+    <div class="kpis rv">
+      <div class="kpi"><div class="v">38%</div><p>Of new youth accounts created a Savings Goal within 90 days</p></div>
+      <div class="kpi"><div class="v">64%</div><p>Of parent-assigned tasks were completed, each moving money into a goal</p></div>
+      <div class="kpi"><div class="v">1.7x</div><p>Deposit frequency for accounts with a goal, against those without</p></div>
+      <div class="kpi"><div class="v">41%</div><p>Of goal-holders turned on savings autopilot</p></div>
+      <div class="kpi"><div class="v">2.3</div><p>Average active goals per engaged saver</p></div>
+      <div class="kpi"><div class="v">+12 pt</div><p>Lift in parents returning weekly when a child had a goal</p></div>
+    </div>
+    <p class="src rv">Illustrative post-launch signals, representative of the early read. Not a formal study.</p>
+
+    <div class="col" style="margin-top:clamp(44px,6vw,72px)">
+      <h3 class="rv">Years later, the work won awards.</h3>
+      <p class="dim rv">The youth savers goals initiative went on to win two awards.</p>
+    </div>
+    <div class="grid g2 rv" style="margin-top:1.4rem">
+      <div class="plate" style="display:flex;gap:20px;align-items:center">
+        <img src="../assets/img/case/westpac/award-canstar.webp" alt="Canstar Outstanding Value badge" width="186" height="240" style="width:72px;height:auto;flex:none">
+        <div><h4>Canstar's Outstanding Value</h4><p class="dim" style="margin:.3rem 0 0;font-size:.9rem">For Junior and Youth Banking, 2024 to 2026</p></div>
+      </div>
+      <div class="plate" style="display:flex;gap:20px;align-items:center">
+        <img src="../assets/img/case/westpac/award-wemoney.webp" alt="WeMoney Winner 2025 badge" width="188" height="188" style="width:72px;height:auto;flex:none">
+        <div><h4>WeMoney Winner 2025</h4><p class="dim" style="margin:.3rem 0 0;font-size:.9rem">For Youth Account of the Year</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT'S NEXT ============ -->
+<section data-depth="6600" data-title="What's next" style="padding-bottom:clamp(80px,12vw,140px)">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>6,000 m +</b> What's next <span class="bar"></span></p>
+      <h2 class="rv">We shipped the loop that mattered, then stopped to learn.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">A first slice only works if you are honest about what you left out. Some of it was held back on purpose. The rest waits on research.</p>
+    </div>
+    <div class="grid g2 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="target">
+        <h4>Held out of scope, on purpose</h4>
+        <ul><li>The full wallet, payments and cards.</li><li>Account opening and parental consent at scale.</li><li>A broader rewards marketplace.</li><li>Social and expressive features the co-design surfaced.</li></ul>
+      </div>
+      <div class="target win">
+        <h4>Pending post-implementation research</h4>
+        <ul><li>Run the formal study to confirm the signals.</li><li>Test friction in goal setup and the parent-task loop.</li><li>Measure whether the habit holds past the first goal.</li><li>Use the findings to refine, then expand the flows once the youth market is proven.</li></ul>
+      </div>
+    </div>
+    <a class="up rv" href="#hero" style="margin-top:clamp(32px,4vw,52px)">↑ Return to the surface</a>
+  </div>
+</section>
+
+<!-- ============ PREVIOUS / NEXT ============ -->
+<nav class="pn wrap" aria-label="More case studies">
+  <a class="pncard rv" href="multi-shipping-options.html" data-nav="multi-shipping-options">
+    <span class="dir">Previous</span>
+    <span class="t">Multi shipping options</span>
+    <span class="s">uMeds · Health tech</span>
+  </a>
+  <a class="pncard next rv" href="admin-redesign.html" data-nav="admin-redesign">
+    <span class="dir">Next</span>
+    <span class="t">Circuit admin redesign</span>
+    <span class="s">Montu · Internal operations portal</span>
+  </a>
+</nav>
+
+</main>
+
+<script src="../assets/js/dive.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "jessyux",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "www.jessyux.com", "zone_name": "jessyux.com", "custom_domain": true },
+    { "pattern": "jessyux.com", "zone_name": "jessyux.com", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./dist"
+  }
+}
