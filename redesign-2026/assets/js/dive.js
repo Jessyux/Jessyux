@@ -103,14 +103,29 @@
     document.querySelectorAll('.kpi .v:not([data-count])').forEach(function(el){ kio.observe(el); });
   }
 
-  /* personas wave on hover (CSS) and when tapped or clicked (this class, for touch screens) */
-  [].slice.call(document.querySelectorAll('.persona')).forEach(function(p){
+  /* personas wave on hover (CSS) and when tapped or clicked (this class, for touch screens),
+     and give two waves the first time each one scrolls into view, then rest */
+  var personas=[].slice.call(document.querySelectorAll('.persona'));
+  personas.forEach(function(p){
     var t;
     p.addEventListener('click',function(){
       p.classList.add('waving'); clearTimeout(t);
       t=setTimeout(function(){ p.classList.remove('waving'); },2200);
     });
+    var last=p.querySelector('.pimg .f2');
+    if(last) last.addEventListener('animationend',function(){ p.classList.remove('wave-intro'); });
   });
+  if(!reduce&&personas.length){
+    var pio=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(!e.isIntersecting) return;
+        pio.unobserve(e.target);
+        var i=personas.indexOf(e.target);
+        setTimeout(function(){ e.target.classList.add('wave-intro'); },350+i*220);
+      });
+    },{threshold:.7});
+    personas.forEach(function(p){ pio.observe(p); });
+  }
 
   /* --- 3. depth model ---------------------------------------------------- */
   /* Sections declare the depth at their TOP. Scroll position interpolates
