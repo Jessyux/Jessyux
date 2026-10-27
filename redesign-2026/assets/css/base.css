@@ -409,10 +409,11 @@ html::-webkit-scrollbar,html.embed::-webkit-scrollbar{width:0;height:0;display:n
   .persona:hover .pimg .f2{animation:waveB .7s steps(1,end) infinite}
 }
 /* the two-wave greeting when a card first scrolls into view */
-.persona.wave-intro .pimg .f0{opacity:0}
+.persona.wave-intro .pimg .f0{animation:waveRest 1.4s steps(1,end) forwards}
 .persona.wave-intro .pimg{animation:waveHop .7s ease-in-out 2}
 .persona.wave-intro .pimg .f1{animation:waveA .7s steps(1,end) 2}
 .persona.wave-intro .pimg .f2{animation:waveB .7s steps(1,end) 2}
+@keyframes waveRest{0%{opacity:0}100%{opacity:1}}
 @keyframes waveA{0%{opacity:1}50%{opacity:0}}
 @keyframes waveB{0%{opacity:0}50%{opacity:1}}
 @keyframes waveHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}

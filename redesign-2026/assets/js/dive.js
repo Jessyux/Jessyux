@@ -121,7 +121,13 @@
         if(!e.isIntersecting) return;
         pio.unobserve(e.target);
         var i=personas.indexOf(e.target);
-        setTimeout(function(){ e.target.classList.add('wave-intro'); },350+i*220);
+        var frames=[].slice.call(e.target.querySelectorAll('.pimg .f1,.pimg .f2'));
+        /* decode the waving frames first so they never pop in late, but never wait more than half a second for it */
+        var ready=Promise.race([
+          Promise.all(frames.map(function(im){ return im.decode?im.decode().catch(function(){}):Promise.resolve(); })),
+          new Promise(function(res){ setTimeout(res,500); })
+        ]);
+        setTimeout(function(){ ready.then(function(){ e.target.classList.add('wave-intro'); }); },350+i*220);
       });
     },{threshold:.7});
     personas.forEach(function(p){ pio.observe(p); });

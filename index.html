@@ -1293,10 +1293,13 @@ requestAnimationFrame(frame);
 <script>
 (()=>{const c=document.getElementById('fish');if(!c)return;const x=c.getContext('2d');
 const wrap=document.getElementById('poolwrap');let W=0,H=0,dpr=Math.min(devicePixelRatio||1,2);
-const mouse={x:-999,y:-999,on:false};
+const mouse={x:-999,y:-999,on:false,t:0,touch:false};
 function size(){const r=wrap.getBoundingClientRect();W=r.width;H=r.height;c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',size);new ResizeObserver(size).observe(wrap);size();
-addEventListener('pointermove',e=>{const r=wrap.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.on=true});
+/* fish are drawn to the pointer, but only while it is moving or has just been tapped: a touch screen never says the finger left,
+   so without an expiry they circled the last tap forever. After a pause they go back to roaming. */
+const seen=e=>{const r=wrap.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.on=true;mouse.t=performance.now();mouse.touch=e.pointerType!=='mouse'};
+addEventListener('pointermove',seen);addEventListener('pointerdown',seen);
 addEventListener('pointerleave',()=>mouse.on=false);
 /* vinyl toy fish from img/vinyl (cut from the fal kit). Sprites face left. */
 const SP=['clown','yellow','blue','puffer','mint'].map(n=>{const i=new Image();i.src='img/vinyl/fish-'+n+'.webp';return i});
@@ -1320,9 +1323,10 @@ let g=.78;if(wl){const u=.5+(px/W-.5)*W/dw;g=wl[Math.max(0,Math.min(wl.length-1,
 return h-dh+g*dh}
 let last=performance.now();
 function tick(t){const dt=Math.min((t-last)/16.7,3);last=t;x.clearRect(0,0,W,H);
+const lure=mouse.on&&performance.now()-mouse.t<(mouse.touch?1800:3000);
 for(const f of F){f.w+=dt*.02;f.p+=dt*.35*f.v;let want=f.a+Math.sin(f.w+f.s)*.04;
 let sp=f.v*1.1;
-if(mouse.on){const dx=mouse.x-f.x,dy=mouse.y-f.y,d=Math.hypot(dx,dy);
+if(lure){const dx=mouse.x-f.x,dy=mouse.y-f.y,d=Math.hypot(dx,dy);
  if(d<320&&d>40){want=Math.atan2(dy,dx);sp=f.v*(1.4+(1-d/320)*1.6)}
  else if(d<=40){want=Math.atan2(dy,dx)+1.9;sp=f.v*2.4}}
 let da=Math.atan2(Math.sin(want-f.a),Math.cos(want-f.a));f.a+=da*.05*dt;
