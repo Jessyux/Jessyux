@@ -107,10 +107,10 @@
      and give two waves the first time each one scrolls into view, then rest */
   var personas=[].slice.call(document.querySelectorAll('.persona'));
   personas.forEach(function(p){
-    var t;
+    /* a tap replays the same two-wave greeting, then rests until the next tap */
     p.addEventListener('click',function(){
-      p.classList.add('waving'); clearTimeout(t);
-      t=setTimeout(function(){ p.classList.remove('waving'); },2200);
+      if(reduce){ return; }
+      p.classList.remove('wave-intro'); void p.offsetWidth; p.classList.add('wave-intro');
     });
     var last=p.querySelector('.pimg .f2');
     if(last) last.addEventListener('animationend',function(){ p.classList.remove('wave-intro'); });
