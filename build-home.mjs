@@ -25,7 +25,8 @@ function copy(rel){
 }
 
 // the page itself, favicon and CV if they are in the project root
-['index.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
+// pm.html is the PM showcase: self-contained, unlinked, served at jessyux.com/pm
+['index.html', 'pm.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
 
 // images the page references by path
 const html = readFileSync(resolve(ROOT, 'index.html'), 'utf8');
