@@ -1,0 +1,50 @@
+/* ==========================================================================
+   pm.css — playground settings on the generic PM page
+   Its tokens differ from the case studies (--dim, --soft, --accent, --line),
+   and each slide is built to fit one screen, so anything that makes text
+   bigger lets slides grow rather than clip.
+   ========================================================================== */
+.sandt{display:none}
+
+/* one-screen slides only hold at default settings */
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-style="classic"]){scroll-snap-type:none}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"],[data-jux-font="lexend"],[data-jux-font="atkinson"]) .slide .foot{position:static;margin-top:28px;padding-inline:0}
+html:is([data-jux-size="2"],[data-jux-size="3"]) .slide{padding-right:max(16px,env(safe-area-inset-right,0px))}
+html:is([data-jux-size="2"],[data-jux-size="3"]) #rail{display:none}
+html[data-jux-size="3"] :is(.g3,.g4){grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr))}
+html[data-jux-size="3"] .g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))}
+
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"]) .eyebrow{flex-wrap:wrap}
+/* the churn glass pins its notes to the water line, which only fits at default text */
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"],[data-jux-font="lexend"],[data-jux-font="atkinson"]) .vs-notes{height:auto;display:grid;gap:14px;align-content:start}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"],[data-jux-font="lexend"],[data-jux-font="atkinson"]) :is(.vs-mark,.vs-fig){position:static;transform:none;top:auto!important;padding:0 0 0 14px}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-space="roomy"],[data-jux-font="lexend"],[data-jux-font="atkinson"]) .vs-now::before{display:none}
+html[data-jux-size="3"] .vs-fig .imp-big{font-size:2.6rem}
+
+/* the sand title is a picture, so it swaps for text when settings can't reach it */
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"],[data-jux-style="classic"]) .cover h1.sandh{margin:0;width:auto;line-height:1.05}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"],[data-jux-style="classic"]) .cover h1.sandh img{display:none}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"],[data-jux-style="classic"]) .sandt{display:block;font:800 clamp(2.4rem,6vw,4.4rem)/1.05 var(--display);color:var(--sand-ink)}
+
+/* high contrast in the water look */
+html[data-jux-contrast="high"][data-jux-style="personality"]{--dim:#E6F2F4;--soft:#E6F2F4;--faint:#D4E4E9;--accent:#7CFFDB;--beam:#A9E4FF;--signal:#FFD0A0;--line:rgba(255,255,255,.5);--sand-ink:#000;--sand-dim:#1A1A1A;--sand-accent:#044B3E;--accent-deep:#044B3E}
+html[data-jux-contrast="high"][data-jux-style="personality"] .cover{background:#FFF3DF}
+html[data-jux-contrast="high"][data-jux-style="personality"] .shore{display:none}
+
+/* Classic Portfolio */
+html[data-jux-style="classic"]{--rail:0px;--dim:var(--ink-dim);--soft:var(--ink-dim);--faint:var(--ink-faint);--accent:var(--glow);--on-accent:var(--bg);--shallow:var(--glow);--line:var(--hull-2);--line-accent:var(--glow);--sand-ink:var(--ink);--sand-dim:var(--ink-dim);--sand-accent:var(--glow);--accent-deep:var(--glow)}
+html[data-jux-style="classic"] .cover{background:none;color:var(--ink);padding-bottom:clamp(88px,12vh,128px)}
+html[data-jux-style="classic"] :is(.shore,.ripples,.toy,.cue,.surf){display:none}
+html[data-jux-style="classic"] .cover .hero{grid-template-columns:1fr}
+html[data-jux-style="classic"] .cover .foot{bottom:clamp(16px,3vh,28px)}
+html[data-jux-style="classic"] .plate{box-shadow:none;backdrop-filter:none}
+html[data-jux-style="classic"] .slide{min-height:auto;padding-block:clamp(48px,7vh,80px) clamp(88px,12vh,128px)}
+html[data-jux-style="classic"] .cover{min-height:70vh}
+html[data-jux-style="classic"] :is(.eyebrow,.label,.yr,.src,.n,.cn){font-family:var(--body);letter-spacing:.02em;text-transform:none}
+/* the Montu badge keeps its own dark plate in both themes */
+html[data-jux-style="classic"] .mtu{color:#D6E9EE}
+html[data-jux-style="classic"] .mtu b{color:#5EF2C8}
+html[data-jux-style="classic"] .mtu i{color:#B8CCD3}
+/* chart tracks are painted white-on-water, so they need the theme's own colour */
+html[data-jux-style="classic"][data-jux-theme="light"] :is(.bar .trk,.row .track,.art .im.data .trk){background:rgba(30,26,36,.1)}
+html[data-jux-style="classic"] :is(.art .im,.art .im.data){background:var(--bg)}
