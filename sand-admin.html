@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Remove a sand message</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@800&family=Hanken+Grotesk:wght@400;600&family=Shadows+Into+Light&display=swap">
+<link rel="stylesheet" href="/a11y/sand.css">
+<script src="/a11y/settings.js"></script>
+<script>juxA11y.apply(document.documentElement)</script>
+</head>
+<body>
+<main class="sand-page">
+  <h1 class="hand">Remove a sand message</h1>
+  <p class="sand-sub">Removing a message is permanent.</p>
+  <label class="sand-field" for="secret">Secret
+    <input type="password" id="secret" autocomplete="off">
+  </label>
+  <p class="sand-status" id="status" role="status"></p>
+  <ul class="wall" id="list" style="columns:1"></ul>
+</main>
+<script src="/a11y/sand.js"></script>
+<script>
+/* the secret stays in the input: never stored, never in a URL */
+(function(){
+  var $=function(id){return document.getElementById(id)},status=$('status'),list=$('list');
+  function button(text,cls,on){var b=document.createElement('button');b.type='button';b.className='sand-btn'+(cls?' '+cls:'');b.textContent=text;b.onclick=on;return b}
+  function row(m){
+    var li=document.createElement('li');li.className='msg adm-row';
+    var body=document.createElement('div');
+    if(m.kind==='draw'){
+      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 1000 500');
+      svg.setAttribute('role','img');svg.setAttribute('aria-label','Hand-drawn message');
+      var p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',juxSand.strokesToPath(m.strokes,.5));
+      svg.appendChild(p);body.appendChild(svg);
+    }else{var t=document.createElement('p');t.className='hand';t.textContent=m.text;body.appendChild(t)}
+    var by=document.createElement('p');by.className='by';by.textContent=(m.name?'From '+m.name+', ':'')+new Date(m.created).toLocaleString('en-AU');body.appendChild(by);
+    var acts=document.createElement('div');acts.className='adm-actions';
+    function idle(){acts.textContent='';acts.appendChild(button('Remove','',confirm))}
+    function confirm(){
+      acts.textContent='';
+      var yes=button('Remove for good','go',remove);
+      acts.append(yes,button('Keep it','',idle));yes.focus();
+    }
+    function remove(){
+      fetch('/api/sand/'+encodeURIComponent(m.id),{method:'DELETE',headers:{authorization:'Bearer '+$('secret').value}})
+        .then(function(r){
+          if(r.status===204){li.remove();status.textContent='Removed.';return}
+          status.textContent=r.status===401?'That secret isn\'t right.':'It couldn\'t be removed right now.';idle();
+        })
+        .catch(function(){status.textContent='It couldn\'t be removed right now.';idle()});
+    }
+    idle();li.append(body,acts);return li;
+  }
+  fetch('/api/sand').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(data){
+    data.messages.forEach(function(m){list.appendChild(row(m))});
+    if(!data.messages.length)status.textContent='No messages.';
+  }).catch(function(){status.textContent='Messages can\'t be loaded right now.'});
+})();
+</script>
+</body>
+</html>
