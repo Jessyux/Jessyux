@@ -43,6 +43,26 @@ then `npx wrangler deploy`. The first copies the home page and only the images i
 `dist/`; the second builds the case studies into `dist/redesign/`, where the home page's
 uMeds frame loads the study from. Netlify runs both through `netlify.toml`.
 
+### Accessibility playground (branch `accessibility-playground`, not merged)
+
+Spec: `../docs/superpowers/specs/2026-11-04-accessibility-playground-design.md`. Shared code is in
+`../a11y/`, plain scripts and CSS with no bundler.
+
+- `settings.js` keeps visitor settings in `localStorage` (`jux-a11y`) and writes `data-jux-*` on
+  `<html>`, so CSS does most of the work. Frames follow through the `storage` event.
+- `panel.js` is the playground, `contrast.js` the score, `welcome.js` the first-visit screen.
+- `classic.css`, `classic-home.js` and `classic-case.css` are Classic Portfolio. `pm.css` is the PM page's own rules.
+- `product-manager.html` is the generic PM case study, from `pm.html` with Karmo removed. Only the first-visit screen links to it. `/pm` and `/bps` must stay byte-identical and never get the playground.
+- `sand.html`, `sand-admin.html` and `sand.js` are the message wall. `worker/` is the only server code, and it only handles `/api/*`.
+
+**The rule for Personality Portfolio:** at default settings it must match live jessyux.com, apart from the ducky and the first-visit screen.
+
+**Running it:** the `portfolio` preview serves the source. `portfolio-worker` (`npx wrangler dev --port 8787`) serves `dist/` with the API, so build first and apply the schema once: `npx wrangler d1 execute SAND_DB --local --file worker/schema.sql`. Local secrets go in `.dev.vars`, which is not committed. On any localhost address the home page loads study frames from `redesign-2026/`, which `dist/` doesn't have, so check frames on `portfolio`, not `portfolio-worker`.
+
+**Tests:** `node --test tests/*.cjs tests/*.mjs`.
+
+**Deploying the sand wall needs Jessy's go-ahead:** create the D1 database (`npx wrangler d1 create jessyux-sand`), put its ID in `wrangler.jsonc`, apply `worker/schema.sql` with `--remote`, set `SAND_ADMIN_SECRET` and `SAND_SALT` with `npx wrangler secret put`, then deploy. Netlify has no Worker, so the sand screen says messages can't be saved there.
+
 ### Depth per destination
 
 | Tap | Depth | Water |

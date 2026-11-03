@@ -26,7 +26,8 @@
     if(external){a.target='_blank';a.rel='noopener'}
     return a;
   }
-  function close(){if(dlg&&dlg.open)dlg.close()}
+  /* marked here, not on the close event: Chromium holds that event for the next frame, so leaving for /product-manager or a hidden tab would lose it */
+  function close(){markSeen(storage());if(dlg&&dlg.open)dlg.close()}
 
   function fill(eyebrow,title,nodes){
     body.textContent='';
@@ -73,7 +74,7 @@
     dlg.setAttribute('aria-labelledby','jw-title');
     body=el('div','jw-body');
     dlg.appendChild(body);
-    dlg.addEventListener('close',function(){markSeen(storage())});
+    dlg.addEventListener('cancel',function(){markSeen(storage())});
     d.body.appendChild(dlg);
   }
   function open(){
