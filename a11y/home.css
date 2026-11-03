@@ -62,7 +62,7 @@ body[data-view=work] #cs .cw{opacity:1;transform:none;transition-delay:calc(.5s 
 body[data-view=work] #deep{opacity:.45}
 .cs-card{display:flex;flex-direction:column;width:clamp(272px,80vw,372px);max-height:none;padding:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
 .cs-card:hover{border-color:var(--accent2)}
-.cs-card img{display:block;width:100%;height:clamp(120px,19vh,190px);object-fit:cover;object-position:50% 20%;border:0;border-radius:0;flex:none;background:#5C8F8D}
+.cs-card img{display:block;width:100%;height:clamp(120px,19vh,190px);object-fit:cover;object-position:50% 20%;border:0;border-radius:0;flex:none;background:radial-gradient(58% 95% at 12% 8%,rgba(246,176,116,.8),transparent 72%),radial-gradient(58% 95% at 92% 12%,rgba(94,242,200,.65),transparent 72%),radial-gradient(60% 75% at 50% 105%,rgba(236,244,240,.35),transparent 72%),#5C8F8D}
 .cs-body{flex:1;display:flex;flex-direction:column;gap:8px;padding:16px 20px 18px}
 .cs-kicker{font-size:.84rem;font-weight:600;color:var(--accent2)}
 .cs-title{font-family:var(--hero);font-size:1.14rem;font-weight:700;line-height:1.25;color:#fff}
