@@ -13,6 +13,7 @@ html[data-jux-size="2"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl
 html[data-jux-size="3"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.5}
 html[data-jux-size="2"] .float .tag{font-size:14px}
 html[data-jux-size="3"] .float .tag{font-size:15px}
+html body.bar .float .tag{font-size:13px}
 /* About me is built to fit one screen: larger text may need to scroll instead of clip */
 html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about{overflow-y:auto}
 html:is([data-jux-size="2"],[data-jux-size="3"]) .about-hero{height:auto;min-height:100%;align-items:flex-start}

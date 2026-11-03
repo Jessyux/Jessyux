@@ -1,0 +1,16 @@
+/* ==========================================================================
+   classic-case.css — Classic Portfolio on the case studies and PM page
+   Same content in the same order. The depth map and water are replaced by one
+   plain background. dive.js paints #sea inline, hence the !important.
+   ========================================================================== */
+html[data-jux-style="classic"]{color-scheme:dark;--display:"Outfit",system-ui,sans-serif;--body:"Outfit",system-ui,sans-serif;--mono:"Outfit",system-ui,sans-serif;--r-plate:16px}
+html[data-jux-style="classic"][data-jux-theme="dark"]{--bg:#1E1A24;--ink:#F6EFE8;--ink-dim:#C9BFC4;--ink-faint:#B5AAB1;--glow:#F2C9A8;--signal:#FFB26B;--beam:#A9C8FF;--hull:rgba(246,239,232,.12);--hull-2:rgba(246,239,232,.24);--plate:#2A2531}
+html[data-jux-style="classic"][data-jux-theme="light"]{color-scheme:light;--bg:#FFFFFF;--ink:#1E1A24;--ink-dim:#4F4855;--ink-faint:#5E5664;--glow:#8A3F1E;--signal:#9A4A00;--beam:#1F5FB0;--hull:rgba(30,26,36,.12);--hull-2:rgba(30,26,36,.24);--plate:#F6EFE8}
+html[data-jux-style="classic"][data-jux-theme="dark"][data-jux-contrast="high"]{--bg:#000;--ink:#FFF;--ink-dim:#EDE7E2;--ink-faint:#EDE7E2;--glow:#FFD9B8;--plate:#14111A;--hull:#FFF;--hull-2:#FFF}
+html[data-jux-style="classic"][data-jux-theme="light"][data-jux-contrast="high"]{--bg:#FFF;--ink:#000;--ink-dim:#2A2531;--ink-faint:#2A2531;--glow:#6B2C10;--plate:#FFF;--hull:#000;--hull-2:#000}
+
+html[data-jux-style="classic"],html[data-jux-style="classic"] body{background:var(--bg)!important;color:var(--ink)}
+html[data-jux-style="classic"] #sea{background:var(--bg)!important;background-image:none!important}
+html[data-jux-style="classic"] :is(#life,#rail,#mread,#topbar,[data-float]::before){display:none!important}
+html[data-jux-style="classic"].embed body{padding-right:0!important}
+html[data-jux-style="classic"] .eyebrow{font-family:var(--body);letter-spacing:.02em}

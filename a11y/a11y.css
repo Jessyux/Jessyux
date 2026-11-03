@@ -22,6 +22,11 @@ html[data-jux-font="atkinson"] body,html[data-jux-font="atkinson"] body *{font-f
 /* motion */
 html[data-jux-motion="calm"] *,html[data-jux-motion="calm"] *::before,html[data-jux-motion="calm"] *::after{animation:none!important;transition-duration:.01s!important;transition-delay:0s!important;scroll-behavior:auto!important}
 
+/* high contrast on the case studies and PM page, in the water look */
+html[data-jux-contrast="high"][data-jux-style="personality"]{--ink:#FFFFFF;--ink-dim:#E6F2F4;--ink-faint:#D4E4E9;--glow:#7CFFDB;--plate:#000000;--hull:rgba(255,255,255,.5);--hull-2:#fff}
+html[data-jux-contrast="high"][data-jux-style="personality"] #sea{background:#00131D!important}
+html[data-jux-contrast="high"][data-jux-style="personality"] #life{display:none}
+
 /* through someone's eyes. Page only, never the panel. Frames skip it: the parent's filter already covers them */
 html[data-jux-lens="low"]:not(.embed) body>*:not(.jux-ui){filter:blur(2.2px) contrast(.82)}
 html[data-jux-lens="deut"]:not(.embed) body>*:not(.jux-ui){filter:url(#jux-deut)}
