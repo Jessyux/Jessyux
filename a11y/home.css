@@ -1,0 +1,34 @@
+/* ==========================================================================
+   home.css — playground settings on the beach home page
+   Home text is sized in px, so text size uses zoom on the text containers.
+   At default settings nothing here applies, except hiding the .sandt text
+   that stands in for the sand title images.
+   ========================================================================== */
+.sandt{display:none;font-family:"Gabarito",sans-serif;font-weight:800;letter-spacing:-.015em;line-height:1.05;color:var(--jux-ink,#042B38)}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"]) .sandh{display:none!important}
+html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"]) .sandt{display:block}
+
+/* text size */
+html[data-jux-size="2"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.25}
+html[data-jux-size="3"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.5}
+html[data-jux-size="2"] .float .tag{font-size:14px}
+html[data-jux-size="3"] .float .tag{font-size:15px}
+/* About me is built to fit one screen: larger text may need to scroll instead of clip */
+html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about{overflow-y:auto}
+html:is([data-jux-size="2"],[data-jux-size="3"]) .about-hero{height:auto;min-height:100%;align-items:flex-start}
+html:is([data-jux-size="2"],[data-jux-size="3"]) .about-hero .txt{padding-bottom:190px}
+
+/* motion */
+html[data-jux-motion="calm"] #dive{display:none}
+
+/* high contrast: solid colour behind text instead of photos */
+html[data-jux-contrast="high"]{--jux-ink:#000}
+html[data-jux-contrast="high"] #palmsbg,html[data-jux-contrast="high"] #shore{background:#FFF4DC!important;background-image:none!important}
+html[data-jux-contrast="high"] :is(#abpan,#beachdeco){display:none!important}
+html[data-jux-contrast="high"] :is(header.intro .lead,#v-about .lead,#v-about p.bio,.tl-sub,.timeline h3,.timeline p,.tl-role){color:#000!important;text-shadow:none!important}
+html[data-jux-contrast="high"] :is(header.intro .lead .w,#v-about .lead .w){color:#034A3B!important}
+html[data-jux-contrast="high"] :is(.iconlink,.status,.scroll-hint){background:#fff!important;color:#000!important;border:2px solid #000!important}
+html[data-jux-contrast="high"] .status .s-text{color:#000!important}
+html[data-jux-contrast="high"] #kw .card{background:#000!important;color:#fff!important;border:2px solid #fff!important}
+html[data-jux-contrast="high"] #kw .card :is(p,figcaption,b,span){color:#fff!important;background:transparent!important}
+html[data-jux-contrast="high"] .float .tag{background:#000!important;color:#fff!important;border:1px solid #fff}

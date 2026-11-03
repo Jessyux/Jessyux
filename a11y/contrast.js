@@ -5,9 +5,9 @@
    backgrounds, and the panel says so: it is not an audit.
    ========================================================================== */
 (function(g){
-  var CASE={bg:'#0a4a66',ink:'#EAF7F8',soft:'#9DB9C4',accent:'#5EF2C8'};
+  var CASE={bg:'#126A84',ink:'#EAF7F8',soft:'#9DB9C4',accent:'#5EF2C8'};
   var WATER={bg:'#06323F',ink:'#EAF7F8',soft:'#9DB9C4',accent:'#5EF2C8'};
-  var SAND={bg:'#F3E3C6',ink:'#1B2A2F',soft:'#3D4D50',accent:'#078A72'};
+  var SAND={bg:'#F3E3C6',ink:'#12404D',soft:'#2E5560',accent:'#078A72'};
   var SAND_HIGH={bg:'#FFF4DC',ink:'#000000',soft:'#1B2A2F',accent:'#034A3B'};
   var DEEP_HIGH={bg:'#00131D',ink:'#FFFFFF',soft:'#E6F2F4',accent:'#7CFFDB'};
   var SURFACES={

@@ -12,6 +12,9 @@
 <script>if(window.parent!==window)document.documentElement.classList.add('embed')</script>
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="/a11y/a11y.css">
+<script src="/a11y/settings.js"></script>
+<script>juxA11y.apply(document.documentElement)</script>
 </head>
 
 <body>
@@ -328,5 +331,8 @@
 </main>
 
 <script src="../assets/js/dive.js"></script>
+<script src="/a11y/contrast.js"></script>
+<script src="/a11y/panel.js"></script>
+<script>juxPanel.mount({view:"case",showFloatingButton:true,reloadOnMotion:true})</script>
 </body>
 </html>

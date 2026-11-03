@@ -15,7 +15,7 @@
 (function(){
   var root=document.documentElement;
   root.classList.add('js');
-  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches||(window.juxA11y&&juxA11y.isCalm());
   /* Deepest point this page descends to. Challenger Deep by default; a page
      that stays in the sunlit zones sets <body data-max-depth="1200">.        */
   var MAX=parseFloat(document.body.dataset.maxDepth)||10994;

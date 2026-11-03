@@ -44,13 +44,13 @@ function build({ src, out }){
   let html = readFileSync(srcPath, 'utf8');
 
   // 1. inline local stylesheets
-  html = html.replace(/<link[^>]+rel="stylesheet"[^>]+href="((?!https?:)[^"]+)"[^>]*>/g, (m, href) => {
+  html = html.replace(/<link[^>]+rel="stylesheet"[^>]+href="((?!https?:|\/)[^"]+)"[^>]*>/g, (m, href) => {
     const css = readFileSync(resolve(base, href), 'utf8');
     return `<style>\n${css}\n</style>`;
   });
 
   // 2. inline local scripts
-  html = html.replace(/<script[^>]+src="((?!https?:)[^"]+)"[^>]*><\/script>/g, (m, s) => {
+  html = html.replace(/<script[^>]+src="((?!https?:|\/)[^"]+)"[^>]*><\/script>/g, (m, s) => {
     const js = readFileSync(resolve(base, s), 'utf8');
     return `<script>\n${js}\n</script>`;
   });

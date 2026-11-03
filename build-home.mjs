@@ -27,7 +27,10 @@ function copy(rel){
 // the page itself, favicon and CV if they are in the project root
 // pm.html is the PM showcase: self-contained, unlinked, served at jessyux.com/pm
 // bps.html is the same showcase framed for Best Practice Software, served at jessyux.com/bps
-['index.html', 'pm.html', 'bps.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
+['index.html', 'pm.html', 'bps.html', 'product-manager.html', 'sand.html', 'sand-admin.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
+
+// the playground's shared scripts and styles
+if (existsSync(resolve(ROOT, 'a11y'))) readdirSync(resolve(ROOT, 'a11y')).forEach(f => copy('a11y/' + f));
 
 // images the page references by path
 const html = readFileSync(resolve(ROOT, 'index.html'), 'utf8');

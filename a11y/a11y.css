@@ -1,0 +1,75 @@
+/* ==========================================================================
+   a11y.css — what each playground setting does, plus the panel itself
+   Everything is keyed off data-jux-* on <html>, written by settings.js.
+   At default settings none of these rules change the page.
+   ========================================================================== */
+
+/* text size. Home page text is sized in px, so it also gets zoom (see the home block below) */
+html[data-jux-size="2"]{font-size:125%}
+html[data-jux-size="3"]{font-size:150%}
+html[data-jux-size="2"] body{font-size:calc(17px*1.25)}
+html[data-jux-size="3"] body{font-size:calc(17px*1.5)}
+
+/* spacing */
+html[data-jux-space="roomy"] body{letter-spacing:.03em;word-spacing:.1em}
+html[data-jux-space="roomy"] :is(p,li,dd,blockquote,figcaption,td,th){line-height:1.95!important;letter-spacing:.03em;word-spacing:.1em}
+html[data-jux-space="roomy"] :is(p,li)+:is(p,li){margin-top:.9em}
+
+/* typeface */
+html[data-jux-font="lexend"] body,html[data-jux-font="lexend"] body *{font-family:"Lexend",system-ui,sans-serif!important}
+html[data-jux-font="atkinson"] body,html[data-jux-font="atkinson"] body *{font-family:"Atkinson Hyperlegible",system-ui,sans-serif!important}
+
+/* motion */
+html[data-jux-motion="calm"] *,html[data-jux-motion="calm"] *::before,html[data-jux-motion="calm"] *::after{animation:none!important;transition-duration:.01s!important;transition-delay:0s!important;scroll-behavior:auto!important}
+
+/* through someone's eyes. Page only, never the panel. Frames skip it: the parent's filter already covers them */
+html[data-jux-lens="low"]:not(.embed) body>*:not(.jux-ui){filter:blur(2.2px) contrast(.82)}
+html[data-jux-lens="deut"]:not(.embed) body>*:not(.jux-ui){filter:url(#jux-deut)}
+html[data-jux-lens="prot"]:not(.embed) body>*:not(.jux-ui){filter:url(#jux-prot)}
+html[data-jux-lens="trit"]:not(.embed) body>*:not(.jux-ui){filter:url(#jux-trit)}
+html[data-jux-lens="kbd"]:not(.embed) body>*:not(.jux-ui),html[data-jux-lens="kbd"]:not(.embed) body>*:not(.jux-ui) *{cursor:none!important;pointer-events:none!important}
+html[data-jux-lens="kbd"] :focus-visible{outline:4px solid #0B6BCB!important;outline-offset:3px!important;box-shadow:0 0 0 7px #fff!important}
+
+/* panel colours --------------------------------------------------------- */
+html{--jp-bg:#FFF8EC;--jp-ink:#1B2A2F;--jp-soft:#44524F;--jp-line:#D8C6A3;--jp-on:#075E4E;--jp-onink:#fff;--jp-focus:#075E4E}
+html[data-jux-style="classic"][data-jux-theme="dark"]{--jp-bg:#262130;--jp-ink:#F6EFE8;--jp-soft:#CFC6CA;--jp-line:#4A4356;--jp-on:#F6EFE8;--jp-onink:#1E1A24;--jp-focus:#F2C9A8}
+html[data-jux-style="classic"][data-jux-theme="light"]{--jp-bg:#FFFFFF;--jp-ink:#1E1A24;--jp-soft:#4F4855;--jp-line:#CFC8D2;--jp-on:#1E1A24;--jp-onink:#fff;--jp-focus:#8A3F1E}
+
+.jux-panel{position:fixed;z-index:2147483000;top:10px;right:10px;bottom:10px;width:min(calc(100vw - 20px),25rem);display:none;flex-direction:column;background:var(--jp-bg);color:var(--jp-ink);border:1px solid var(--jp-line);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.35);font:400 .95rem/1.45 "Hanken Grotesk",system-ui,sans-serif;text-align:left;letter-spacing:normal}
+html[data-jux-style="classic"] .jux-panel{font-family:"Outfit",system-ui,sans-serif}
+.jux-panel.open{display:flex}
+.jux-panel *{box-sizing:border-box}
+.jux-panel :focus-visible{outline:3px solid var(--jp-focus);outline-offset:2px}
+.jp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--jp-line)}
+.jp-head h2{margin:0;font:800 1.15rem/1.2 "Gabarito",system-ui,sans-serif;letter-spacing:-.01em;color:inherit}
+html[data-jux-style="classic"] .jp-head h2{font-family:"Outfit",system-ui,sans-serif;font-weight:700}
+.jp-body{flex:1;overflow:auto;padding:14px 16px}
+.jp-foot{display:flex;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--jp-line)}
+.jp-btn{font:inherit;font-weight:600;font-size:.9rem;line-height:1.25;padding:8px 15px;border-radius:999px;background:transparent;color:var(--jp-ink);border:1.5px solid var(--jp-line);cursor:pointer}
+.jp-btn.go,.jp-opts button[aria-pressed="true"]{background:var(--jp-on);color:var(--jp-onink);border-color:var(--jp-on)}
+.jp-score{display:flex;gap:12px;align-items:center;border:1px solid var(--jp-line);border-radius:14px;padding:11px;margin-top:14px}
+.jp-badge{flex:none;min-width:3.4rem;padding:10px 5px;border-radius:10px;text-align:center;font-weight:800;font-size:1rem;line-height:1;background:#CDEBDD;color:#07382B}
+.jp-badge.warn{background:#FFE0B5;color:#5A3200}
+.jp-score b{display:block}
+.jp-score small{display:block;color:var(--jp-soft);font-size:.82rem;line-height:1.35}
+.jp-checks{margin:8px 0 0;font-size:.86rem}
+.jp-checks summary{cursor:pointer;font-weight:600}
+.jp-checks .row{display:flex;justify-content:space-between;gap:8px;margin-top:3px}
+.jp-intro{margin:14px 0 0;color:var(--jp-soft)}
+.jp-ctl{margin-top:16px}
+.jp-ctl[hidden]{display:none}
+.jp-ctl h3{margin:0 0 6px;font:inherit;font-weight:700;font-size:.98rem;color:inherit}
+.jp-opts{display:flex;flex-wrap:wrap;gap:6px}
+.jp-opts button{font:inherit;font-weight:500;font-size:.88rem;line-height:1.25;padding:7px 12px;border-radius:10px;background:transparent;color:var(--jp-ink);border:1.5px solid var(--jp-line);cursor:pointer;min-height:36px}
+.jp-ctl.big .jp-opts button{flex:1 1 9rem;text-align:left;padding:10px 13px;font-weight:600}
+.jp-why{margin:6px 0 0;font-size:.82rem;color:var(--jp-soft)}
+.jp-actions{display:grid;gap:6px;margin-top:18px;padding-top:14px;border-top:1px solid var(--jp-line)}
+.jp-actions:empty{display:none}
+.jp-actions .jp-btn{text-align:left}
+
+.jux-open{position:fixed;z-index:2147482000;right:14px;bottom:14px;font:600 .95rem/1.2 "Hanken Grotesk",system-ui,sans-serif;padding:10px 16px;border-radius:999px;background:var(--jp-bg);color:var(--jp-ink);border:1.5px solid var(--jp-line);box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer}
+.jux-open:focus-visible{outline:3px solid var(--jp-focus);outline-offset:2px}
+.jux-kbdtip{display:none;position:fixed;z-index:2147482500;left:50%;transform:translateX(-50%);bottom:16px;background:#000;color:#fff;padding:9px 16px;border-radius:999px;font:600 .9rem/1.3 system-ui,sans-serif;max-width:calc(100vw - 32px);text-align:center}
+html[data-jux-lens="kbd"]:not(.embed) .jux-kbdtip{display:block}
+
+@media(max-width:760px){.jux-panel{top:auto;left:10px;right:10px;width:auto;max-height:82vh;bottom:10px}}
