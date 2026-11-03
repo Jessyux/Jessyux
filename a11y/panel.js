@@ -66,9 +66,9 @@
         var score=el('div','jp-score');refs.badge=el('div','jp-badge');refs.scoreTitle=el('b');refs.scoreText=el('small');
         var t=el('div');t.append(refs.scoreTitle,refs.scoreText);score.append(refs.badge,t);
         var det=el('details','jp-checks'),sum=el('summary',null,'See the checks');refs.checks=el('div');
-        det.append(sum,refs.checks,el('p','jp-why','Measured against each colour\'s solid background. It isn\'t a full audit: that takes people and assistive tech too.'));
+        det.append(sum,refs.checks);
         var intro=el('p','jp-intro','Accessibility is part of how I design, not a last step. Change anything here and the whole site responds, and I\'ve noted who each setting helps.');
-        body.append(score,det,intro);
+        body.append(score,el('p','jp-why',C.CAVEAT),det,intro);
       }
     });
     actions=el('div','jp-actions');body.appendChild(actions);
@@ -104,7 +104,7 @@
     var key=C.surfaceFor(s,theme,viewFn()),res=C.score(key),bad=res.level==='Below AA';
     refs.badge.textContent=bad?'Low':res.level;
     refs.badge.classList.toggle('warn',bad);
-    refs.scoreTitle.textContent=bad?'Below WCAG 2.2 AA':'WCAG 2.2 '+res.level;
+    refs.scoreTitle.textContent=C.headline(res);
     refs.scoreText.textContent='Lowest result: '+res.lowest.ratio.toFixed(1)+':1 ('+res.lowest.label.toLowerCase()+'). AA needs 4.5:1, AAA needs 7:1.';
     refs.checks.textContent='';
     res.rows.forEach(function(r){
@@ -130,11 +130,18 @@
 
   /* dive.js and the page's particles read motion once at load, so a change reloads the study in place */
   function reloadKeepingScroll(){
-    var key='jux-scroll:'+location.pathname;
+    /* clean URLs drop .html, and the home page knows these pages by their .html path */
+    var path=location.pathname.replace(/\.html$/,''),key='jux-scroll:'+path,lastKey='jux-lasty:'+path;
     try{
       var saved=sessionStorage.getItem(key);
+      sessionStorage.setItem(lastKey,saved||'0');
       if(saved!=null){sessionStorage.removeItem(key);scrollTo({top:+saved,behavior:'instant'})}
     }catch(e){}
+    /* a frame hidden by a style switch forgets its scroll, so the last real position is kept for classic-home.js */
+    addEventListener('scroll',function(){
+      if(!innerWidth)return;
+      try{sessionStorage.setItem(lastKey,String(scrollY))}catch(e){}
+    },{passive:true});
     var was=A.isCalm();
     A.subscribe(function(){
       var now=A.isCalm();
@@ -149,7 +156,11 @@
       o=o||{};
       injectFilters();
       if(o.reloadOnMotion)reloadKeepingScroll();
-      if(d.documentElement.classList.contains('embed'))return;
+      if(d.documentElement.classList.contains('embed')){
+        /* with focus inside a study, Esc still has to give the mouse back */
+        d.addEventListener('keydown',function(e){if(e.key==='Escape'&&A.load().lens==='kbd')A.save({lens:'off'})});
+        return;
+      }
       if(typeof o.view==='function')viewFn=o.view;else if(o.view)viewFn=function(){return o.view};
       build();
       A.subscribe(refresh);

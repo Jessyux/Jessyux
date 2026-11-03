@@ -13,6 +13,18 @@ html[data-jux-style="classic"][data-jux-theme="dark"][data-jux-contrast="high"]{
 body{margin:0;min-height:100vh;color:var(--s-ink);background:var(--s-bg);font:400 1.0625rem/1.55 "Hanken Grotesk",system-ui,sans-serif}
 /* just sand: a soft tone with fine grain, no water or palm shadows */
 html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .14 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E"),linear-gradient(#f0d8b8,#fae1c1 45%,#f3d9b4);background-attachment:fixed}
+/* palm tree shadows reaching in from off both edges, sized to the screen. Decoration only, so high contrast and Classic drop them */
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::before,
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::after{content:"";position:fixed;z-index:-1;top:-4vh;width:clamp(190px,36vw,760px);height:108vh;background:url(/a11y/palm-shadow.svg) left top/100% auto no-repeat;opacity:.34;pointer-events:none}
+html[data-jux-style="personality"] body::before{left:calc(clamp(190px,36vw,760px)*-.1)}
+html[data-jux-style="personality"] body::after{right:calc(clamp(190px,36vw,760px)*-.1);top:12vh;transform:scaleX(-1)}
+/* on a phone the text fills the width, so the shadows stay further off the edge and lighter */
+@media(max-width:760px){
+  html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::before,
+  html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::after{opacity:.24}
+  html[data-jux-style="personality"] body::before{left:calc(clamp(190px,36vw,760px)*-.42)}
+  html[data-jux-style="personality"] body::after{right:calc(clamp(190px,36vw,760px)*-.42)}
+}
 html[data-jux-style="classic"] body{font-family:"Outfit",system-ui,sans-serif}
 /* sizes grow with the screen, and the rem in each keeps the Text size setting working */
 .sand-page{width:min(100%,calc(30rem + 42vw));margin:0 auto;padding:clamp(16px,3vw,44px) clamp(16px,4vw,64px) 88px}

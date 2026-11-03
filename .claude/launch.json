@@ -10,7 +10,7 @@
     {
       "name": "portfolio-worker",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "wrangler", "dev", "--port", "8787"],
+      "runtimeArgs": ["--yes", "wrangler", "dev", "--env", "local", "--port", "8787"],
       "port": 8787
     }
   ]

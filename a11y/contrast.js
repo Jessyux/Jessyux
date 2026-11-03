@@ -58,7 +58,12 @@
       :'personality.'+view+'.'+settings.contrast;
   }
 
-  var api={ratio:ratio,level:level,score:score,surfaceFor:surfaceFor,SURFACES:SURFACES};
+  var CAVEAT='This only checks colour contrast against solid backgrounds, and photo backgrounds aren\'t fully measured. It isn\'t a full audit: that takes people and assistive tech too.';
+  function headline(res){
+    return res.level==='Below AA'?'Colour contrast: below WCAG 2.2 AA':'Colour contrast: WCAG 2.2 '+res.level;
+  }
+
+  var api={ratio:ratio,level:level,score:score,surfaceFor:surfaceFor,headline:headline,CAVEAT:CAVEAT,SURFACES:SURFACES};
   g.juxContrast=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

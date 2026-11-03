@@ -28,7 +28,7 @@ html[data-jux-style="classic"] #classic{display:flex;flex-direction:column;min-h
 .cl-main h1,.cl-main h2{font-family:inherit;font-weight:700;letter-spacing:-.02em;line-height:1.08;margin:0;color:inherit}
 .cl-main h1{font-size:clamp(2.2rem,5vw,3.6rem)}
 .cl-main h2{font-size:clamp(1.6rem,3vw,2.2rem);margin:0 0 16px}
-.cl-main h3{font:inherit;font-weight:700;font-size:1.15rem;line-height:1.25;margin:0}
+.cl-main h3{font:inherit;font-weight:700;font-size:1.15rem;line-height:1.25;margin:0;color:inherit}
 .cl-main p{margin:0}
 .cl-hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(24px,4vw,48px);align-items:center}
 .cl-lead{font-size:1.35rem;line-height:1.35;font-weight:500;margin:16px 0!important}

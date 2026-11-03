@@ -14,3 +14,4 @@ html[data-jux-style="classic"] #sea{background:var(--bg)!important;background-im
 html[data-jux-style="classic"] :is(#life,#rail,#mread,#topbar,[data-float]::before){display:none!important}
 html[data-jux-style="classic"].embed body{padding-right:0!important}
 html[data-jux-style="classic"] .eyebrow{font-family:var(--body);letter-spacing:.02em}
+html[data-jux-style="classic"] .eyebrow>b{display:none}

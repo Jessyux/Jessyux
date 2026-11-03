@@ -919,6 +919,11 @@ addEventListener('keydown',e=>{if(e.key==='Escape')closeTl();});
     if(view!=='about')return;
     if(innerWidth<=760)return;
     if(Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;
+    /* larger text can make the hero taller than the screen: reach the bottom of it before moving sideways */
+    if(juxA11y.load().size!=='1'&&!e.target.closest('#tlWrap')){
+      const down=e.deltaY>0,room=down?av.scrollTop+av.clientHeight<av.scrollHeight-1:av.scrollTop>0;
+      if(room){e.preventDefault();av.scrollTop+=e.deltaY;return}
+    }
     const arrived=tlArrived();
     if(arrived&&e.target.closest('#tlWrap')){
       const w=$('tlWrap');
@@ -1385,7 +1390,7 @@ av.addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);
 </script>
 <script src="/a11y/contrast.js"></script>
 <script src="/a11y/panel.js"></script>
-<script>juxPanel.mount({view:()=>{const v=juxHome.view();return v==="kind"?"recs":v==="about"?"about":v==="intro"?"intro":"case"}})</script>
+<script>juxPanel.mount({showFloatingButton:true,view:()=>{const v=juxHome.view();return v==="kind"?"recs":v==="about"?"about":v==="intro"?"intro":"case"}})</script>
 <script src="/a11y/classic-home.js"></script>
 <script src="/a11y/welcome.js"></script>
 </body>

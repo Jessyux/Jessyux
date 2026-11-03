@@ -35,6 +35,18 @@ test('innocent words containing a blocked word pass', () => {
   }
 });
 
+test('punctuation after a blocked word does not get it through', () => {
+  for (const bad of ['you ass!', 'nazi!', 'rape!', 'cock!', 'sh!t']) {
+    assert.equal(validatePost(text(bad)).status, 422, bad);
+  }
+});
+
+test('ordinary words that start like a blocked word pass', () => {
+  for (const ok of ['Fukushima', 'what a niggle', 'fire retardant', 'spic and span', 'a pussycat']) {
+    assert.equal(validatePost(text(ok)).ok, true, ok);
+  }
+});
+
 test('empty text is refused', () => {
   assert.equal(validatePost(text('   ')).status, 400);
   assert.equal(validatePost({ kind: 'text' }).status, 400);

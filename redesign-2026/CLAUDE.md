@@ -57,11 +57,11 @@ Spec: `../docs/superpowers/specs/2026-11-04-accessibility-playground-design.md`.
 
 **The rule for Personality Portfolio:** at default settings it must match live jessyux.com, apart from the ducky and the first-visit screen.
 
-**Running it:** the `portfolio` preview serves the source. `portfolio-worker` (`npx wrangler dev --port 8787`) serves `dist/` with the API, so build first and apply the schema once: `npx wrangler d1 execute SAND_DB --local --file worker/schema.sql`. Local secrets go in `.dev.vars`, which is not committed. On any localhost address the home page loads study frames from `redesign-2026/`, which `dist/` doesn't have, so check frames on `portfolio`, not `portfolio-worker`.
+**Running it:** the `portfolio` preview serves the source. `portfolio-worker` (`npx wrangler dev --env local --port 8787`) serves `dist/` with the API, so build first and apply the schema once: `npx wrangler d1 execute SAND_DB --env local --local --file worker/schema.sql`. Local secrets go in `.dev.vars`, which is not committed. On any localhost address the home page loads study frames from `redesign-2026/`, which `dist/` doesn't have, so check frames on `portfolio`, not `portfolio-worker`.
 
 **Tests:** `node --test tests/*.cjs tests/*.mjs`.
 
-**Deploying the sand wall needs Jessy's go-ahead:** create the D1 database (`npx wrangler d1 create jessyux-sand`), put its ID in `wrangler.jsonc`, apply `worker/schema.sql` with `--remote`, set `SAND_ADMIN_SECRET` and `SAND_SALT` with `npx wrangler secret put`, then deploy. Netlify has no Worker, so the sand screen says messages can't be saved there.
+**Deploying the sand wall needs Jessy's go-ahead:** create the D1 database (`npx wrangler d1 create jessyux-sand`), add a top-level `d1_databases` block with its ID to `wrangler.jsonc` (the existing one is under `env.local`), apply `worker/schema.sql` with `--remote`, set `SAND_ADMIN_SECRET` and `SAND_SALT` with `npx wrangler secret put`, then deploy. Netlify has no Worker, so the sand screen says messages can't be saved there.
 
 ### Depth per destination
 

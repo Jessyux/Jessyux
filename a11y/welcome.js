@@ -50,6 +50,7 @@
     return fill('Quick question','What brings you here?',[opts,foot]);
   }
   function message(title,copy,buttons){
+    markSeen(storage()); /* they've answered, even if they leave by a link */
     var row=el('div','jw-row');buttons.forEach(function(b){row.appendChild(b)});
     var foot=el('div','jw-foot');foot.appendChild(btn('Back',function(){question().focus()},'jw-link'));
     fill(null,title,[el('p','jw-copy',copy),row,foot]).focus();

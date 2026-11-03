@@ -1,4 +1,14 @@
 const test = require('node:test');
+test('the score names colour contrast, so it never reads as full compliance', () => {
+  const { score, headline, CAVEAT } = require('../a11y/contrast.js');
+  const assert = require('node:assert/strict');
+  assert.equal(headline(score('classic.dark.std')), 'Colour contrast: WCAG 2.2 AAA');
+  assert.equal(headline({ level: 'Below AA' }), 'Colour contrast: below WCAG 2.2 AA');
+  assert.match(CAVEAT, /only/i);
+  assert.match(CAVEAT, /colour contrast/i);
+  assert.match(CAVEAT, /photo/i);
+});
+
 const assert = require('node:assert');
 const { ratio, level, score, surfaceFor, SURFACES } = require('../a11y/contrast.js');
 

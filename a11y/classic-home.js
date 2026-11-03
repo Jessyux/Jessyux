@@ -96,14 +96,28 @@
     document.body.appendChild(root);
     theme();
   }
+  /* reading across a style switch: the study's last position, passed to the frame that opens next */
+  function studyPath(route){return new URL(NEW_CASE[route],location.href).pathname.replace(/\.html$/,'')}
+  function lastY(route){try{return sessionStorage.getItem('jux-lasty:'+studyPath(route))}catch(e){return null}}
+  function carry(route){
+    var y=lastY(route);
+    try{if(y&&y!=='0')sessionStorage.setItem('jux-scroll:'+studyPath(route),y)}catch(e){}
+  }
   function fromHome(){
     var v=juxHome.view();
-    if(R2[v])show('cases',R2[v]);else if(v==='kind')show('recs');else show('about');
+    if(R2[v]){carry(R2[v]);show('cases',R2[v])}else if(v==='kind')show('recs');else show('about');
   }
   function toHome(){
     var id=caseRoute&&STUDIES.find(function(s){return s.route===caseRoute}).id;
     var target=id||(state==='recs'?'kind':state==='about'?'about':'intro');
-    if(juxHome.view()!==target)juxHome.go(target);
+    if(juxHome.view()!==target){
+      if(caseRoute)carry(caseRoute);
+      juxHome.go(target);
+    }else if(caseRoute){
+      /* same study still open behind Classic: it only needs moving */
+      var y=+lastY(caseRoute)||0,f=q('#v-case iframe');
+      if(f)setTimeout(function(){try{f.contentWindow.scrollTo({top:y,behavior:'instant'})}catch(e){}},60);
+    }
   }
   var wasClassic=false;
   function sync(){

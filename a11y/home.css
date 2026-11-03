@@ -11,6 +11,21 @@ html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-j
 /* text size */
 html[data-jux-size="2"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.25}
 html[data-jux-size="3"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.5}
+/* zoom scales the width too, so these stay inside the screen. The intro title sits in a fixed layer with no scrolling */
+html[data-jux-size="2"] header.intro{width:min(760px,calc(90vw/1.25))}
+html[data-jux-size="3"] header.intro{width:min(760px,calc(90vw/1.5))}
+html[data-jux-size="2"] .intro .sandt{font-size:min(10.4vw,3.4rem)}
+html[data-jux-size="3"] .intro .sandt{font-size:min(8.6vw,3rem)}
+@media(max-width:760px){
+  /* the date column takes too much of a phone at larger text: the date moves above its card and the logo above the words */
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .timeline::before{left:10px}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .tl-item{grid-template-columns:20px minmax(0,1fr);column-gap:8px;row-gap:4px}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .tl-dot-col{grid-column:1;grid-row:1;padding-top:4px}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .tl-date{grid-column:2;grid-row:1;text-align:left;padding-top:0}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about :is(.tl-d1,.tl-d2){display:inline}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .tl-card{grid-column:2;grid-row:2;min-width:0;flex-direction:column;gap:8px;padding:12px 14px}
+  html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about .tl-card-body{width:100%;overflow-wrap:break-word}
+}
 html[data-jux-size="2"] .float .tag{font-size:14px}
 html[data-jux-size="3"] .float .tag{font-size:15px}
 html body.bar .float .tag{font-size:13px}
@@ -18,6 +33,10 @@ html body.bar .float .tag{font-size:13px}
 html:is([data-jux-size="2"],[data-jux-size="3"]) #v-about{overflow-y:auto}
 html:is([data-jux-size="2"],[data-jux-size="3"]) .about-hero{height:auto;min-height:100%;align-items:flex-start}
 html:is([data-jux-size="2"],[data-jux-size="3"]) .about-hero .txt{padding-bottom:190px}
+
+/* an open study hides the floaties on wider screens, so the playground needs its own way in. Classic has one in its header */
+.jux-open{display:none}
+html[data-jux-style="personality"] body.side .jux-open{display:block}
 
 /* motion */
 html[data-jux-motion="calm"] #dive{display:none}

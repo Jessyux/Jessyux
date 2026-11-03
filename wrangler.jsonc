@@ -12,12 +12,14 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
-  "d1_databases": [
-    {
-      "binding": "SAND_DB",
-      "database_name": "jessyux-sand",
-      // placeholder for local testing. Set at deploy, after creating the real database with Jessy's go-ahead.
-      "database_id": "00000000-0000-0000-0000-000000000000"
+  // The sand wall's database is only bound for local testing, so this file still deploys the site
+  // before the real database exists: the sand screen then says messages can't be saved.
+  // At deploy, with Jessy's go-ahead, add the same block at the top level with the real ID.
+  "env": {
+    "local": {
+      "d1_databases": [
+        { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "00000000-0000-0000-0000-000000000000" }
+      ]
     }
-  ]
+  }
 }
