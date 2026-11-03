@@ -83,7 +83,12 @@
     load();
     setInterval(load,LOAD_EVERY);
     d.addEventListener('visibilitychange',load);
-    return {add:function(m){newest=m.id;status.textContent='';list.prepend(messageEl(m,true))}};
+    return {add:function(m){
+      newest=m.id;status.textContent='';
+      var el=messageEl(m,true);list.prepend(el);
+      /* the wall sits above the form, so bring the new message into view */
+      if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:calm()?'auto':'smooth'});
+    }};
   }
 
   function canvasPad(onChange){

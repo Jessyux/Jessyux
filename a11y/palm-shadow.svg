@@ -1,10 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" preserveAspectRatio="xMinYMin meet">
-  <!-- a palm's shadow falling onto the sand: the crown sits off the left edge, fronds reach in. Mirrored for the right side in sand.css -->
+  <!-- a palm's shadow cast on the sand: the crown sits off the left edge, fronds reach in, fading and softening with distance. Mirrored for the right side in sand.css -->
   <defs>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5"/></filter>
+    <filter id="cast" x="-25%" y="-25%" width="150%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="7" result="dunes"/>
+      <feDisplacementMap in="SourceGraphic" in2="dunes" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+    <radialGradient id="fade" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="620">
+      <stop offset="0" stop-color="#6B4A25"/>
+      <stop offset=".55" stop-color="#6B4A25" stop-opacity=".82"/>
+      <stop offset="1" stop-color="#6B4A25" stop-opacity=".42"/>
+    </radialGradient>
     <path id="frond" d="M0 0C70-34 170-50 300-34c70 8 130 24 190 52-62-12-112-14-160-8l42 40c-40-22-74-34-108-40l28 50c-34-28-66-44-98-52l14 52c-28-30-56-46-86-54l2 50c-22-28-44-42-68-50l-8 42C42 56 22 42 0 30Z"/>
   </defs>
-  <g filter="url(#soft)" fill="#4A3216" transform="translate(-30 210)">
+  <g filter="url(#cast)" fill="url(#fade)" transform="translate(-30 210)">
     <use href="#frond" transform="rotate(-62) scale(1.02)"/>
     <use href="#frond" transform="rotate(-30) scale(1.18)"/>
     <use href="#frond" transform="rotate(2) scale(1.26)"/>
