@@ -112,6 +112,10 @@ puffy edges, heat-sealed seams, thin white stripe bands and a tiny air valve, li
 the top left. The palette is the theme's: coral `#FF7B6E`, flamingo `#F48FB1`, mint
 `#5EF2C8`, kelp `#0A6354`, sky `#6FD0FF`, sand `#F3E3C6`.
 
+- Home floaties are now Case studies (briefcase), Recommendations, Accessibility playground
+  (ducky) and Leave a message (pencil), around Jessy for About me. The three studies are
+  cards on the water in `#cs` (view `work`), built like the recommendations wall. Briefcase
+  and pencil are `nano-banana-2`, cut out with birefnet, loaded from `../img/floaties/`.
 - Floatie icons (home, uMeds, Westpac, Montu admin, recommendations) are done. Sources
   are in `../img/floaties/`, inlined as data URIs in `../index.html`. Made with
   `fal-ai/nano-banana-2`, each old icon passed in as the shape reference, then cut out

@@ -9,8 +9,8 @@ html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-j
 html:is([data-jux-size="2"],[data-jux-size="3"],[data-jux-font="lexend"],[data-jux-font="atkinson"],[data-jux-contrast="high"]) .sandt{display:block}
 
 /* text size */
-html[data-jux-size="2"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.25}
-html[data-jux-size="3"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card){zoom:1.5}
+html[data-jux-size="2"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card,#cs .card){zoom:1.25}
+html[data-jux-size="3"] :is(header.intro,.about-hero .txt,.tl-head,.timeline,.tl-m-body,.tl-m-head,.pk-wrap-inner .tl-sub,#kw .card,#cs .card){zoom:1.5}
 /* zoom scales the width too, so these stay inside the screen. The intro title sits in a fixed layer with no scrolling */
 html[data-jux-size="2"] header.intro{width:min(760px,calc(90vw/1.25))}
 html[data-jux-size="3"] header.intro{width:min(760px,calc(90vw/1.5))}
@@ -49,6 +49,35 @@ html[data-jux-contrast="high"] :is(header.intro .lead,#v-about .lead,#v-about p.
 html[data-jux-contrast="high"] :is(header.intro .lead .w,#v-about .lead .w){color:#034A3B!important}
 html[data-jux-contrast="high"] :is(.iconlink,.status,.scroll-hint){background:#fff!important;color:#000!important;border:2px solid #000!important}
 html[data-jux-contrast="high"] .status .s-text{color:#000!important}
-html[data-jux-contrast="high"] #kw .card{background:#000!important;color:#fff!important;border:2px solid #fff!important}
-html[data-jux-contrast="high"] #kw .card :is(p,figcaption,b,span){color:#fff!important;background:transparent!important}
+html[data-jux-contrast="high"] :is(#kw,#cs) .card{background:#000!important;color:#fff!important;border:2px solid #fff!important}
+html[data-jux-contrast="high"] :is(#kw,#cs) .card :is(p,figcaption,b,span){color:#fff!important;background:transparent!important}
 html[data-jux-contrast="high"] .float .tag{background:#000!important;color:#fff!important;border:1px solid #fff}
+
+/* case studies: the briefcase floatie opens these cards, bobbing on the water like the recommendations */
+#cs{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 118px);bottom:env(safe-area-inset-bottom,0px);z-index:2;display:flex;align-items:safe center;justify-content:safe center;gap:24px;padding:12px 8vw 40px;overflow-x:auto;overflow-y:auto;visibility:hidden;pointer-events:none;scrollbar-width:thin}
+body[data-view=work] #cs{visibility:visible;pointer-events:auto}
+body[data-view=work] #cs .cw{opacity:1;transform:none;transition-delay:calc(.5s + var(--i)*70ms)}
+body[data-view=work] #deep{opacity:.45}
+.cs-card{display:flex;flex-direction:column;width:clamp(272px,80vw,372px);max-height:none;padding:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.cs-card:hover{border-color:var(--accent2)}
+.cs-card img{display:block;width:100%;height:clamp(120px,19vh,190px);object-fit:cover;object-position:50% 20%;border:0;border-radius:0;flex:none;background:#fff}
+.cs-body{display:flex;flex-direction:column;gap:8px;padding:16px 20px 18px}
+.cs-kicker{font-size:.84rem;font-weight:600;color:var(--accent2)}
+.cs-title{font-family:var(--hero);font-size:1.14rem;font-weight:700;line-height:1.25;color:#fff}
+.cs-summary{font-size:.93rem;line-height:1.45}
+.cs-impact{padding-top:8px;border-top:1px solid var(--line2);font-size:.93rem;line-height:1.4;color:#fff}
+.cs-impact b{display:block;margin-bottom:2px;font-size:.84rem;font-weight:600;color:var(--accent2)}
+.cs-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px;margin-top:6px;font-size:.88rem}
+.cs-go{padding:8px 14px;border-radius:999px;font-weight:700;background:var(--accent2);color:#042B38;transition:background .2s}
+.cs-card:hover .cs-go,.cs-card:focus-visible .cs-go{background:#fff}
+html[data-jux-contrast="high"] #cs .cs-card .cs-go{background:#fff;color:#000}
+/* zoom scales the card width too, so larger text stays inside a phone screen */
+@media(max-width:760px){
+  html[data-jux-size="2"] #cs .cs-card{width:calc(84vw/1.25)}
+  html[data-jux-size="3"] #cs .cs-card{width:calc(84vw/1.5)}
+}
+/* phones: labels on the outer floaties line up with the screen edge instead of running off it */
+@media(max-width:640px){
+  body[data-view=intro] :is(.float[data-id=work],.float[data-id=duck]) .tag{left:0;transform:translate(0,4px)}
+  body[data-view=intro] :is(.float[data-id=kind],.float[data-id=pencil]) .tag{left:auto;right:0;transform:translate(0,4px)}
+}

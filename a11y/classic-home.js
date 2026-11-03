@@ -105,11 +105,11 @@
   }
   function fromHome(){
     var v=juxHome.view();
-    if(R2[v]){carry(R2[v]);show('cases',R2[v])}else if(v==='kind')show('recs');else show('about');
+    if(R2[v]){carry(R2[v]);show('cases',R2[v])}else if(v==='kind')show('recs');else if(v==='work')show('cases');else show('about');
   }
   function toHome(){
     var id=caseRoute&&STUDIES.find(function(s){return s.route===caseRoute}).id;
-    var target=id||(state==='recs'?'kind':state==='about'?'about':'intro');
+    var target=id||(state==='recs'?'kind':state==='cases'?'work':state==='about'?'about':'intro');
     if(juxHome.view()!==target){
       if(caseRoute)carry(caseRoute);
       juxHome.go(target);
