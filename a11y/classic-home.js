@@ -126,5 +126,5 @@
   });
   A.subscribe(sync);
   sync();
-  window.juxClassic={sync:sync};
+  window.juxClassic={sync:sync,show:function(v){if(root)show(v)}};
 })();

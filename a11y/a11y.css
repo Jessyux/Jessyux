@@ -77,4 +77,26 @@ html[data-jux-style="classic"] .jp-head h2{font-family:"Outfit",system-ui,sans-s
 .jux-kbdtip{display:none;position:fixed;z-index:2147482500;left:50%;transform:translateX(-50%);bottom:16px;background:#000;color:#fff;padding:9px 16px;border-radius:999px;font:600 .9rem/1.3 system-ui,sans-serif;max-width:calc(100vw - 32px);text-align:center}
 html[data-jux-lens="kbd"]:not(.embed) .jux-kbdtip{display:block}
 
+/* first-visit screen ---------------------------------------------------- */
+.jux-welcome{width:min(calc(100vw - 32px),30rem);max-height:calc(100dvh - 32px);padding:0;margin:auto;overflow:auto;background:var(--jp-bg);color:var(--jp-ink);border:1px solid var(--jp-line);border-radius:22px;box-shadow:0 24px 70px rgba(3,34,46,.45);font:400 1rem/1.5 "Hanken Grotesk",system-ui,sans-serif;text-align:left;letter-spacing:normal}
+.jux-welcome::backdrop{background:rgba(3,34,46,.5)}
+html[data-jux-style="classic"] .jux-welcome::backdrop{background:rgba(0,0,0,.55)}
+html[data-jux-style="classic"] .jux-welcome{font-family:"Outfit",system-ui,sans-serif}
+.jux-welcome *{box-sizing:border-box}
+.jw-body{padding:clamp(20px,5vw,30px)}
+.jw-eyebrow{margin:0 0 6px;font-size:.88rem;font-weight:600;color:var(--jp-soft)}
+.jux-welcome h2{margin:0 0 18px;font:800 clamp(1.6rem,6vw,2.1rem)/1.1 "Gabarito",system-ui,sans-serif;letter-spacing:-.015em;color:inherit;outline:0}
+html[data-jux-style="classic"] .jux-welcome h2{font-family:"Outfit",system-ui,sans-serif;font-weight:700}
+.jw-opts{display:grid;gap:8px}
+.jw-opt{display:block;width:100%;font:inherit;font-weight:600;line-height:1.3;text-align:left;padding:14px 16px;border-radius:14px;background:transparent;color:var(--jp-ink);border:1.5px solid var(--jp-line);cursor:pointer}
+.jw-opt:hover{border-color:var(--jp-on);background:var(--jp-on);color:var(--jp-onink)}
+.jw-copy{margin:0 0 18px}
+.jw-row{display:flex;flex-wrap:wrap;gap:8px}
+.jw-btn{display:inline-block;font:inherit;font-weight:600;font-size:.95rem;line-height:1.25;padding:10px 16px;border-radius:999px;background:transparent;color:var(--jp-ink);border:1.5px solid var(--jp-line);cursor:pointer;text-decoration:none}
+.jw-row .jw-btn:first-child{background:var(--jp-on);color:var(--jp-onink);border-color:var(--jp-on)}
+.jw-foot{display:flex;justify-content:flex-end;margin-top:14px}
+.jw-link{font:inherit;font-weight:600;font-size:.95rem;padding:8px 2px;background:none;border:0;color:var(--jp-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.jux-welcome :focus-visible{outline:3px solid var(--jp-focus);outline-offset:2px}
+.jux-welcome h2:focus-visible{outline:0}
+
 @media(max-width:760px){.jux-panel{top:auto;left:10px;right:10px;width:auto;max-height:82vh;bottom:10px}}

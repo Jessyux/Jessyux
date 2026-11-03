@@ -72,6 +72,10 @@
       }
     });
     actions=el('div','jp-actions');body.appendChild(actions);
+    if(viewFn()!=='sand'){
+      var sand=el('button','jp-btn','Messages in the sand');sand.type='button';
+      sand.onclick=function(){g.location.href='/sand'};actions.appendChild(sand);
+    }
 
     var foot=el('div','jp-foot'),reset=el('button','jp-btn','Reset everything'),done=el('button','jp-btn go','Done');
     reset.type=done.type='button';reset.onclick=function(){A.reset()};done.onclick=hide;
