@@ -60,7 +60,7 @@ body[data-view=work] #cs .cw{opacity:1;transform:none;transition-delay:calc(.5s 
 body[data-view=work] #deep{opacity:.45}
 .cs-card{display:flex;flex-direction:column;width:clamp(272px,80vw,372px);max-height:none;padding:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
 .cs-card:hover{border-color:var(--accent2)}
-.cs-card img{display:block;width:100%;height:clamp(120px,19vh,190px);object-fit:cover;object-position:50% 20%;border:0;border-radius:0;flex:none;background:#fff}
+.cs-card img{display:block;width:100%;height:clamp(120px,19vh,190px);object-fit:cover;object-position:50% 20%;border:0;border-radius:0;flex:none;background:#5B7F95}
 .cs-body{display:flex;flex-direction:column;gap:8px;padding:16px 20px 18px}
 .cs-kicker{font-size:.84rem;font-weight:600;color:var(--accent2)}
 .cs-title{font-family:var(--hero);font-size:1.14rem;font-weight:700;line-height:1.25;color:#fff}
