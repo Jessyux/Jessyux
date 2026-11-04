@@ -50,47 +50,12 @@
       el('section',{class:'cl-sec'},[el('h2',{text:'Pocket sized me'}),el('p',{class:'cl-soft',style:'margin-bottom:14px',text:'A look into my life.'}),photos])];
   }
   function recs(){
-    var long=[];
-    var rail=el('div',{class:'cl-rail',tabindex:'0',role:'region','aria-label':'Recommendations, scroll sideways'},RECS.map(function(r){
-      var quote=el('div',{class:'cl-quote'},r.p.map(function(t){return el('p',{text:t})}));
-      var more=el('button',{type:'button',class:'cl-more','aria-expanded':'false',text:'Read more',on:function(){
-        var open=quote.classList.toggle('open');
-        more.textContent=open?'Show less':'Read more';
-        more.setAttribute('aria-expanded',String(open));
-      }});
-      long.push([quote,more]);
-      return el('figure',{class:'cl-card'},[quote,more,
-        el('figcaption',{},[r.photo?el('img',{src:r.photo,alt:''}):null,el('span',{},[el('b',{text:r.name}),el('span',{class:'cl-soft',text:r.role})])])
-      ]);
-    }));
-    /* Read more only shows on quotes that overflow; its space stays reserved so the cards match */
-    function fit(){
-      long.forEach(function(l){
-        if(l[0].classList.contains('open'))return;
-        var over=l[0].scrollHeight>l[0].clientHeight+1;
-        l[0].classList.toggle('fits',!over);
-        l[1].style.visibility=over?'':'hidden';
-      });
-      ends();
-    }
-    var prev=pill('Previous',function(){step(-1)}),next=pill('Next',function(){step(1)});
-    /* aria-disabled, so keyboard focus stays on the button at either end of the rail */
-    function ends(){
-      var max=rail.scrollWidth-rail.clientWidth;
-      prev.setAttribute('aria-disabled',rail.scrollLeft<=1?'true':'false');
-      next.setAttribute('aria-disabled',rail.scrollLeft>=max-1?'true':'false');
-    }
-    function step(dir){
-      var card=rail.firstElementChild;
-      rail.scrollBy({left:dir*(card.offsetWidth+14),behavior:A.isCalm()?'auto':'smooth'});
-    }
-    rail.addEventListener('scroll',ends,{passive:true});
-    /* the rail's size changes with the window and the text size setting */
-    new ResizeObserver(fit).observe(rail);
-    if(document.fonts)document.fonts.ready.then(fit);
-    return [el('h1',{text:'What people say'}),
-      el('div',{class:'cl-railhead'},[el('p',{class:'cl-lead cl-soft',text:RECS.length+' recommendations from people I’ve worked with.'}),el('div',{class:'cl-railnav'},[prev,next])]),
-      rail];
+    return [el('h1',{text:'What people say'}),el('p',{class:'cl-lead cl-soft',text:RECS.length+' recommendations from people I’ve worked with.'}),
+      el('div',{class:'cl-stack'},RECS.map(function(r){
+        return el('figure',{class:'cl-card'},r.p.map(function(t){return el('p',{text:t})}).concat([
+          el('figcaption',{},[r.photo?el('img',{src:r.photo,alt:''}):null,el('span',{},[el('b',{text:r.name}),el('span',{class:'cl-soft',text:r.role})])])
+        ]));
+      }))];
   }
   function cases(){
     return [el('h1',{text:'Case studies'}),el('p',{class:'cl-lead cl-soft',text:'Pick one to read the whole story.'}),
@@ -102,6 +67,7 @@
     state=next;caseRoute=route||null;
     main.textContent='';
     main.classList.toggle('flush',!!caseRoute);
+    main.classList.toggle('wide',next==='recs');
     if(caseRoute){
       main.append(el('iframe',{class:'cl-frame',title:'Case study',src:NEW_CASE[caseRoute]}));
     }else{
