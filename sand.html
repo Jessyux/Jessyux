@@ -32,20 +32,20 @@
     <feComposite in="specks" in2="halo" operator="in" result="grains"/>
     <feMerge><feMergeNode in="grains"/><feMergeNode in="rim"/><feMergeNode in="floor"/><feMergeNode in="inner"/></feMerge>
   </filter>
-  <filter id="sand-carve-lg" x="-4%" y="-14%" width="108%" height="128%" color-interpolation-filters="sRGB">
+  <filter id="sand-carve-sm" x="-4%" y="-14%" width="108%" height="128%" color-interpolation-filters="sRGB">
     <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="4" result="n"/>
-    <feMorphology in="SourceAlpha" operator="dilate" radius="0.8"/>
-    <feDisplacementMap in2="n" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
-    <feGaussianBlur stdDeviation=".45" result="a"/>
+    <feMorphology in="SourceAlpha" operator="dilate" radius="0.1"/>
+    <feDisplacementMap in2="n" scale="0.9" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation=".2" result="a"/>
     <feFlood flood-color="#7A5C33"/><feComposite in2="a" operator="in" result="floor"/>
-    <feOffset in="a" dx="1.6" dy="2.1" result="off"/>
+    <feOffset in="a" dx=".5" dy=".7" result="off"/>
     <feComposite in="a" in2="off" operator="out" result="edge"/>
     <feFlood flood-color="#4A3418"/><feComposite in2="edge" operator="in"/><feGaussianBlur stdDeviation=".8" result="inner"/>
     <feComposite in="off" in2="a" operator="out" result="lip"/>
     <feFlood flood-color="#FFF6E2" flood-opacity=".8"/><feComposite in2="lip" operator="in"/><feGaussianBlur stdDeviation=".9" result="rim"/>
     <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="11"/>
     <feColorMatrix values="0 0 0 0 .56  0 0 0 0 .43  0 0 0 0 .25  0 0 0 5 -3.5" result="specks"/>
-    <feMorphology in="a" operator="dilate" radius="1.8"/><feGaussianBlur stdDeviation="3" result="halo"/>
+    <feMorphology in="a" operator="dilate" radius="0.8"/><feGaussianBlur stdDeviation="2" result="halo"/>
     <feComposite in="specks" in2="halo" operator="in" result="grains"/>
     <feMerge><feMergeNode in="grains"/><feMergeNode in="rim"/><feMergeNode in="floor"/><feMergeNode in="inner"/></feMerge>
   </filter>
@@ -94,6 +94,7 @@
     <p class="sand-status" id="post-status" role="status"></p>
   </form>
 </main>
+<div class="sand-shore" aria-hidden="true"></div>
 <script src="/a11y/contrast.js"></script>
 <script src="/a11y/panel.js"></script>
 <script>juxPanel.mount({view:'sand',showFloatingButton:true})</script>
