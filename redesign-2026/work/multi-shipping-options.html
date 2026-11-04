@@ -44,13 +44,13 @@
   <div class="wrap">
     <p class="kicker">Case study <span>·</span> Health tech <span>·</span> B2C ecommerce <span>·</span> uMeds multi shipping options</p>
     <h1>Patients kept walking out the door. We gave them a reason to stay.</h1>
-    <p class="lede dim">uMeds delivers medication to patients across Australia, and every month about a thousand of them asked to take their script somewhere else. I worked out why, then helped build the fix. It cut patient-initiated churn by 19% and protected an estimated $13.7M a year. It also missed both of its launch targets, and that part of the story taught me the most.</p>
+    <p class="lede dim">uMeds delivers medication to patients across Australia, and every month about a thousand of them asked to take their script somewhere else. I worked out why, then owned the fix as product owner, from research and design through rollout and evaluation. It cut patient-initiated churn by 19% and protected an estimated $13.7M a year. It also missed both of its launch targets, and that part of the story taught me the most.</p>
     <dl class="meta">
       <div><dt>Why</dt><dd>Standard delivery did not fit how patients wanted their medication, so they left.</dd></div>
       <div><dt>How</dt><dd>I talked to real patients first, then designed a shipping experience around choice and trust.</dd></div>
       <div><dt>What</dt><dd>Same-day, weekend, 3-hour and click-and-collect delivery, added to the existing checkout.</dd></div>
-      <div><dt>Role</dt><dd>I scoped the work, ran the research, designed and prototyped the flow, tested it, managed stakeholders and the change, and tracked the results after launch.</dd></div>
-      <div><dt>Timeline</dt><dd>Research Q2 2025, launch Nov 2025, continuous review to Jun 2026.</dd></div>
+      <div><dt>Role</dt><dd>Product owner with a design-led approach. I scoped the work, ran the research, designed and prototyped the flow, wrote the PRD, tested it, managed stakeholders and the change, and tracked the results after launch.</dd></div>
+      <div><dt>Timeline</dt><dd>Research Q2 2025, launch Nov 2025, continuous review to Jun 2026, This Afternoon test Aug 2026.</dd></div>
       <div><dt>Surface</dt><dd>uMeds B2C ordering and checkout (web). Shipped.</dd></div>
     </dl>
   </div>
@@ -71,6 +71,26 @@
       </div>
       <figure class="sshot"><img src="../assets/img/case/multi-shipping/shipping-options-angled.webp" alt="The shipped uMeds shipping options screen showing same-day, standard and click-and-collect side by side" width="560" height="699"></figure>
     </div>
+  </div>
+</section>
+
+<!-- ============ HOW I RAN IT ============ -->
+<section data-depth="0" data-title="How I ran it">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>0 m</b> How I ran it <span class="bar"></span></p>
+      <h2 class="rv">I owned it end to end, and treated delivery as one ecosystem.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">A delivery promise depends on patients, pharmacies, couriers, stock, comms and patient support all working together, so I planned for all of them. Design led the work: I started with patients and prototypes, then used them to get every team onto one map.</p>
+    </div>
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">01</div><h4>Triage</h4><p>I framed the work around the roughly 1,050 patients a month asking to leave, and scoped what would make them stay.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Discovery</h4><p>I read why patients left in two datasets, then ran usability sessions with seven patients to learn what they trusted.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Design</h4><p>I prototyped the flow, ran a mapping workshop with six teams and wrote a PRD with guardrails that engineers could build from.</p></div>
+      <div class="idea"><div class="n">04</div><h4>Delivery</h4><p>I took stakeholders through sign-off and engineering through the PRD, prepared patient support for the change and piloted with a small group first.</p></div>
+      <div class="idea"><div class="n">05</div><h4>Evaluation</h4><p>I tracked results on evaluation boards fed by live BigQuery data, reported the missed targets alongside the win, and turned the gaps into new work.</p></div>
+      <div class="idea"><div class="n">AI</div><h4>AI-assisted workflow</h4><p>I helped co-build the Claude product assistant skill the product team uses to move from idea to production. It follows these five phases. When I hit a gap, I wrote a change request so our product lead could refine it for everyone.</p></div>
+    </div>
+    <p class="src rv">Sources 7 and 8 · Montu product process and product team workflow.</p>
   </div>
 </section>
 
@@ -329,6 +349,31 @@
   </div>
 </section>
 
+<!-- ============ AFTER LAUNCH ============ -->
+<section data-depth="5000" data-title="After launch">
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow rv"><b>5,000 m</b> After launch <span class="bar"></span></p>
+      <h2 class="rv">After launch, the next problem sat in the supply chain.</h2>
+      <p class="lede dim rv" style="margin-top:1.4rem">Evaluation showed that many same-day eligible patients never saw the option at checkout. A better screen would not have fixed that, so I followed the problem upstream.</p>
+    </div>
+    <div class="grid g3 rv" style="margin-top:clamp(28px,4vw,44px)">
+      <div class="idea"><div class="n">01</div><h4>The rule</h4><p>Same-day only shows when a nearby pharmacy has the stock.</p></div>
+      <div class="idea"><div class="n">02</div><h4>The cause</h4><p>Restocking treats all sales history as one total, so it does not spot priority same-day orders at nearby partner pharmacies.</p></div>
+      <div class="idea"><div class="n">03</div><h4>What I did</h4><p>I created a branch initiative so eligible patients can see the faster option.</p></div>
+    </div>
+    <p class="src rv">Source 9 · Stock-Blocked SDD Orders analysis, BigQuery.</p>
+
+    <h3 class="rv" style="margin-top:clamp(48px,6vw,80px)">The next release used what I learned</h3>
+    <div class="grid g3 rv" style="margin-top:1.4rem">
+      <div class="idea"><div class="n">01</div><h4>Size it first</h4><p>For This Afternoon, I sized the opportunity as a range and checked it against real order data.</p></div>
+      <div class="idea"><div class="n">02</div><h4>Promise what operations can deliver</h4><p>Suburb-level routing and carrier-approved zones, so nobody sees a window they cannot get.</p></div>
+      <div class="idea"><div class="n">03</div><h4>Test small</h4><p>A one-week test in two regions, with named owners and a guardrail to pause before expanding.</p></div>
+    </div>
+    <p class="src rv">Source 7 · This Afternoon artefacts. Sizing is modelled.</p>
+  </div>
+</section>
+
 <!-- ============ HADAL / ASCENT ============ -->
 <section data-depth="6100" data-title="So what">
   <div class="wrap">
@@ -356,6 +401,9 @@
       <li>Survicate discharge survey, script-release reasons.</li>
       <li>Google Looker, uMeds Post Delivery NPS, CSat and Awaiting Collection / Delivery Attempted.</li>
       <li>Q2 2025 Shipping Options: Data and Insights (FigJam), 7 de-identified participants.</li>
+      <li>Montu product process and This Afternoon artefacts, Jul to Aug 2026.</li>
+      <li>Montu product team workflow; Claude product assistant skill.</li>
+      <li>Stock-Blocked SDD Orders analysis, BigQuery, 17 Nov 2025 to 12 Jul 2026.</li>
     </ol>
     <p class="cap rv" style="margin-top:1.6rem">Internal Montu sources. Figures shown as reported in those documents. Product names masked in the design screens.</p>
     <a class="up rv" href="#hero">↑ Return to the surface</a>
