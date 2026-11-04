@@ -54,6 +54,16 @@ button.cl-card{cursor:pointer;display:block;width:100%}
 .cl-card figcaption{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:.92rem;line-height:1.3}
 .cl-card figcaption img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:none}
 .cl-card figcaption b{display:block}
+.cl-railhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0 16px}
+.cl-railnav{display:flex;gap:8px;margin-bottom:16px}
+.cl-railnav .cl-pill[aria-disabled="true"]{opacity:.45;cursor:default}
+.cl-rail{display:flex;align-items:flex-start;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 4px;padding:4px 4px 14px;margin:0 -4px;scrollbar-color:var(--cl-soft) transparent}
+.cl-rail .cl-card{flex:0 0 min(88%,26rem);scroll-snap-align:start}
+.cl-rail .cl-card figcaption{min-height:4.4em}
+.cl-quote{height:17.6em;height:11lh;overflow:hidden;-webkit-mask-image:linear-gradient(#000 calc(100% - 2lh),transparent);mask-image:linear-gradient(#000 calc(100% - 2lh),transparent)}
+.cl-quote.open,.cl-quote.fits{-webkit-mask-image:none;mask-image:none}
+.cl-quote.open{height:auto}
+.cl-more{display:block;min-height:24px;margin-top:6px;padding:2px 0;background:none;border:0;color:var(--cl-accent);font:inherit;font-weight:600;font-size:.95rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .cl-kicker{font-size:.85rem;font-weight:600;color:var(--cl-accent);margin-bottom:8px!important}
 .cl-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,12rem),1fr));gap:12px;margin:0;padding:0;list-style:none}
 .cl-photos figure{margin:0}
