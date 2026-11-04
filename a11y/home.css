@@ -70,8 +70,8 @@ body[data-view=work] #deep{opacity:.45}
 .cs-impact{padding-top:8px;border-top:1px solid var(--line2);font-size:.93rem;line-height:1.4;color:#fff}
 .cs-impact b{display:block;margin-bottom:2px;font-size:.84rem;font-weight:600;color:var(--accent2)}
 .cs-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px;margin-top:6px;font-size:.88rem}
-.cs-go{padding:8px 14px;border-radius:999px;font-weight:700;background:var(--accent2);color:#042B38;transition:background .2s}
-.cs-card:hover .cs-go,.cs-card:focus-visible .cs-go{background:#fff}
+.cs-go{padding:8px 14px;border-radius:999px;font-weight:700;background:#fff;color:#042B38;transition:background .2s}
+.cs-card:hover .cs-go,.cs-card:focus-visible .cs-go{background:var(--accent2)}
 html[data-jux-contrast="high"] #cs .cs-card .cs-go{background:#fff;color:#000}
 /* zoom scales the card width too, so larger text stays inside a phone screen */
 @media(max-width:760px){
