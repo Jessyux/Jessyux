@@ -52,9 +52,11 @@
   function recs(){
     return [el('h1',{text:'What people say'}),el('p',{class:'cl-lead cl-soft',text:RECS.length+' recommendations from people I’ve worked with.'}),
       el('div',{class:'cl-stack'},RECS.map(function(r){
-        return el('figure',{class:'cl-card'},r.p.map(function(t){return el('p',{text:t})}).concat([
-          el('figcaption',{},[r.photo?el('img',{src:r.photo,alt:''}):null,el('span',{},[el('b',{text:r.name}),el('span',{class:'cl-soft',text:r.role})])])
-        ]));
+        /* who is speaking comes first, so it's read before a long quote */
+        return el('figure',{class:'cl-card cl-rec'},[
+          el('figcaption',{},[r.photo?el('img',{src:r.photo,alt:''}):null,el('span',{},[el('b',{text:r.name}),el('span',{class:'cl-soft',text:r.role})])]),
+          el('blockquote',{},r.p.map(function(t){return el('p',{text:t})}))
+        ]);
       }))];
   }
   function cases(){
