@@ -786,6 +786,21 @@ function renderPanel(){
     </section>`;
   }
 
+  if(S.phase==='setup' && mt){
+    const step = S.setup.step;
+    const card = (k,label,sub,icon) => `<div class="build${step===k?' active':' idle'}">${icon}<span class="nm">${label}<small>${sub}</small></span>${costChips(COST[k])}</div>`;
+    html += `<section class="card">
+    <h3>Build cards</h3>
+    <p class="setup-note">Setup pieces are free. After setup, each build costs the cards shown.</p>
+    <div class="builds">
+      ${card('bed','Cat bed', step==='bed'?'Placing now · 1 point':'1 point', `<svg viewBox="-19 -14 38 29" width="34" height="26" aria-hidden="true">${bedShape(br.color)}</svg>`)}
+      ${card('path','Yarn path', step==='path'?'Placing now · connects your beds':'Connects your beds', pathIcon(br.color))}
+      ${card('tower','Cat tower', 'Upgrade a bed later · 2 points', `<svg viewBox="-21 -28 42 46" width="30" height="33" aria-hidden="true">${towerShape(br.color)}</svg>`)}
+      ${card('treat','Treat card', 'Surprise bonus, after setup', treatIcon('gift',30))}
+    </div>
+    </section>`;
+  }
+
   if(play && mt){
     html += `<section class="card">
     <h3>Build</h3>
@@ -955,22 +970,78 @@ function modalHTML(){
   }
   return '';
 }
+function tileThumb(t){
+  const info = RINFO[t];
+  return ART.has(info.tileArt) ? `<img class="tile-thumb" src="${artSrc(info.tileArt)}" alt="">`
+    : `<svg class="tile-thumb" viewBox="-52 -60 104 120" aria-hidden="true"><polygon points="${hexPoints(0,0,57)}" fill="${info.fill}" stroke="#3A2341" stroke-width="3"/><g transform="scale(1.5)">${resGlyph(t)}</g></svg>`;
+}
+function pieceSVG(fn, vb, w, h){ return `<svg viewBox="${vb}" width="${w}" height="${h}" aria-hidden="true">${fn(BREEDS[0].color)}</svg>`; }
 function rulesHTML(){
-  return `<div class="modal rules"><h2>How to play</h2>
-  <p>Be the first cat to reach ${WIN_AT} points by building beds and towers across the island. Play with 2 to 4 cats on the classic island, or 5 to 10 on Big Island.</p>
-  <h3>Setting up</h3><ul><li>Each cat places a bed and a yarn path, then again in reverse order.</li><li>Your second bed collects one card from each tile it touches.</li><li>Beds can't sit right next to another bed. Leave at least one corner between.</li></ul>
-  <h3>Your turn</h3><ul><li>Roll two dice. Every tile showing that number gives a card to each bed touching it (towers get two).</li><li>Build, trade and play one treat card, in any order.</li><li>End your turn.</li></ul>
-  <h3>Building</h3><ul>
-   <li>Yarn path: ${describe(COST.path)}. Paths extend from your beds and other paths.</li>
-   <li>Cat bed: ${describe(COST.bed)}. 1 point. Must touch your yarn.</li>
-   <li>Cat tower: ${describe(COST.tower)}. Upgrades a bed. 2 points, collects double.</li>
-   <li>Treat card: ${describe(COST.treat)}. Drawn from the treat jar.</li></ul>
-  <h3>The Vacuum</h3><ul><li>Rolling 7 switches it on. Anyone holding more than 7 cards drops half.</li><li>The roller moves the Vacuum to a tile. That tile stops producing until it moves again.</li><li>The roller swipes one random card from a cat with a bed on that tile.</li></ul>
-  <h3>Trading</h3><ul><li>Offer any mix of cards to another cat on your turn.</li><li>Trade with the shop at 4 for 1. A bed on a 3:1 dock makes it 3 for 1, and a matching 2:1 dock makes that resource 2 for 1.</li></ul>
-  <h3>Bonus points</h3><ul><li>Longest yarn: 2 points for the first unbroken trail of 5 or more paths. Longer trails steal it.</li><li>Zoomiest cat: 2 points for the first to play 3 Zoomies. More Zoomies steal it.</li><li>Cat show trophies: 1 secret point each.</li></ul>
-  <h3>Treat cards</h3><ul>${Object.values(TREATS).map(t=>`<li><b>${t.name}:</b> ${t.text}</li>`).join('')}<li>A treat can't be played on the turn you buy it, and only one per turn.</li></ul>
-  <h3>Playing online</h3><ul><li>Create a game and share its code. Friends open this page, enter the code and pick a cat.</li><li>The host starts the game once everyone is in. If you lose connection, open the page again and rejoin with the same code.</li></ul>
-  <div class="actions"><button class="btn primary" onclick="G.close()">Back</button></div></div>`;
+  const USE = {litter:'Paths and beds', yarn:'Paths and beds', nip:'Beds and treats', nib:'Beds, towers and treats', fish:'Towers and treats'};
+  const steps = (items) => `<ol class="steps">${items.map(([pic,t])=>`<li>${pic?`<span class="step-pic">${pic}</span>`:''}<span>${t}</span></li>`).join('')}</ol>`;
+  const bedPic = pieceSVG(bedShape,'-19 -14 38 29',46,35), pathPic = pathIcon(BREEDS[0].color).replace('width="30" height="30"','width="40" height="40"');
+  const towerPic = pieceSVG(towerShape,'-21 -28 42 46',40,44);
+  return `<div class="modal rules">
+  <div class="rules-head"><h2>How to play</h2><button class="btn small" onclick="G.close()">Close</button></div>
+  <p class="lead">Be the first cat to reach <b>${WIN_AT} points</b>. Build beds and towers, link them with yarn, and keep away from the Vacuum. 2 to 4 cats play the classic island, 5 to 10 play Big Island.</p>
+
+  <section class="rule-block"><h3>Play online with friends</h3>
+  ${steps([
+    [`<span class="pill">Create</span>`, `One person taps <b>Create a game</b> and gets a cat code like <b>sleepy-tuna-42</b>.`],
+    [`<span class="pill">Share</span>`, `Share the code or invite link. Friends open the game, type their name, pick a cat and tap <b>Join</b>.`],
+    [`<span class="pill">Start</span>`, `The host taps <b>Start</b> once everyone is in. Lost connection? Open the link again to rejoin.`]
+  ])}
+  <p class="small">Playing in one room? Choose <b>Play on one device</b> and pass the screen. Hands stay hidden until each cat taps in.</p></section>
+
+  <section class="rule-block"><h3>Setting up</h3>
+  ${steps([
+    [bedPic, `Each cat places a free <b>cat bed</b> on a corner where tiles meet.`],
+    [pathPic, `Then a free <b>yarn path</b> along an edge touching that bed.`],
+    [`${bedPic}${pathPic}`, `Go round again in reverse order. Your second bed collects one card from each tile it touches.`]
+  ])}
+  <p class="small">Beds need one empty corner between them and any other bed.</p></section>
+
+  <section class="rule-block"><h3>Resources</h3>
+  <p class="small">Each tile makes one resource when its number is rolled. The Nap spot makes nothing.</p>
+  <div class="res-grid">${RES.map(r=>`<div class="res-item">${tileThumb(r)}<b>${RINFO[r].name}</b><small>${USE[r]}</small></div>`).join('')}<div class="res-item">${tileThumb('nap')}<b>Nap spot</b><small>Makes nothing</small></div></div></section>
+
+  <section class="rule-block"><h3>Your turn</h3>
+  ${steps([
+    [`<span class="mini-dice">${[3,4].map(n=>`<span class="die" aria-hidden="true">${Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('')}</span>`).join('')}</span>`, `<b>Roll.</b> Every tile with that number gives a card to each bed touching it. Towers get two.`],
+    [`<span class="pill">Build</span>`, `<b>Build, trade and play one treat</b>, in any order.`],
+    [`<span class="pill">End</span>`, `<b>End your turn.</b> The next cat goes.`]
+  ])}</section>
+
+  <section class="rule-block"><h3>Build cards</h3>
+  <div class="build-grid">
+    <div class="bcard">${pathPic}<b>Yarn path</b><small>Extends from your beds and paths</small>${costChips(COST.path)}</div>
+    <div class="bcard">${bedPic}<b>Cat bed</b><small>1 point · must touch your yarn</small>${costChips(COST.bed)}</div>
+    <div class="bcard">${towerPic}<b>Cat tower</b><small>2 points · upgrades a bed, collects double</small>${costChips(COST.tower)}</div>
+    <div class="bcard">${treatIcon('gift',40)}<b>Treat card</b><small>A surprise from the treat jar</small>${costChips(COST.treat)}</div>
+  </div></section>
+
+  <section class="rule-block split"><div class="split-pic">${ART.has('vacuum')?`<img src="${artSrc('vacuum')}" alt="">`:`<svg viewBox="-30 -30 60 60">${vacuumSVG()}</svg>`}</div><div><h3>The Vacuum</h3>
+  <ul><li>Rolling a <b>7</b> switches it on. Anyone holding more than 7 cards drops half.</li><li>The roller moves the Vacuum to any tile. That tile stops making cards until it moves.</li><li>The roller swipes a random card from a cat with a bed on that tile.</li></ul></div></section>
+
+  <section class="rule-block"><h3>Trading</h3>
+  <div class="trade-row">
+    <div class="dock"><span class="dock-badge">4:1</span><small>Shop: swap 4 of a kind for any 1</small></div>
+    <div class="dock"><span class="dock-badge">3:1</span><small>Bed on a 3:1 dock: any 3 for 1</small></div>
+    <div class="dock"><span class="dock-badge">${resIcon('fish',26)}<em>2:1</em></span><small>Bed on a 2:1 dock: 2 of that resource for 1</small></div>
+  </div>
+  <p class="small">On your turn you can also offer any mix of cards to another cat.</p></section>
+
+  <section class="rule-block"><h3>Bonus points</h3>
+  <div class="trade-row">
+    <div class="dock"><span class="badge">Longest yarn</span><small>+2 for the first unbroken trail of 5 paths. A longer trail steals it.</small></div>
+    <div class="dock"><span class="badge" style="background:var(--butter)">Zoomiest</span><small>+2 for the first to play 3 Zoomies. More Zoomies steal it.</small></div>
+  </div></section>
+
+  <section class="rule-block"><h3>Treat cards</h3>
+  <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div class="tcard">${treatIcon(k,56)}<b>${TREATS[k].name}</b><small>${TREATS[k].text}</small></div>`).join('')}</div>
+  <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
+
+  <div class="actions"><button class="btn primary" onclick="G.close()">Back to the game</button></div></div>`;
 }
 
 /* ---------- start and lobby screens ---------- */
