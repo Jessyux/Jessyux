@@ -715,8 +715,9 @@ function renderRollbar(){
       <div class="turn">${portrait(cp.breed)}<div><div class="who">${youLabel}</div>
         <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
       <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
-      ${ui.mode && !S.sub && mt ? `<div style="margin-top:8px"><button class="btn small" onclick="G.mode(null)">Cancel building</button></div>` : ''}
+      ${ui.mode && !S.sub && mt ? `<button class="btn small" onclick="G.mode(null)">Cancel building</button>` : ''}
     </div>
+    <div class="rb-cols">
     <div class="rb-dice">
       <h3>Dice</h3>
       <div id="dice" class="dice-row"></div>
@@ -724,7 +725,8 @@ function renderRollbar(){
       ${play && mt ? `<button class="btn primary" onclick="G.roll()" ${S.rolled||S.sub||ui.rolling?'disabled':''}>Roll dice</button>` : ''}
     </div>
     <div class="rb-odds"><h3>Odds <small class="muted">${rolls} roll${rolls===1?'':'s'}</small></h3>${oddsChart()}</div>
-    <div class="rb-log"><h3>What happened</h3><ul class="log">${S.log.slice(0,30).map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+    <div class="rb-log"><h3>What happened</h3><ul class="log">${S.log.slice(0,30).map(l=>`<li>${l}</li>`).join('')}</ul></div>
+    </div>`;
   renderDice();
 }
 function miniMark(){ return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M18 44 26 8 48 28Z M82 44 74 8 52 28Z" fill="#FF8A3D" stroke="#3A2341" stroke-width="5" stroke-linejoin="round"/><ellipse cx="50" cy="60" rx="40" ry="33" fill="#FFB067" stroke="#3A2341" stroke-width="5"/><circle cx="35" cy="60" r="7" fill="#3A2341"/><circle cx="65" cy="60" r="7" fill="#3A2341"/><circle cx="33" cy="57" r="2.5" fill="#fff"/><circle cx="63" cy="57" r="2.5" fill="#fff"/></svg>`; }
