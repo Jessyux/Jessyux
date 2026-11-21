@@ -54,7 +54,7 @@ const ART = new Set();
 const ART_FILES = [
   ...RES.map(r=>RINFO[r].art), RINFO.nap.art, ...RES.map(r=>RINFO[r].tileArt), RINFO.nap.tileArt,
   ...BREEDS.map(b=>'cat-'+b.id), ...BREEDS.map(b=>'cat-'+b.id+'-win'),
-  'vacuum', ...Object.values(TREATS).map(t=>t.art), 'logo-art'
+  'vacuum', ...Object.values(TREATS).map(t=>t.art), 'logo-art', 'logo'
 ];
 function artSrc(name){ return 'assets/' + name + '.webp'; }
 ART_FILES.forEach(name=>{
@@ -687,7 +687,7 @@ function render(){
   }
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar">
-      <div class="wordmark">${miniMark()}<span>Whisker Isles</span></div>
+      <div class="wordmark">${ART.has('logo') ? `<img class="logo-img" src="${artSrc('logo')}" alt="Whisker Isles">` : `${miniMark()}<span>Whisker Isles</span>`}</div>
       <div class="tools" id="tools"></div>
     </header>
     <div class="board-wrap"><svg id="board" role="application" aria-label="Game board"></svg><section class="card rollbar" id="rollbar"></section></div>
@@ -1148,7 +1148,8 @@ function rulesHTML(){
 function heroHTML(){
   const art = ART.has('logo-art') ? `<img class="hero-art" src="${artSrc('logo-art')}" alt="Four chibi cats waving from a little island">`
     : `<div class="hero-art fallback">${[0,1,2,3].map(i=>`<span>${catSVG(i)}</span>`).join('')}</div>`;
-  return `<div class="hero"><div class="hero-frame">${art}<h1>Whisker Isles</h1></div>
+  const title = ART.has('logo') ? `<h1 class="logo-h1"><img src="${artSrc('logo')}" alt="Whisker Isles"></h1>` : `<h1>Whisker Isles</h1>`;
+  return `<div class="hero"><div class="hero-frame">${art}${title}</div>
     <p>Claim the comfiest corners of the island. Build cat beds, roll out yarn, trade snacks and keep away from the Vacuum.</p></div>`;
 }
 function breedPicker(sel, taken, fn){
