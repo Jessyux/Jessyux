@@ -38,6 +38,8 @@ What changes instead:
 nav and the Recommendations card point to `../../index.html`, the beach home page. To change
 the home page, edit `../index.html`.
 
+**Games:** `../games/whisker-isles/` (a cat hex board game) is copied to `dist/games/` by `build-home.mjs`. Its online mode uses the Worker in `../worker/index.js` (Durable Object `GameRoom`), wired up in `../wrangler.jsonc`. See `../games/whisker-isles/README.md`.
+
 **Deploy:** run `node build-home.mjs` in the project root, then `node redesign-2026/build.mjs`,
 then `npx wrangler deploy`. The first copies the home page and only the images it uses into
 `dist/`; the second builds the case studies into `dist/redesign/`, where the home page's

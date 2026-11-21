@@ -6,7 +6,17 @@
     { "pattern": "www.jessyux.com", "zone_name": "jessyux.com", "custom_domain": true },
     { "pattern": "jessyux.com", "zone_name": "jessyux.com", "custom_domain": true }
   ],
+  // Static site from ./dist. The Worker script only handles /api/whisker-isles/*
+  // (online play for games/whisker-isles); every other request is a static file.
+  "main": "worker/index.js",
   "assets": {
-    "directory": "./dist"
-  }
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "GameRoom" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["GameRoom"] }
+  ]
 }

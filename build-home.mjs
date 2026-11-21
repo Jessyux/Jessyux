@@ -7,7 +7,7 @@
    references, so the 100+ MB of source art in img/vinyl-examples stays out of
    the deploy. Never hand-edit dist/.
    ========================================================================== */
-import { readFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, mkdirSync, copyFileSync, existsSync, readdirSync, cpSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,3 +38,10 @@ if (existsSync(vinyl)) readdirSync(vinyl).forEach(f => refs.add('img/vinyl/' + f
 let n = 0;
 [...refs].sort().forEach(rel => { if (copy(rel)) n++; });
 console.log(`dist/index.html + ${n} images copied.`);
+
+// games: each folder in games/ is a self-contained static page (index.html, game.js, assets/)
+const games = resolve(ROOT, 'games');
+if (existsSync(games)) {
+  cpSync(games, resolve(DIST, 'games'), { recursive: true });
+  console.log('dist/games copied: ' + readdirSync(games).join(', '));
+}
