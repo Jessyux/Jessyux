@@ -18,11 +18,12 @@ const RINFO = {
   fish:  {name:'Fish',    tile:'Fish pond',      fill:'#BFE6F7', deep:'#4FA9D9', art:'res-fish',    tileArt:'tile-fish'},
   nap:   {name:'Nap spot',tile:'Sunny nap spot', fill:'#E8E2FF', deep:'#A99BEF', art:'res-nap',     tileArt:'tile-nap'}
 };
+// Yarn and Nibbles build paths; Catnip and Litter build towers; Fish, Catnip and Litter buy treat cards
 const COST = {
-  path: {litter:1, yarn:1},
-  bed:  {litter:1, yarn:1, nip:1, nib:1},
-  tower:{nib:2, fish:3},
-  treat:{nip:1, nib:1, fish:1}
+  path: {yarn:1, nib:1},
+  bed:  {yarn:1, nib:1, fish:1, nip:1},
+  tower:{nip:2, litter:3},
+  treat:{fish:1, nip:1, litter:1}
 };
 const BREEDS = [
   {id:'ginger',  label:'Ginger tabby', base:'#FFB067', mark:'#E9853A', muzzle:'#FFE7CC', iris:'#F2A93B', color:'#FF8A3D'},
@@ -253,7 +254,7 @@ function makeBoard(radius){
   const per = big ? 7 : null;
   const types = big
     ? shuffle([...RES.flatMap(r=>Array(per).fill(r)), 'nap','nap'])
-    : shuffle(['litter','litter','litter','litter','yarn','yarn','yarn','nip','nip','nip','nip','nib','nib','nib','nib','fish','fish','fish','nap']);
+    : shuffle(['litter','litter','litter','yarn','yarn','yarn','nip','nip','nip','nip','nib','nib','nib','nib','fish','fish','fish','fish','nap']);
   const base = [2,3,3,4,4,5,5,6,6,8,8,9,9,10,10,11,11,12];
   const tokens = big ? [...base, ...base.slice(1)] : base;   // 35 tokens for 35 producing tiles
   let nums;
@@ -779,6 +780,10 @@ function renderBoard(){
       out += `<polygon points="${hexPoints(hx.x,hx.y,HR-3)}" fill="${info.fill}" stroke="#3A2341" stroke-width="3.5" stroke-linejoin="round"/>`;
       out += `<g transform="translate(${hx.x} ${hx.y-(t.num?20:0)}) scale(${t.num?1.05:1.4})">${resGlyph(t.type)}</g>`;
     }
+    // rim in the resource's own colour, like the yarn tile's pink frame
+    out += `<polygon points="${hexPoints(hx.x,hx.y,HR-7)}" fill="none" stroke="${info.deep}" stroke-width="8" stroke-linejoin="round" opacity=".95"/>`
+         + `<polygon points="${hexPoints(hx.x,hx.y,HR-11.5)}" fill="none" stroke="${shade(info.deep,-.25)}" stroke-width="1.6" stroke-linejoin="round" opacity=".55"/>`
+         + `<polygon points="${hexPoints(hx.x,hx.y,HR-2.5)}" fill="none" stroke="#3A2341" stroke-width="3" stroke-linejoin="round"/>`;
     if(ui.hl && t.num===ui.hl.sum){
       out += `<polygon class="${i===S.vac?'hl-blocked':'hl-tile'}" points="${hexPoints(hx.x,hx.y,HR-4)}"/>`;
     }
@@ -936,7 +941,7 @@ function renderPanel(){
       const fresh = c.turn>=S.turn, vpCard = c.t==='trophy';
       const ok = mt && !vpCard && !fresh && !S.playedTreat && !S.sub && (c.t==='zoomies' || S.rolled);
       return `<button class="treat${fresh?' new':''}" ${ok?'':'disabled'} onclick="G.playTreat(${i})" title="${esc(TREATS[c.t].text)}">${treatIcon(c.t)}${TREATS[c.t].name}${vpCard?'<br><small>secret point</small>':fresh?'<br><small>next turn</small>':''}</button>`; }).join('')}</div>`
-      : `<p class="empty">No treats yet. Buy one with Catnip, Nibbles and Fish.</p>`}
+      : `<p class="empty">No treats yet. Buy one with Fish, Catnip and Litter.</p>`}
     </section>`;
   }
 
