@@ -168,34 +168,32 @@ function costChips(cost){
 }
 function pathIcon(c){ return `<svg viewBox="-20 -20 40 40" width="30" height="30" aria-hidden="true"><path d="M-14 10 14-10" stroke="#3A2341" stroke-width="10" stroke-linecap="round"/><path d="M-14 10 14-10" stroke="${c}" stroke-width="5.5" stroke-linecap="round"/><path d="M-14 10 14-10" stroke="#fff" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round" opacity=".8"/></svg>`; }
 function shade(c,f){ const n=parseInt(c.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const m=f<0?0:255,t=Math.abs(f); r=Math.round(r+(m-r)*t); g=Math.round(g+(m-g)*t); b=Math.round(b+(m-b)*t); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
-/* cat bed (settlement): a dome cat cave with ears and glowing eyes in the doorway */
-function bedShape(c){
+/* a woven basket in the player colour with a sleepy cream cat inside, centred on (0,0) */
+function basket(c){
   const P='#3A2341', l=shade(c,.35), d=shade(c,-.25);
-  return `<ellipse cy="13" rx="17" ry="3.5" fill="${P}" opacity=".18"/>
-  <path d="M-13-6-12-19-4-13Z M13-6 12-19 4-13Z" fill="${c}" stroke="${P}" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M-11-10-10.5-16-7-13Z M11-10 10.5-16 7-13Z" fill="#FFB3C7"/>
-  <path d="M-16 11V0A16 15 0 0 1 16 0V11Z" fill="${c}" stroke="${P}" stroke-width="2.6" stroke-linejoin="round"/>
-  <path d="M-11-4A12 11 0 0 1-2-11" stroke="${l}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  <path d="M-8 11V4A8 8 0 0 1 8 4V11Z" fill="${P}"/>
-  <ellipse cx="-3.5" cy="5" rx="1.9" ry="2.4" fill="#FFE27A"/><ellipse cx="3.5" cy="5" rx="1.9" ry="2.4" fill="#FFE27A"/>
-  <rect x="-17" y="9" width="34" height="5" rx="2.5" fill="${d}" stroke="${P}" stroke-width="2.2"/>`;
+  return `<ellipse cy="2" rx="16" ry="6" fill="${d}" stroke="${P}" stroke-width="2.4"/>
+  <path d="M-8 1-7-11-2-6Z M8 1 7-11 2-6Z" fill="#FFF3E3" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M-6-8-5.5-4-3-5.5Z M6-8 5.5-4 3-5.5Z" fill="#FFB3C7"/>
+  <ellipse cy="0" rx="10" ry="8" fill="#FFF3E3" stroke="${P}" stroke-width="2.2"/>
+  <path d="M-6-1q2 2 4 0M2-1q2 2 4 0" stroke="${P}" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+  <ellipse cx="-7" cy="2.5" rx="2" ry="1.2" fill="#FF8FA8" opacity=".7"/><ellipse cx="7" cy="2.5" rx="2" ry="1.2" fill="#FF8FA8" opacity=".7"/>
+  <path d="M-16 2Q-15 13 0 13Q15 13 16 2Q8 6 0 6Q-8 6-16 2Z" fill="${c}" stroke="${P}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M-12 6Q0 10 12 6M-9 4.5v7M-3 5.8v7M3 5.8v7M9 4.5v7" stroke="${l}" stroke-width="1.4" fill="none" opacity=".9"/>`;
 }
-/* cat tower (city): a two-storey cat condo, a cave on a sisal post above a cave base */
+/* cat bed (settlement): a sleepy cat in a basket */
+function bedShape(c){
+  return `<ellipse cy="13" rx="17" ry="3.5" fill="#3A2341" opacity=".18"/>${basket(c)}`;
+}
+/* cat tower (city): a cat tree, sisal post on a wide base with a basket bed on top */
 function towerShape(c){
-  const P='#3A2341', l=shade(c,.35), d=shade(c,-.25);
+  const P='#3A2341', d=shade(c,-.25);
   return `<ellipse cy="15" rx="19" ry="3.5" fill="${P}" opacity=".18"/>
-  <rect x="-3.5" y="-12" width="7" height="12" fill="#E8C99B" stroke="${P}" stroke-width="2.2"/>
-  <path d="M-3.5-9h7M-3.5-5h7" stroke="${P}" stroke-width="1.2" opacity=".5"/>
-  <rect x="-17" y="-1" width="34" height="13" rx="4" fill="${c}" stroke="${P}" stroke-width="2.6"/>
-  <path d="M-6 12V7A6 6 0 0 1 6 7V12Z" fill="${P}"/>
-  <ellipse cx="-2.6" cy="8.5" rx="1.5" ry="1.9" fill="#FFE27A"/><ellipse cx="2.6" cy="8.5" rx="1.5" ry="1.9" fill="#FFE27A"/>
-  <rect x="-19" y="11" width="38" height="5" rx="2.5" fill="${d}" stroke="${P}" stroke-width="2.2"/>
-  <path d="M-11-20-10-31-3-25Z M11-20 10-31 3-25Z" fill="${c}" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M-9.4-23-9-28.5-6-26Z M9.4-23 9-28.5 6-26Z" fill="#FFB3C7"/>
-  <path d="M-13-10V-17A13 12 0 0 1 13-17V-10Z" fill="${c}" stroke="${P}" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M-9-19A9 8 0 0 1-2-24" stroke="${l}" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <path d="M-5-10V-14A5 5 0 0 1 5-14V-10Z" fill="${P}"/>
-  <rect x="-15" y="-12" width="30" height="4" rx="2" fill="${d}" stroke="${P}" stroke-width="2"/>`;
+  <rect x="-18" y="7" width="36" height="8" rx="4" fill="${c}" stroke="${P}" stroke-width="2.6"/>
+  <path d="M-12 11h24" stroke="${d}" stroke-width="2" stroke-linecap="round"/>
+  <rect x="-4" y="-8" width="8" height="16" fill="#E8C99B" stroke="${P}" stroke-width="2.2"/>
+  <path d="M-4-3h8M-4 2h8" stroke="${P}" stroke-width="1.2" opacity=".5"/>
+  <circle cx="11" cy="3" r="3" fill="#F58AB8" stroke="${P}" stroke-width="1.6"/>
+  <g transform="translate(0 -14) scale(.95)">${basket(c)}</g>`;
 }
 function vacuumSVG(){
   if(ART.has('vacuum')) return `<image href="${artSrc('vacuum')}" x="-32" y="-32" width="64" height="64"/>`;
@@ -675,7 +673,7 @@ function renderBoard(){
       out += `<g transform="translate(${hx.x} ${hx.y-(t.num?20:0)}) scale(${t.num?1.05:1.4})">${resGlyph(t.type)}</g>`;
     }
     if(t.num){
-      const hot = t.num===6||t.num===8, ty = hx.y+(ART.has(info.tileArt)?24:22);
+      const hot = t.num===6||t.num===8, ty = hx.y+(ART.has(info.tileArt)?14:22);
       out += `<circle cx="${hx.x}" cy="${ty}" r="17" fill="#fff" stroke="#3A2341" stroke-width="2.6"/>
         <text x="${hx.x}" y="${ty+4}" text-anchor="middle" font-family="Mochiy Pop One" font-size="15" fill="${hot?'#E0335A':'#3A2341'}">${t.num}</text>
         ${Array.from({length:pips(t.num)},(_,k)=>`<circle cx="${hx.x+(k-(pips(t.num)-1)/2)*4.2}" cy="${ty+11}" r="1.4" fill="${hot?'#E0335A':'#3A2341'}"/>`).join('')}`;
@@ -793,8 +791,8 @@ function renderPanel(){
     <h3>Build</h3>
     <div class="builds">
       ${buildBtn('path','Yarn path', `${cp.pieces.path} left · connects your beds`, pathOK, pathIcon(br.color))}
-      ${buildBtn('bed','Cat bed', `${cp.pieces.bed} left · 1 point`, bedOK, `<svg viewBox="-19 -21 38 37" width="32" height="31" aria-hidden="true">${bedShape(br.color)}</svg>`)}
-      ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, `<svg viewBox="-21 -33 42 52" width="28" height="35" aria-hidden="true">${towerShape(br.color)}</svg>`)}
+      ${buildBtn('bed','Cat bed', `${cp.pieces.bed} left · 1 point`, bedOK, `<svg viewBox="-19 -14 38 29" width="34" height="26" aria-hidden="true">${bedShape(br.color)}</svg>`)}
+      ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, `<svg viewBox="-21 -28 42 46" width="30" height="33" aria-hidden="true">${towerShape(br.color)}</svg>`)}
       <button class="build" ${treatOK?'':'disabled'} onclick="G.buyTreat()">${treatIcon('gift',30)}<span class="nm">Treat card<small>${S.deck.length} in the jar</small></span>${costChips(COST.treat)}</button>
     </div>
     <div class="row" style="margin-top:10px">
@@ -998,7 +996,11 @@ function startScreen(){
     ${heroHTML()}
     ${ON.err?`<p class="hint alert" role="alert" style="max-width:680px;margin:14px auto 0">${esc(ON.err)}</p>`:''}
     <div class="modes">
-      <section class="card mode">
+      ${window.WI_OFFLINE ? `<section class="card mode">
+        <h2>Play online with friends</h2>
+        <p class="muted">Online games with cat codes turn on once Whisker Isles is live on jessyux.com. This preview plays on one device.</p>
+        ${breedPicker(-1, [], 'void')}
+      </section>` : `<section class="card mode">
         <h2>Play online with friends</h2>
         <p class="muted">Everyone plays on their own phone or laptop.</p>
         <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
@@ -1012,7 +1014,7 @@ function startScreen(){
             <button class="btn" ${busy?'disabled':''}>${ON.status==='connecting'?'Joining…':'Join'}</button>
           </form>
         </div>
-      </section>
+      </section>`}
       <section class="card mode">
         <h2>Play on one device</h2>
         <p class="muted">Pass the screen around. ${n>MAX_CLASSIC?'<b>Big Island</b> for 5 to 10 cats.':'Classic island for 2 to 4 cats. Add a 5th for Big Island.'}</p>
