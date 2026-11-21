@@ -11,7 +11,7 @@
 /* ---------- content ---------- */
 const RES = ['litter','yarn','nip','nib','fish'];
 const RINFO = {
-  litter:{name:'Litter',  tile:'Litter dunes',   fill:'#EFD9B4', deep:'#C9A46E', art:'res-litter',  tileArt:'tile-litter'},
+  litter:{name:'Litter',  tile:'Litter dunes',   fill:'#EFD9B4', deep:'#C9A46E', art:'res-litter',  tileArt:'tile-litter', rim:'#A3A0B3'},
   yarn:  {name:'Yarn',    tile:'Yarn meadow',    fill:'#F9C6DC', deep:'#F58AB8', art:'res-yarn',    tileArt:'tile-yarn'},
   nip:   {name:'Catnip',  tile:'Catnip patch',   fill:'#C4EAA6', deep:'#6CC04A', art:'res-catnip',  tileArt:'tile-catnip'},
   nib:   {name:'Nibbles', tile:'Nibble bakery',  fill:'#FFD9B8', deep:'#E8935A', art:'res-nibbles', tileArt:'tile-nibbles'},
@@ -752,8 +752,8 @@ function renderBoard(){
   const minX=Math.min(...xs)-pad, minY=Math.min(...ys)-pad, w=Math.max(...xs)-minX+pad, h=Math.max(...ys)-minY+pad;
   svg.setAttribute('viewBox', `${minX} ${minY} ${w} ${h}`);
   let out = `<defs><pattern id="waves" width="60" height="26" patternUnits="userSpaceOnUse"><path d="M0 13q15-10 30 0t30 0" fill="none" stroke="#B2A5F0" stroke-width="3" stroke-linecap="round"/></pattern></defs>
-  <rect x="${minX}" y="${minY}" width="${w}" height="${h}" rx="40" fill="#C7BDF7" stroke="#3A2341" stroke-width="5"/>
-  <rect x="${minX}" y="${minY}" width="${w}" height="${h}" rx="40" fill="url(#waves)" opacity=".8"/>
+  <rect x="${minX+3}" y="${minY+3}" width="${w-6}" height="${h-6}" rx="38" fill="#C7BDF7" stroke="#3A2341" stroke-width="5"/>
+  <rect x="${minX+5.5}" y="${minY+5.5}" width="${w-11}" height="${h-11}" rx="35.5" fill="url(#waves)" opacity=".8"/>
   <g aria-hidden="true">${HEX.map(hx=>`<polygon points="${hexPoints(hx.x,hx.y,HR)}" fill="#3A2341" stroke="#3A2341" stroke-width="34" stroke-linejoin="round"/>`).join('')}${HEX.map(hx=>`<polygon points="${hexPoints(hx.x,hx.y,HR)}" fill="#FFF3C9" stroke="#FFF3C9" stroke-width="26" stroke-linejoin="round"/>`).join('')}</g>`;
   // the beach follows the outline of the tiles, with soft rounded corners
   S.board.docks.forEach(d=>{
@@ -781,8 +781,8 @@ function renderBoard(){
       out += `<g transform="translate(${hx.x} ${hx.y-(t.num?20:0)}) scale(${t.num?1.05:1.4})">${resGlyph(t.type)}</g>`;
     }
     // rim in the resource's own colour, like the yarn tile's pink frame
-    out += `<polygon points="${hexPoints(hx.x,hx.y,HR-7)}" fill="none" stroke="${info.deep}" stroke-width="8" stroke-linejoin="round" opacity=".95"/>`
-         + `<polygon points="${hexPoints(hx.x,hx.y,HR-11.5)}" fill="none" stroke="${shade(info.deep,-.25)}" stroke-width="1.6" stroke-linejoin="round" opacity=".55"/>`
+    out += `<polygon points="${hexPoints(hx.x,hx.y,HR-7)}" fill="none" stroke="${info.rim||info.deep}" stroke-width="8" stroke-linejoin="round" opacity=".95"/>`
+         + `<polygon points="${hexPoints(hx.x,hx.y,HR-11.5)}" fill="none" stroke="${shade(info.rim||info.deep,-.25)}" stroke-width="1.6" stroke-linejoin="round" opacity=".55"/>`
          + `<polygon points="${hexPoints(hx.x,hx.y,HR-2.5)}" fill="none" stroke="#3A2341" stroke-width="3" stroke-linejoin="round"/>`;
     if(ui.hl && t.num===ui.hl.sum){
       out += `<polygon class="${i===S.vac?'hl-blocked':'hl-tile'}" points="${hexPoints(hx.x,hx.y,HR-4)}"/>`;
