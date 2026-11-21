@@ -167,22 +167,35 @@ function costChips(cost){
     Object.entries(cost).flatMap(([r,n])=>Array(n).fill(resIcon(r))).join('') + `</span>`;
 }
 function pathIcon(c){ return `<svg viewBox="-20 -20 40 40" width="30" height="30" aria-hidden="true"><path d="M-14 10 14-10" stroke="#3A2341" stroke-width="10" stroke-linecap="round"/><path d="M-14 10 14-10" stroke="${c}" stroke-width="5.5" stroke-linecap="round"/><path d="M-14 10 14-10" stroke="#fff" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round" opacity=".8"/></svg>`; }
+function shade(c,f){ const n=parseInt(c.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255; const m=f<0?0:255,t=Math.abs(f); r=Math.round(r+(m-r)*t); g=Math.round(g+(m-g)*t); b=Math.round(b+(m-b)*t); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
+/* cat bed (settlement): a dome cat cave with ears and glowing eyes in the doorway */
 function bedShape(c){
-  const P='#3A2341';
-  return `<ellipse cy="5" rx="15" ry="9" fill="${c}" stroke="${P}" stroke-width="2.6"/>
-  <ellipse cy="2" rx="10" ry="5" fill="#fff" opacity=".55"/>
-  <path d="M-8-1-6-9-2-4M8-1 6-9 2-4" fill="${c}" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M-8 0q8-8 16 0" fill="${c}" stroke="${P}" stroke-width="2.2"/>
-  <path d="M-5-1q1.5 1.5 3 0M2-1q1.5 1.5 3 0" stroke="${P}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+  const P='#3A2341', l=shade(c,.35), d=shade(c,-.25);
+  return `<ellipse cy="13" rx="17" ry="3.5" fill="${P}" opacity=".18"/>
+  <path d="M-13-6-12-19-4-13Z M13-6 12-19 4-13Z" fill="${c}" stroke="${P}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M-11-10-10.5-16-7-13Z M11-10 10.5-16 7-13Z" fill="#FFB3C7"/>
+  <path d="M-16 11V0A16 15 0 0 1 16 0V11Z" fill="${c}" stroke="${P}" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M-11-4A12 11 0 0 1-2-11" stroke="${l}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-8 11V4A8 8 0 0 1 8 4V11Z" fill="${P}"/>
+  <ellipse cx="-3.5" cy="5" rx="1.9" ry="2.4" fill="#FFE27A"/><ellipse cx="3.5" cy="5" rx="1.9" ry="2.4" fill="#FFE27A"/>
+  <rect x="-17" y="9" width="34" height="5" rx="2.5" fill="${d}" stroke="${P}" stroke-width="2.2"/>`;
 }
+/* cat tower (city): a two-storey cat condo, a cave on a sisal post above a cave base */
 function towerShape(c){
-  const P='#3A2341';
-  return `<rect x="-3.5" y="-14" width="7" height="26" fill="#E8C99B" stroke="${P}" stroke-width="2.2"/>
-  <rect x="-15" y="10" width="30" height="7" rx="3" fill="${c}" stroke="${P}" stroke-width="2.6"/>
-  <rect x="-12" y="-3" width="13" height="5" rx="2.5" fill="${c}" stroke="${P}" stroke-width="2.2"/>
-  <rect x="-13" y="-19" width="26" height="7" rx="3.5" fill="${c}" stroke="${P}" stroke-width="2.6"/>
-  <path d="M-7-19-5-27-1-21M7-19 5-27 1-21" fill="${c}" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M-7-19q7-8 14 0" fill="${c}" stroke="${P}" stroke-width="2.2"/>`;
+  const P='#3A2341', l=shade(c,.35), d=shade(c,-.25);
+  return `<ellipse cy="15" rx="19" ry="3.5" fill="${P}" opacity=".18"/>
+  <rect x="-3.5" y="-12" width="7" height="12" fill="#E8C99B" stroke="${P}" stroke-width="2.2"/>
+  <path d="M-3.5-9h7M-3.5-5h7" stroke="${P}" stroke-width="1.2" opacity=".5"/>
+  <rect x="-17" y="-1" width="34" height="13" rx="4" fill="${c}" stroke="${P}" stroke-width="2.6"/>
+  <path d="M-6 12V7A6 6 0 0 1 6 7V12Z" fill="${P}"/>
+  <ellipse cx="-2.6" cy="8.5" rx="1.5" ry="1.9" fill="#FFE27A"/><ellipse cx="2.6" cy="8.5" rx="1.5" ry="1.9" fill="#FFE27A"/>
+  <rect x="-19" y="11" width="38" height="5" rx="2.5" fill="${d}" stroke="${P}" stroke-width="2.2"/>
+  <path d="M-11-20-10-31-3-25Z M11-20 10-31 3-25Z" fill="${c}" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M-9.4-23-9-28.5-6-26Z M9.4-23 9-28.5 6-26Z" fill="#FFB3C7"/>
+  <path d="M-13-10V-17A13 12 0 0 1 13-17V-10Z" fill="${c}" stroke="${P}" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M-9-19A9 8 0 0 1-2-24" stroke="${l}" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M-5-10V-14A5 5 0 0 1 5-14V-10Z" fill="${P}"/>
+  <rect x="-15" y="-12" width="30" height="4" rx="2" fill="${d}" stroke="${P}" stroke-width="2"/>`;
 }
 function vacuumSVG(){
   if(ART.has('vacuum')) return `<image href="${artSrc('vacuum')}" x="-32" y="-32" width="64" height="64"/>`;
@@ -680,7 +693,7 @@ function renderBoard(){
   out += `<g transform="translate(${vh.x} ${vh.y-14})" aria-label="The Vacuum"><g class="vac-bob">${vacuumSVG()}</g></g>`;
   Object.entries(S.bld).forEach(([v,b])=>{
     const c = BREEDS[S.players[b.p].breed].color;
-    out += `<g transform="translate(${V[v].x} ${V[v].y}) scale(1.3)" aria-hidden="true">${b.t==='tower'?towerShape(c):bedShape(c)}</g>`;
+    out += `<g transform="translate(${V[v].x} ${V[v].y}) scale(1.15)" aria-hidden="true">${b.t==='tower'?towerShape(c):bedShape(c)}</g>`;
   });
   const mode = boardMode(), p = S.cur;
   if(mode==='bed') validBeds(p, S.phase==='setup').forEach(v=>{
@@ -780,8 +793,8 @@ function renderPanel(){
     <h3>Build</h3>
     <div class="builds">
       ${buildBtn('path','Yarn path', `${cp.pieces.path} left · connects your beds`, pathOK, pathIcon(br.color))}
-      ${buildBtn('bed','Cat bed', `${cp.pieces.bed} left · 1 point`, bedOK, `<svg viewBox="-18 -14 36 26" width="34" height="26" aria-hidden="true">${bedShape(br.color)}</svg>`)}
-      ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, `<svg viewBox="-18 -30 36 50" width="26" height="34" aria-hidden="true">${towerShape(br.color)}</svg>`)}
+      ${buildBtn('bed','Cat bed', `${cp.pieces.bed} left · 1 point`, bedOK, `<svg viewBox="-19 -21 38 37" width="32" height="31" aria-hidden="true">${bedShape(br.color)}</svg>`)}
+      ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, `<svg viewBox="-21 -33 42 52" width="28" height="35" aria-hidden="true">${towerShape(br.color)}</svg>`)}
       <button class="build" ${treatOK?'':'disabled'} onclick="G.buyTreat()">${treatIcon('gift',30)}<span class="nm">Treat card<small>${S.deck.length} in the jar</small></span>${costChips(COST.treat)}</button>
     </div>
     <div class="row" style="margin-top:10px">
