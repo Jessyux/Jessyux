@@ -698,6 +698,35 @@ function render(){
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
   renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
+  watchAwards();
+}
+/* when a bonus card changes hands, pop it up big, then fly it to that cat's row */
+function watchAwards(){
+  const key = (S.code||'hotseat') + ':' + S.board.tiles.map(t=>t.type[0]+(t.num||'')).join('');
+  const now = {longest:S.longest, army:S.army, key}, was = ui.awards;
+  ui.awards = now;
+  if(!was || was.key!==key) return;   // first look at this game, or a new one: no fanfare
+  if(now.longest>=0 && now.longest!==was.longest) awardPop('longest', now.longest);
+  if(now.army>=0 && now.army!==was.army) awardPop('zoomiest', now.army);
+}
+function awardPop(kind, p){
+  const title = kind==='longest' ? 'Longest yarn' : 'Zoomiest cat';
+  const el = document.createElement('div');
+  el.className = 'award-pop'; el.setAttribute('role','status');
+  el.innerHTML = `<div class="ap-card ${kind==='longest'?'':'zoom'}">${awardSVG(kind,120)}<b>${title}</b><span>${esc(pname(p))} gets +2 points</span></div>`;
+  document.body.appendChild(el);
+  const card = el.firstElementChild;
+  const land = ()=>{ el.remove(); const row = document.querySelector(`.pl[data-i="${p}"]`); if(row){ row.classList.remove('got'); void row.offsetWidth; row.classList.add('got'); } };
+  if(reduceMotion){ setTimeout(land, 1800); return; }
+  card.animate([{transform:'scale(.2) rotate(-12deg)',opacity:0},{transform:'scale(1.12) rotate(3deg)',opacity:1,offset:.6},{transform:'scale(1) rotate(0)',opacity:1}],{duration:520,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'both'});
+  setTimeout(()=>{
+    const target = document.querySelector(`.pl[data-i="${p}"] .badges`) || document.querySelector(`.pl[data-i="${p}"]`);
+    const cr = card.getBoundingClientRect();
+    let dx = 0, dy = -200;
+    if(target){ const tr = target.getBoundingClientRect(); dx = tr.left+tr.width/2-(cr.left+cr.width/2); dy = tr.top+tr.height/2-(cr.top+cr.height/2); }
+    el.classList.add('leaving');
+    card.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*.5}px,${dy*.5-50}px) scale(.6)`,opacity:1,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(.12)`,opacity:.3}],{duration:900,easing:'cubic-bezier(.45,0,.3,1)',fill:'both'}).onfinish = land;
+  }, 1900);
 }
 function renderRollbar(){
   const el = $('#rollbar'); if(!el) return;
@@ -888,8 +917,9 @@ function renderPanel(){
     <h3>Cats</h3>
     <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}" data-i="${i}">
       ${portrait(q.breed)}
-      <div><div class="nm"><span class="dot" style="background:${BREEDS[q.breed].color}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}${S.longest===i?`<span class="award-chip" title="Longest yarn, +2 points">${awardSVG('longest',20)}Longest yarn</span>`:''}${S.army===i?`<span class="award-chip" title="Zoomiest cat, +2 points">${awardSVG('zoomiest',20)}Zoomiest</span>`:''}</div>
+      <div><div class="nm"><span class="dot" style="background:${BREEDS[q.breed].color}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
       <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div></div>
+      <div class="badges">${S.longest===i?`<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',36)}</span>`:''}${S.army===i?`<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',36)}</span>`:''}</div>
       <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
   </section>`;
 

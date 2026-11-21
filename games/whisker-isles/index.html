@@ -137,7 +137,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 .players{display:grid;gap:4px}
 .cats-card{padding:10px 12px}
 .cats-card h3{margin-bottom:4px}
-.pl{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:6px 8px;border-radius:var(--r-md);border:2.5px solid transparent}
+.pl{display:grid;grid-template-columns:44px 1fr auto auto;gap:10px;align-items:center;padding:6px 8px;border-radius:var(--r-md);border:2.5px solid transparent}
 .pl.cur{border-color:var(--plum);background:#FFF7DA}
 .pl .portrait{width:44px;height:44px;border-width:2.5px}
 .pl .nm{font-weight:900}
@@ -241,6 +241,19 @@ svg :focus{outline:none}
 @keyframes awardBob{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-2px)}}
 .award .shine{animation:shine 2.8s ease-in-out infinite}
 @keyframes shine{0%,55%{transform:skewX(-20deg) translateX(0)}85%,100%{transform:skewX(-20deg) translateX(64px)}}
+.badges{display:flex;gap:2px;align-items:center}
+.badges:empty{display:none}
+.badge{display:block;line-height:0;filter:drop-shadow(1px 2px 0 rgba(58,35,65,.25))}
+.badge .award{animation:awardBob 3s ease-in-out infinite;transform-origin:50% 40%}
+.badge + .badge .award{animation-delay:-1.5s}
+/* bonus card pop-up */
+.award-pop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none;background:rgba(58,35,65,.18);transition:background .4s}
+.award-pop.leaving{background:transparent}
+.ap-card{display:grid;justify-items:center;gap:4px;padding:18px 28px 20px;background:linear-gradient(135deg,#E9FBF3,#fff);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:5px 5px 0 var(--plum);text-align:center}
+.ap-card.zoom{background:linear-gradient(135deg,#FFF4D1,#fff)}
+.ap-card b{font-family:var(--display);font-weight:400;font-size:1.6rem}
+.ap-card span{font-weight:800}
+.ap-card .award{animation:awardBob 1.6s ease-in-out infinite;transform-origin:50% 40%}
 .award-chip{display:inline-flex;align-items:center;gap:3px;font-size:.7rem;font-weight:900;border:2px solid var(--plum);border-radius:999px;padding:0 .55em 0 .15em;margin-left:4px;background:#fff;vertical-align:middle}
 .award-chip .award{margin:-4px 0}
 /* roll panel under the board */
