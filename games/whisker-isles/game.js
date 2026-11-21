@@ -444,8 +444,10 @@ function roll(){
       S.discardQ = S.players.map((p,i)=>i).filter(i=>total(S.players[i].res)>7);
       if(S.discardQ.length){ S.sub='discard'; }
       else { S.sub='vacuum'; S.subData={from:'roll'}; }
-    } else produce(sum);
+    } else { S.lastProd=[]; produce(sum); }
+    if(sum===7) S.lastProd=[];
     commit();
+    celebrateRoll();
   };
   if(reduceMotion){ finish(); return; }
   spinDice(finish, d);
@@ -458,11 +460,73 @@ function spinDice(done, final){
     if(++n>=7){ clearInterval(iv); if(done) done(); else { ui.rolling=false; render(); } }
   }, 65);
 }
+/* After the dice land: light up the tiles with that number, then fly each
+   card from its tile to the cat who collects it. */
+function celebrateRoll(){
+  if(!S || !S.rolled) return;
+  const sum = S.dice[0]+S.dice[1];
+  ui.hl = {sum, until: Date.now()+2200};
+  renderBoard();
+  clearTimeout(ui.hlTimer);
+  ui.hlTimer = setTimeout(()=>{ ui.hl=null; if(S) renderBoard(); }, 2250);
+  if(reduceMotion || !S.lastProd || !S.lastProd.length) return;
+  const svg = $('#board'); if(!svg || !svg.getScreenCTM) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  let k = 0;
+  S.lastProd.forEach(g=>{
+    const target = document.querySelector(`.pl[data-i="${g.p}"] .portrait`);
+    if(!target) return;
+    const pt = svg.createSVGPoint(); pt.x = HEX[g.h].x; pt.y = HEX[g.h].y;
+    const a = pt.matrixTransform(ctm), tr = target.getBoundingClientRect();
+    const bx = tr.left + tr.width/2, by = tr.top + tr.height/2;
+    for(let n=0;n<g.n;n++){
+      const el = document.createElement('div');
+      el.className = 'fly'; el.innerHTML = resIcon(g.r);
+      el.style.left = (a.x-18)+'px'; el.style.top = (a.y-18)+'px';
+      document.body.appendChild(el);
+      const dx = bx-a.x, dy = by-a.y, delay = 350 + k*140;
+      k++;
+      el.animate([
+        {transform:'translate(0,0) scale(.2)', opacity:0},
+        {transform:'translate(0,-26px) scale(1.25)', opacity:1, offset:.2},
+        {transform:`translate(${dx*.5}px,${dy*.5-60}px) scale(1)`, opacity:1, offset:.6},
+        {transform:`translate(${dx}px,${dy}px) scale(.5)`, opacity:.2}
+      ], {duration:1100, delay, easing:'cubic-bezier(.45,0,.3,1)', fill:'both'}).onfinish = ()=>{
+        el.remove();
+        const row = document.querySelector(`.pl[data-i="${g.p}"]`);
+        if(row){ row.classList.remove('got'); void row.offsetWidth; row.classList.add('got'); }
+      };
+    }
+  });
+}
+
+/* award rosettes for the two bonus cards, with a moving shine */
+let awardN = 0;
+function awardSVG(kind, size){
+  const id = 'aw'+(awardN++), P='#3A2341';
+  const ribbon = kind==='longest' ? '#8EDFC0' : '#FFD36E', ribbon2 = kind==='longest' ? '#5CC9A4' : '#F6B73C';
+  const pts = Array.from({length:24},(_,i)=>{ const r = i%2? 19 : 22, a = Math.PI*2*i/24; return (r*Math.cos(a)).toFixed(1)+','+(r*Math.sin(a)-4).toFixed(1); }).join(' ');
+  const inner = kind==='longest'
+    ? `<circle cx="-1" cy="-5" r="9" fill="#F58AB8" stroke="${P}" stroke-width="2"/><path d="M-9-8q8 4 16-1M-9-2q8 4 16-1M-4-13q3 8 0 16" fill="none" stroke="#C94F86" stroke-width="1.6"/><path d="M7-1q6 5 3 10" fill="none" stroke="${P}" stroke-width="1.8" stroke-linecap="round"/>`
+    : `<path d="M-14-9h5M-15-4h6M-13 1h4" stroke="${P}" stroke-width="2" stroke-linecap="round"/><ellipse cx="1" cy="-2" rx="8" ry="5.5" fill="#FFB067" stroke="${P}" stroke-width="2"/><circle cx="8" cy="-8" r="5" fill="#FFB067" stroke="${P}" stroke-width="2"/><path d="M5-12 6-16 8.5-12.5M10-12.5 12-16 12.5-11" fill="#FFB067" stroke="${P}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  return `<svg class="award" viewBox="-26 -30 52 60" width="${size}" height="${size*60/52}" aria-hidden="true">
+    <defs><clipPath id="${id}"><circle cx="0" cy="-4" r="15"/></clipPath>
+    <linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+    <path d="M-10 10-15 28-8 24-4 30 0 12Z" fill="${ribbon2}" stroke="${P}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M10 10 15 28 8 24 4 30 0 12Z" fill="${ribbon}" stroke="${P}" stroke-width="2" stroke-linejoin="round"/>
+    <polygon points="${pts}" fill="${ribbon}" stroke="${P}" stroke-width="2.2" stroke-linejoin="round"/>
+    <circle cx="0" cy="-4" r="15" fill="#FFF7DA" stroke="${P}" stroke-width="2"/>
+    ${inner}
+    <g clip-path="url(#${id})"><rect class="shine" x="-30" y="-24" width="14" height="40" fill="url(#${id}g)" transform="skewX(-20)"/></g>
+  </svg>`;
+}
+
 function produce(sum){
   const gains = S.players.map(()=>emptyRes());
+  S.lastProd = [];
   S.board.tiles.forEach((t,i)=>{
     if(t.num!==sum || i===S.vac) return;
-    HEXV[i].forEach(v=>{ const b=S.bld[v]; if(b){ const n = b.t==='tower'?2:1; S.players[b.p].res[t.type]+=n; gains[b.p][t.type]+=n; } });
+    HEXV[i].forEach(v=>{ const b=S.bld[v]; if(b){ const n = b.t==='tower'?2:1; S.players[b.p].res[t.type]+=n; gains[b.p][t.type]+=n; S.lastProd.push({h:i, p:b.p, r:t.type, n}); } });
   });
   const parts = gains.map((g,i)=>describe(g)?`${pname(i)} gets ${describe(g)}`:null).filter(Boolean);
   log(`${pname(S.cur)} rolls ${sum}. ` + (parts.length ? parts.join('; ')+'.' : 'Nobody collects.'));
@@ -587,7 +651,7 @@ function applyRemote(state, ver){
   S = state; ON.ver = ver; ON.status='playing';
   buildGeo(S.board.radius);
   if(ui.modal && ['trade','bank','gift','pounce'].includes(ui.modal.kind) && !myTurn()) ui.modal=null;
-  if(prevRoll!==null && S.rollN!==prevRoll && !reduceMotion){ const d=S.dice; spinDice(null, d); return; }
+  if(prevRoll!==null && S.rollN!==prevRoll && !reduceMotion){ const d=S.dice; spinDice(()=>{ ui.rolling=false; render(); celebrateRoll(); }, d); return; }
   render();
 }
 function pushState(){
@@ -615,13 +679,32 @@ function render(){
       <div class="wordmark">${miniMark()}<span>Whisker Isles</span></div>
       <div class="tools" id="tools"></div>
     </header>
-    <div class="board-wrap"><svg id="board" role="application" aria-label="Game board"></svg></div>
+    <div class="board-wrap"><svg id="board" role="application" aria-label="Game board"></svg><section class="card rollbar" id="rollbar"></section></div>
     <aside class="panel" id="panel"></aside>
   </div>`;
   $('#tools').innerHTML = `${S.online?`<span class="code-chip" title="Friends join with this code">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></span>`:''}
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
-  renderBoard(); renderPanel(); renderOverlay();
+  renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
+}
+function renderRollbar(){
+  const el = $('#rollbar'); if(!el) return;
+  const play = S.phase==='play', mt = myTurn();
+  const sum = S.dice[0]+S.dice[1], rolls = S.hist.reduce((a,b)=>a+b,0);
+  const last = !play ? 'Dice start after setup.'
+    : ui.rolling ? 'Rolling…'
+    : S.rolled ? (sum===7 ? 'Rolled 7. The Vacuum switches on.' : `Rolled ${sum}. A ${sum} comes up ${pips(sum)} in 36 rolls (${Math.round(pips(sum)/36*100)}%).`)
+    : `${pname(S.cur)} rolls next.`;
+  el.innerHTML = `
+    <div class="rb-dice">
+      <h3>Dice</h3>
+      <div id="dice" class="dice-row"></div>
+      <p class="rb-last">${last}</p>
+      ${play && mt ? `<button class="btn primary" onclick="G.roll()" ${S.rolled||S.sub||ui.rolling?'disabled':''}>Roll dice</button>` : ''}
+    </div>
+    <div class="rb-odds"><h3>Odds <small class="muted">${rolls} roll${rolls===1?'':'s'}</small></h3>${oddsChart()}</div>
+    <div class="rb-log"><h3>What happened</h3><ul class="log">${S.log.slice(0,30).map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+  renderDice();
 }
 function miniMark(){ return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M18 44 26 8 48 28Z M82 44 74 8 52 28Z" fill="#FF8A3D" stroke="#3A2341" stroke-width="5" stroke-linejoin="round"/><ellipse cx="50" cy="60" rx="40" ry="33" fill="#FFB067" stroke="#3A2341" stroke-width="5"/><circle cx="35" cy="60" r="7" fill="#3A2341"/><circle cx="65" cy="60" r="7" fill="#3A2341"/><circle cx="33" cy="57" r="2.5" fill="#fff"/><circle cx="63" cy="57" r="2.5" fill="#fff"/></svg>`; }
 
@@ -672,11 +755,16 @@ function renderBoard(){
       out += `<polygon points="${hexPoints(hx.x,hx.y,HR-3)}" fill="${info.fill}" stroke="#3A2341" stroke-width="3.5" stroke-linejoin="round"/>`;
       out += `<g transform="translate(${hx.x} ${hx.y-(t.num?20:0)}) scale(${t.num?1.05:1.4})">${resGlyph(t.type)}</g>`;
     }
+    if(ui.hl && t.num===ui.hl.sum){
+      out += `<polygon class="${i===S.vac?'hl-blocked':'hl-tile'}" points="${hexPoints(hx.x,hx.y,HR-4)}"/>`;
+    }
     if(t.num){
       const hot = t.num===6||t.num===8, ty = hx.y+(ART.has(info.tileArt)?14:22);
+      if(ui.hl && t.num===ui.hl.sum && i!==S.vac) out += `<g class="hl-token" style="transform-origin:${hx.x}px ${ty}px">`;
       out += `<circle cx="${hx.x}" cy="${ty}" r="17" fill="#fff" stroke="#3A2341" stroke-width="2.6"/>
         <text x="${hx.x}" y="${ty+4}" text-anchor="middle" font-family="Mochiy Pop One" font-size="15" fill="${hot?'#E0335A':'#3A2341'}">${t.num}</text>
         ${Array.from({length:pips(t.num)},(_,k)=>`<circle cx="${hx.x+(k-(pips(t.num)-1)/2)*4.2}" cy="${ty+11}" r="1.4" fill="${hot?'#E0335A':'#3A2341'}"/>`).join('')}`;
+      if(ui.hl && t.num===ui.hl.sum && i!==S.vac) out += `</g>`;
     }
     out += `</g>`;
   });
@@ -773,9 +861,16 @@ function renderPanel(){
     <div class="turn">${portrait(cp.breed)}<div><div class="who">${youLabel}</div>
       <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
     <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
-    ${play ? `<div class="dice-row" style="margin-top:12px"><div id="dice" class="dice-row" style="gap:8px"></div>
-      ${mt?`<button class="btn primary" onclick="G.roll()" ${S.rolled||S.sub||ui.rolling?'disabled':''}>Roll dice</button>`:''}</div>` : ''}
     ${ui.mode && !S.sub && mt ? `<div style="margin-top:10px"><button class="btn small" onclick="G.mode(null)">Cancel building</button></div>` : ''}
+  </section>`;
+
+  html += `<section class="card cats-card">
+    <h3>Cats</h3>
+    <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}" data-i="${i}">
+      ${portrait(q.breed)}
+      <div><div class="nm"><span class="dot" style="background:${BREEDS[q.breed].color}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}${S.longest===i?`<span class="award-chip" title="Longest yarn, +2 points">${awardSVG('longest',20)}Longest yarn</span>`:''}${S.army===i?`<span class="award-chip" title="Zoomiest cat, +2 points">${awardSVG('zoomiest',20)}Zoomiest</span>`:''}</div>
+      <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div></div>
+      <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
   </section>`;
 
   if(mp){
@@ -829,19 +924,10 @@ function renderPanel(){
     </section>`;
   }
 
-  html += `<section class="card">
-    <h3>Cats</h3>
-    <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}">
-      ${portrait(q.breed)}
-      <div><div class="nm"><span class="dot" style="background:${BREEDS[q.breed].color}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}${S.longest===i?'<span class="badge">Longest yarn</span>':''}${S.army===i?'<span class="badge" style="background:var(--butter)">Zoomiest</span>':''}</div>
-      <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div></div>
-      <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
-  </section>`;
 
-  if(play) html += `<section class="card odds"><details><summary>Dice odds</summary>${oddsChart()}</details></section>`;
-  html += `<section class="card"><details open><summary>What happened</summary><ul class="log">${S.log.slice(0,30).map(l=>`<li>${l}</li>`).join('')}</ul></details></section>`;
+
   $('#panel').innerHTML = html;
-  if(!ui.rolling) renderDice();
+
 }
 
 function oddsChart(){
@@ -1033,8 +1119,8 @@ function rulesHTML(){
 
   <section class="rule-block"><h3>Bonus points</h3>
   <div class="trade-row">
-    <div class="dock"><span class="badge">Longest yarn</span><small>+2 for the first unbroken trail of 5 paths. A longer trail steals it.</small></div>
-    <div class="dock"><span class="badge" style="background:var(--butter)">Zoomiest</span><small>+2 for the first to play 3 Zoomies. More Zoomies steal it.</small></div>
+    <div class="award-card">${awardSVG('longest',72)}<div><b>Longest yarn</b><span class="plus">+2 points</span><small>For the first unbroken trail of 5 or more yarn paths. A longer trail steals it.</small></div></div>
+    <div class="award-card zoom">${awardSVG('zoomiest',72)}<div><b>Zoomiest cat</b><span class="plus">+2 points</span><small>For the first cat to play 3 Zoomies. Playing more Zoomies steals it.</small></div></div>
   </div></section>
 
   <section class="rule-block"><h3>Treat cards</h3>
