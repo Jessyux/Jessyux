@@ -158,6 +158,7 @@ function treatGlyph(t){
   }
 }
 function treatIcon(t, px){
+  if(!TREATS[t]) t = 'gift';
   const a = TREATS[t].art, st = px?` style="width:${px}px;height:${px}px"`:'';
   if(ART.has(a)) return `<span class="ic"${st}><img src="${artSrc(a)}" alt=""></span>`;
   return `<svg class="ic"${st} viewBox="-21 -21 42 42" aria-hidden="true">${treatGlyph(t)}</svg>`;
@@ -425,9 +426,15 @@ function buyTreat(){
   if(!myTurn() || !canPay(pl.res,COST.treat) || !S.deck.length) return;
   pay(pl.res,COST.treat);
   const t = S.deck.pop();
-  pl.cards.push({t, turn:S.turn});
   log(`${pname(S.cur)} buys a treat card.`);
-  ui.modal = {kind:'bought', t};
+  if(S.online){
+    // online, the deck stays on the server: ask for a card and show it when it arrives
+    pl.cards.push({t:'new', turn:S.turn});
+    ui.pendingBuy = pl.cards.length-1;
+  } else {
+    pl.cards.push({t, turn:S.turn});
+    ui.modal = {kind:'bought', t};
+  }
   commit();
 }
 function describe(g){ return RES.filter(r=>g[r]).map(r=>`${g[r]} ${RINFO[r].name}`).join(', '); }
@@ -571,7 +578,7 @@ function endVacuum(){ S.sub=null; S.subData=null; ui.mode=null; commit(); }
 
 function playTreat(idx){
   const pl = P(), c = pl.cards[idx];
-  if(!myTurn() || !c || c.t==='trophy' || c.turn>=S.turn || S.playedTreat || S.sub) return;
+  if(!myTurn() || !c || !TREATS[c.t] || c.t==='trophy' || c.turn>=S.turn || S.playedTreat || S.sub) return;
   if(c.t!=='zoomies' && !S.rolled) return;
   pl.cards.splice(idx,1); S.playedTreat = true;
   log(`${pname(S.cur)} plays ${TREATS[c.t].name}.`);
@@ -650,6 +657,10 @@ function applyRemote(state, ver){
   if(!S) setTimeout(()=>window.scrollTo(0,0));
   S = state; ON.ver = ver; ON.status='playing';
   buildGeo(S.board.radius);
+  if(ui.pendingBuy!=null && me()>=0){
+    const c = S.players[me()].cards[ui.pendingBuy];
+    if(c && TREATS[c.t]){ ui.modal = {kind:'bought', t:c.t}; ui.pendingBuy = null; }
+  }
   if(ui.modal && ['trade','bank','gift','pounce'].includes(ui.modal.kind) && !myTurn()) ui.modal=null;
   if(prevRoll!==null && S.rollN!==prevRoll && !reduceMotion){ const d=S.dice; spinDice(()=>{ ui.rolling=false; render(); celebrateRoll(); }, d); return; }
   render();
@@ -695,7 +706,17 @@ function renderRollbar(){
     : ui.rolling ? 'Rolling…'
     : S.rolled ? (sum===7 ? 'Rolled 7. The Vacuum switches on.' : `Rolled ${sum}. A ${sum} comes up ${pips(sum)} in 36 rolls (${Math.round(pips(sum)/36*100)}%).`)
     : `${pname(S.cur)} rolls next.`;
+  const p = S.cur, cp = P(), br = BREEDS[cp.breed], mine = me();
+  const youLabel = S.online ? (mine===p ? 'Your turn' : `${pname(p)}'s turn`) : pname(p);
+  const pts = vp(p,false);
+  const h = hintText(); const hObj = typeof h==='string'?{t:h}:h;
   el.innerHTML = `
+    <div class="rb-turn turn-card" style="--pc:${br.color}">
+      <div class="turn">${portrait(cp.breed)}<div><div class="who">${youLabel}</div>
+        <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
+      <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
+      ${ui.mode && !S.sub && mt ? `<div style="margin-top:8px"><button class="btn small" onclick="G.mode(null)">Cancel building</button></div>` : ''}
+    </div>
     <div class="rb-dice">
       <h3>Dice</h3>
       <div id="dice" class="dice-row"></div>
@@ -730,7 +751,8 @@ function renderBoard(){
   let out = `<defs><pattern id="waves" width="60" height="26" patternUnits="userSpaceOnUse"><path d="M0 13q15-10 30 0t30 0" fill="none" stroke="#B2A5F0" stroke-width="3" stroke-linecap="round"/></pattern></defs>
   <rect x="${minX}" y="${minY}" width="${w}" height="${h}" rx="40" fill="#C7BDF7" stroke="#3A2341" stroke-width="5"/>
   <rect x="${minX}" y="${minY}" width="${w}" height="${h}" rx="40" fill="url(#waves)" opacity=".8"/>
-  <polygon points="${hexPoints(0,0,HR*(1.75*R+.2),30)}" fill="#FFF3C9" stroke="#3A2341" stroke-width="4" stroke-linejoin="round"/>`;
+  <g aria-hidden="true">${HEX.map(hx=>`<polygon points="${hexPoints(hx.x,hx.y,HR)}" fill="#3A2341" stroke="#3A2341" stroke-width="34" stroke-linejoin="round"/>`).join('')}${HEX.map(hx=>`<polygon points="${hexPoints(hx.x,hx.y,HR)}" fill="#FFF3C9" stroke="#FFF3C9" stroke-width="26" stroke-linejoin="round"/>`).join('')}</g>`;
+  // the beach follows the outline of the tiles, with soft rounded corners
   S.board.docks.forEach(d=>{
     const e = E[d.e], a=V[e.a], b=V[e.b], hx = HEX[e.hexes[0]];
     const mx=(a.x+b.x)/2, my=(a.y+b.y)/2, dx=mx-hx.x, dy=my-hx.y, L=Math.hypot(dx,dy);
@@ -844,7 +866,6 @@ function renderPanel(){
   const mine = me(), mp = mine>=0 ? S.players[mine] : null;
   const play = S.phase==='play', mt = myTurn();
   const free = play && mt && S.rolled && !S.sub && !S.offer;
-  const h = hintText(); const hObj = typeof h==='string'?{t:h}:h;
   const can = k => free && canPay(cp.res,COST[k]);
   const bedOK = can('bed') && cp.pieces.bed>0 && validBeds(p,false).length>0;
   const pathOK = can('path') && cp.pieces.path>0 && validPaths(p).length>0;
@@ -853,16 +874,8 @@ function renderPanel(){
   const buildBtn = (k,label,sub,ok,icon) => `<button class="build${ui.mode===k?' active':''}" ${ok||ui.mode===k?'':'disabled'} onclick="G.mode('${k}')" aria-pressed="${ui.mode===k}">
       ${icon}<span class="nm">${label}<small>${sub}</small></span>${costChips(COST[k])}</button>`;
   const lens = S.players.map((_,i)=>roadLength(i));
-  const youLabel = S.online ? (mine===p ? 'Your turn' : `${pname(p)}'s turn`) : pname(p);
-  const pts = vp(p,false);
 
-  let html = `
-  <section class="card turn-card" style="--pc:${br.color}">
-    <div class="turn">${portrait(cp.breed)}<div><div class="who">${youLabel}</div>
-      <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
-    <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
-    ${ui.mode && !S.sub && mt ? `<div style="margin-top:10px"><button class="btn small" onclick="G.mode(null)">Cancel building</button></div>` : ''}
-  </section>`;
+  let html = '';
 
   html += `<section class="card cats-card">
     <h3>Cats</h3>
@@ -917,6 +930,7 @@ function renderPanel(){
     html += `<section class="card">
     <h3>Treat cards</h3>
     ${mp.cards.length ? `<div class="treats">${mp.cards.map((c,i)=>{
+      if(!TREATS[c.t]) return `<button class="treat new" disabled>${treatIcon('gift')}Unwrapping…</button>`;
       const fresh = c.turn>=S.turn, vpCard = c.t==='trophy';
       const ok = mt && !vpCard && !fresh && !S.playedTreat && !S.sub && (c.t==='zoomies' || S.rolled);
       return `<button class="treat${fresh?' new':''}" ${ok?'':'disabled'} onclick="G.playTreat(${i})" title="${esc(TREATS[c.t].text)}">${treatIcon(c.t)}${TREATS[c.t].name}${vpCard?'<br><small>secret point</small>':fresh?'<br><small>next turn</small>':''}</button>`; }).join('')}</div>`

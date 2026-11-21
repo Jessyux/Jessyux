@@ -11,7 +11,8 @@
    Each game code maps to one Durable Object (GameRoom). The room keeps
    the lobby and the latest game state, and relays every change to the
    other players. The game rules run in the players' browsers; the room
-   only checks who is allowed to send what. Rooms delete themselves after
+   only checks who is allowed to send what, and keeps the treat card deck
+   and each cat's cards hidden from the other players. Rooms delete themselves after
    3 days without activity.
    ========================================================================== */
 import { DurableObject } from 'cloudflare:workers';
@@ -22,6 +23,45 @@ const CODE_RE = /^[a-z]+-[a-z]+-\d{2}$/;
 const MAX_CATS = 10;
 const IDLE_MS = 3 * 24 * 60 * 60 * 1000;
 const BREEDS = 10;
+
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// Treat cards are private. Each player gets their own copy of the game with
+// the other cats' cards and the deck hidden. Everything shows once it's over.
+function redact(game, seat) {
+  if (!game || game.phase === 'over') return game;
+  return {
+    ...game,
+    deck: (game.deck || []).map(() => 'hidden'),
+    players: game.players.map((pl, i) => i === seat ? pl : { ...pl, cards: pl.cards.map(c => ({ t: 'hidden', turn: c.turn })) })
+  };
+}
+
+// Put a player's push together with what only the server knows. Other cats'
+// cards and the deck come from storage; the sender's own cards must be ones
+// they already hold, plus { t: 'new' } for each card they just bought.
+function merge(stored, inc, seat) {
+  if (!Array.isArray(inc.players) || inc.players.length !== stored.players.length) return null;
+  const deck = stored.deck.slice();
+  let drew = false;
+  for (let j = 0; j < inc.players.length; j++) {
+    if (!inc.players[j] || typeof inc.players[j] !== 'object') return null;
+    if (j !== seat) { inc.players[j].cards = stored.players[j].cards; continue; }
+    const pool = stored.players[j].cards.slice(), out = [];
+    for (const c of Array.isArray(inc.players[j].cards) ? inc.players[j].cards : []) {
+      if (c && c.t === 'new') {
+        if (!deck.length) return null;
+        out.push({ t: deck.pop(), turn: c.turn }); drew = true; continue;
+      }
+      const k = pool.findIndex(o => c && o.t === c.t && o.turn === c.turn);
+      if (k < 0) return null;
+      out.push(pool.splice(k, 1)[0]);
+    }
+    inc.players[j].cards = out;
+  }
+  inc.deck = deck;
+  return { game: inc, drew };
+}
 
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -79,6 +119,17 @@ export class GameRoom extends DurableObject {
   lobbyMsg(room, except) {
     return { type: 'lobby', lobby: { code: room.code, host: room.host, seats: room.seats, started: room.started }, online: this.onlinePids(except) };
   }
+  seatOf(ws, room) {
+    const pid = (ws.deserializeAttachment() || {}).pid;
+    return pid ? room.seats.findIndex(s => s.pid === pid) : -1;
+  }
+  // send each player their own view of the game
+  broadcastGame(room, game, extra, except) {
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws === except) continue;
+      try { ws.send(JSON.stringify({ ...extra, ver: room.ver, state: redact(game, this.seatOf(ws, room)) })); } catch (e) {}
+    }
+  }
   broadcast(msg, except) {
     const s = JSON.stringify(msg);
     for (const ws of this.ctx.getWebSockets()) { if (ws !== except) { try { ws.send(s); } catch (e) {} } }
@@ -111,7 +162,7 @@ export class GameRoom extends DurableObject {
       ws.serializeAttachment({ pid });
       this.broadcast(this.lobbyMsg(room), ws);
       const hello = this.lobbyMsg(room);
-      if (room.started) { hello.state = await this.ctx.storage.get('game'); hello.ver = room.ver; }
+      if (room.started) { hello.state = redact(await this.ctx.storage.get('game'), room.seats.findIndex(s => s.pid === pid)); hello.ver = room.ver; }
       send(hello);
     }
 
@@ -126,23 +177,34 @@ export class GameRoom extends DurableObject {
     }
 
     else if (m.type === 'start' && me && me === room.host && !room.started && room.seats.length >= 2 && m.state && typeof m.state === 'object') {
+      const game = m.state;
+      if (!Array.isArray(game.deck) || !Array.isArray(game.players)) return;
+      game.players.forEach(pl => { pl.cards = []; });
+      shuffle(game.deck); // the host's browser made the deck, so shuffle it again where nobody can see
       room.started = true; room.ver = 1;
-      await this.ctx.storage.put('game', m.state);
+      await this.ctx.storage.put('game', game);
       await this.ctx.storage.put('room', room);
-      const msg = this.lobbyMsg(room); msg.state = m.state; msg.ver = 1;
-      this.broadcast(msg);
+      const lobby = this.lobbyMsg(room); delete lobby.online;
+      for (const ws of this.ctx.getWebSockets()) {
+        try { ws.send(JSON.stringify({ ...lobby, online: this.onlinePids(), ver: 1, state: redact(game, this.seatOf(ws, room)) })); } catch (e) {}
+      }
     }
 
     else if (m.type === 'state' && me && room.started && room.seats.some(s => s.pid === me) && m.state && typeof m.state === 'object') {
-      if (m.base !== room.ver) {
-        // someone else moved first: send the current game back so this player catches up
-        send({ type: 'state', ver: room.ver, state: await this.ctx.storage.get('game') });
+      const seat = room.seats.findIndex(s => s.pid === me);
+      const stored = await this.ctx.storage.get('game');
+      const merged = m.base === room.ver ? merge(stored, m.state, seat) : null;
+      if (!merged) {
+        // someone else moved first, or the push didn't add up: send this player the current game
+        send({ type: 'state', ver: room.ver, state: redact(stored, seat) });
         return;
       }
       room.ver++;
-      await this.ctx.storage.put('game', m.state);
+      await this.ctx.storage.put('game', merged.game);
       await this.ctx.storage.put('room', room);
-      this.broadcast({ type: 'state', ver: room.ver, state: m.state }, ws);
+      // the sender only needs it back if a card was drawn for them or the game just ended
+      const echo = merged.drew || merged.game.phase === 'over';
+      this.broadcastGame(room, merged.game, { type: 'state' }, echo ? null : ws);
     }
 
     await this.ctx.storage.setAlarm(Date.now() + IDLE_MS);
