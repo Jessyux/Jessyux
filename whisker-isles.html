@@ -724,7 +724,12 @@ body{overflow-x:clip}
 .nook-edit .tip{position:absolute;left:50%;top:-30px;transform:translateX(-50%);background:var(--plum);color:#fff;font-size:.75rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
 .nook-edit:hover .tip,.nook-edit:focus-visible .tip{opacity:1}
 .nook-edit:focus-visible .portrait{outline:3px solid var(--plum);outline-offset:3px}
-.host-acts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+.host-acts{display:flex;gap:6px;margin-top:4px;justify-content:center}
+.host-ic{position:relative;width:30px;height:30px;border-radius:50%;border:2.5px solid var(--plum);background:#fff;color:var(--plum);display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:1px 2px 0 var(--plum)}
+.host-ic:hover,.host-ic:focus-visible{background:#FFF7DA}
+.host-ic.boot:hover,.host-ic.boot:focus-visible{background:#FFE3E0}
+.host-ic .tip{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);background:var(--plum);color:#fff;font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:3}
+.host-ic:hover .tip,.host-ic:focus-visible .tip{opacity:1}
 .btn.tiny{font-size:.72rem;padding:2px 8px;border-width:2px;box-shadow:1px 2px 0 var(--plum)}
 .cozy-tip{text-align:center;font-weight:800;font-size:.85rem;background:rgba(255,252,244,.9);border-radius:12px;padding:4px 10px;max-width:46ch;margin:2px auto 0}
 .lc-name{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
@@ -2774,8 +2779,11 @@ function catSheetHTML(i){
 const PENCIL = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4L19 9l-4-4L4 16z" fill="#fff" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2.4"/></svg>';
 /* host buttons under another cat: hand over the host role, or remove them */
 function hostActs(s){
-  return `<span class="host-acts"><button class="btn tiny" onclick="G.makeHost('${esc(s.pid)}')">Make host</button><button class="btn tiny" onclick="G.kick('${esc(s.pid)}')">Remove</button></span>`;
+  const n = esc(s.name);
+  return `<span class="host-acts"><button class="host-ic" onclick="G.makeHost('${esc(s.pid)}')" aria-label="Make ${n} the host">${CROWN}<span class="tip" aria-hidden="true">Make host</span></button><button class="host-ic boot" onclick="G.kick('${esc(s.pid)}')" aria-label="Boot ${n} out of the game">${BOOT}<span class="tip" aria-hidden="true">Boot out of game</span></button></span>`;
 }
+const CROWN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#FFD66B" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 3h6v8l6 3c1.5.8 2 2 2 3.5V20H4V3z" fill="#F7A6A0" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 16h17" stroke="currentColor" stroke-width="2"/></svg>';
 /* your own cat in the lobby: name, cat and colours */
 function lobbyCatHTML(){
   const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return '';
@@ -2794,7 +2802,7 @@ function hostToolsHTML(){
     ${S.phase==='play' ? `<p><button class="btn primary" onclick="G.skip()">Skip ${esc(pname(S.cur))}'s turn</button></p>` : '<p class="muted">Turns can be skipped once setup is done.</p>'}
     <ul class="host-list">${L.seats.map((x,i)=>`<li><span class="dot" style="background:${S.players[i]?pcol(S.players[i]):'#ccc'}"></span><b>${esc(x.name)}</b>${x.pid===L.host?' <small>Host</small>':''}
       ${x.pid===ON.pid ? '<small>You</small>' : hostActs(x)}</li>`).join('')}</ul>
-    <p class="muted small">Removing a cat takes their beds and yarn off the island. A game needs at least 2 cats.</p></div>`;
+    <p class="muted small">Booting a cat takes their beds and yarn off the island. A game needs at least 2 cats. Hover an icon to see what it does.</p></div>`;
 }
 function lobbyScreen(){
   const L = ON.lobby, isHost = L.host===ON.pid, n = L.seats.length;
@@ -2898,8 +2906,8 @@ const G = {
   kick(pid){
     const L = ON.lobby; if(!L || L.host!==ON.pid || !ON.ws) return;
     const k = L.seats.findIndex(q=>q.pid===pid); if(k<0) return;
-    if(S && L.seats.length<=2){ alert('A game needs at least 2 cats, so nobody can be removed.'); return; }
-    if(!confirm(`Remove ${L.seats[k].name} from this game?${S?' Their beds and yarn leave the island.':''}`)) return;
+    if(S && L.seats.length<=2){ alert('A game needs at least 2 cats, so nobody can be booted.'); return; }
+    if(!confirm(`Boot ${L.seats[k].name} out of this game?${S?' Their beds and yarn leave the island.':''}`)) return;
     if(!S){ ON.ws.send(JSON.stringify({type:'kick', pid})); return; }
     const keep = S; S = JSON.parse(JSON.stringify(S)); dropCat(k); const next = S; S = keep;
     ON.ws.send(JSON.stringify({type:'kick', pid, base:ON.ver, state:next})); ui.modal=null; render();
