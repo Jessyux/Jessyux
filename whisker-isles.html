@@ -309,6 +309,16 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .card-btn.wait .pcard{filter:saturate(.55)}
 /* card view */
 .card-view{text-align:center}
+/* a treat card out of the paw: just the card, big, over a light wash */
+.overlay:has(.card-stage){background:rgba(58,35,65,.28);padding:0}
+.card-stage{position:fixed;inset:0;display:grid;place-items:center;padding:16px;overflow:auto}
+.stage-card{position:relative;filter:drop-shadow(6px 8px 0 rgba(58,35,65,.3))}
+.stage-card .pcard.pc-lg{--cw:min(280px,76vw)}
+.stage-card .pc-text{font-size:15px}
+.pc-why{display:block;margin-top:.55em;padding-top:.5em;border-top:2px dashed #E3CFE6;color:var(--plum-2);font-size:.9em}
+.pc-play{display:block;margin:0 auto .6em;font-size:15px}
+.stage-x{position:absolute;right:-12px;top:-12px;width:38px;height:38px;border-radius:50%;border:2.5px solid var(--plum);background:#fff;color:var(--plum);font-weight:900;font-size:22px;line-height:1;box-shadow:2px 2px 0 var(--plum);cursor:pointer;display:grid;place-items:center;padding:0}
+.treat-hand .card-btn.out{visibility:hidden}
 .card-view .flip{display:inline-block;perspective:900px;margin:4px auto 10px}
 .card-view .flip-in{display:grid;transform-style:preserve-3d}
 .card-view .flip-in>*{grid-area:1/1;backface-visibility:hidden}
@@ -997,12 +1007,13 @@ const TREAT_CARD = {
 };
 function treatArt(t){ const a = TREATS[t].art; return ART.has(a) ? `<img src="${artSrc(a)}" alt="">` : `<svg viewBox="-21 -21 42 42" aria-hidden="true">${treatGlyph(t)}</svg>`; }
 /* size: 'sm' in the hand, 'md' in the rules, 'lg' in the card view. md and lg show the rule text. */
-function treatCard(t, size){
+/* extra (big cards only): {why, play} puts a note and a button inside the card */
+function treatCard(t, size, extra){
   if(!TREATS[t]) return cardBack(size);
-  const k = TREAT_CARD[t], big = size!=='sm', art = treatArt(t), mark = t==='trophy' ? '1' : art;
-  return `<span class="pcard pc-${size||'sm'}" style="--tc:${k.c};--tb:${k.b}" aria-hidden="true">
-    <span class="pc-corner tl">${mark}</span><span class="pc-corner br">${mark}</span>
-    <span class="pc-in"><span class="pc-name">${TREATS[t].name}</span><span class="pc-art">${art}</span>${big?`<span class="pc-text">${TREATS[t].text}</span>`:''}<span class="pc-foot">${k.foot}</span></span></span>`;
+  const k = TREAT_CARD[t], big = size!=='sm', art = treatArt(t), mark = t==='trophy' ? '1' : art, x = big && extra;
+  return `<span class="pcard pc-${size||'sm'}" style="--tc:${k.c};--tb:${k.b}"${x?'':' aria-hidden="true"'}>
+    <span class="pc-corner tl" aria-hidden="true">${mark}</span><span class="pc-corner br" aria-hidden="true">${mark}</span>
+    <span class="pc-in"><span class="pc-name">${TREATS[t].name}</span><span class="pc-art" aria-hidden="true">${art}</span>${big?`<span class="pc-text">${TREATS[t].text}${x&&x.why?`<span class="pc-why">${x.why}</span>`:''}</span>`:''}${x&&x.play?x.play:''}<span class="pc-foot" aria-hidden="true">${k.foot}</span></span></span>`;
 }
 function cardBack(size, cls){
   const paw = '<svg viewBox="-20 -20 40 40"><g fill="#3A2341"><ellipse cx="0" cy="6" rx="9" ry="7.5"/><circle cx="-10" cy="-4" r="4"/><circle cx="-4" cy="-11" r="4"/><circle cx="4" cy="-11" r="4"/><circle cx="10" cy="-4" r="4"/></g></svg>';
@@ -2060,6 +2071,7 @@ function renderDock(){
     tab.setAttribute('aria-label', (u[k]?'Lower ':'Lift ')+label.toLowerCase());
     tab.innerHTML = `${label}<span class="chev" aria-hidden="true"></span>`;
     f.innerHTML = fan; f.setAttribute('aria-label', aria);
+    if(k==='treat' && ui.modal && ui.modal.kind==='treat'){ const out = f.querySelector(`.card-btn[data-ci="${ui.modal.i}"]`); if(out) out.classList.add('out'); }
     if(h.dataset.pc!==coat){ h.dataset.pc = coat; h.querySelector('.pb').innerHTML = pawImg(mp,'back'+side,'paw-back'); h.querySelector('.pt').innerHTML = pawImg(mp,'thumb'+side,'paw-thumb'); }
   });
   el.querySelector('.dock-secret').textContent = trophies ? '+'+trophies+' secret' : '';
@@ -2100,13 +2112,25 @@ function dockReact(mine, mp){
   if(now.cards>prev.cards){ const b = el.querySelector('.treat-hand .fc:last-child .card-btn') || el.querySelector('.treat-hand .card-btn'); if(b) b.animate([{transform:'translateY(40px) rotateY(90deg)'},{transform:'translateY(-10px) rotateY(0)',offset:.7},{transform:'none'}],{duration:650,easing:'ease-out'}); squeeze('.treat-hand'); nudge('treat'); }
 }
 /* a played treat leaves the paw and flies up onto the island */
+/* the staged card and the card it came from in the paw */
+function stageFrom(){ const m = ui.modal; return m && m.kind==='treat' ? document.querySelector(`#dock .card-btn[data-ci="${m.i}"] .pcard`) : null; }
+function stageSlide(card, back, done){
+  const src = stageFrom();
+  if(!src || reduceMotion){ if(done) done(); return; }
+  const a = src.getBoundingClientRect(), b = card.getBoundingClientRect();
+  const from = `translate(${a.left+a.width/2-b.left-b.width/2}px,${a.top+a.height/2-b.top-b.height/2}px) rotate(-6deg) scale(${a.width/b.width})`;
+  const frames = [{transform:from},{transform:'translateY(-14px) rotate(2deg) scale(1.03)',offset:.7},{transform:'none'}];
+  const an = card.animate(back ? frames.slice().reverse() : frames, {duration:back?380:520, easing:back?'cubic-bezier(.5,0,.8,.4)':'cubic-bezier(.2,.8,.3,1)', fill:'both'});
+  if(done) an.finished.then(done, done);
+}
 function flyPlayed(i){
-  const b = document.querySelector(`#dock .card-btn[data-ci="${i}"] .pcard`), bd = $('#board');
+  const staged = document.querySelector('#stage-card .pcard'), b = staged || document.querySelector(`#dock .card-btn[data-ci="${i}"] .pcard`), bd = $('#board');
   if(!b || !bd || reduceMotion) return;
   const a = b.getBoundingClientRect(), z = bd.getBoundingClientRect(), c = b.cloneNode(true);
   c.classList.add('flying-card'); c.style.left = a.left+'px'; c.style.top = a.top+'px'; document.body.appendChild(c);
   const dx = z.left+z.width/2-a.left-a.width/2, dy = Math.max(z.top+z.height/2, 140)-a.top-a.height/2;
-  c.animate([{transform:'none'},{transform:`translate(${dx*.6}px,${dy*.6-60}px) rotate(-8deg) scale(1.5)`,offset:.55},{transform:`translate(${dx}px,${dy}px) rotate(4deg) scale(1.8)`,opacity:0}],{duration:900,easing:'cubic-bezier(.3,.7,.4,1)'}).finished.then(()=>c.remove(),()=>c.remove());
+  const s1 = staged ? .8 : 1.5, s2 = staged ? .5 : 1.8; c.style.width = a.width+'px';
+  c.animate([{transform:'none'},{transform:`translate(${dx*.6}px,${dy*.6-60}px) rotate(-8deg) scale(${s1})`,offset:.55},{transform:`translate(${dx}px,${dy}px) rotate(4deg) scale(${s2})`,opacity:0}],{duration:900,easing:'cubic-bezier(.3,.7,.4,1)'}).finished.then(()=>c.remove(),()=>c.remove());
 }
 /* lift and lower the paws: tap the cards or the tab, tap anywhere else or press Esc to lower */
 function setHand(k, up){
@@ -2187,6 +2211,7 @@ function renderOverlay(){
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
   if(S && S.phase==='over' && !ui.hideWin) playClimb();
   /* a bought card arrives face down and turns over */
+  const sc = !sameKind && o.querySelector('#stage-card'); if(sc) stageSlide(sc, false);
   const fl = o.querySelector('#flip-in'); if(fl && !reduceMotion) fl.animate([{transform:'rotateY(180deg) scale(.7)'},{transform:'rotateY(90deg) scale(1.05)',offset:.55},{transform:'rotateY(0) scale(1)'}],{duration:850,easing:'cubic-bezier(.3,.1,.3,1)',delay:150,fill:'backwards'});
 }
 /* full-screen confetti for the winner, in the island's colours */
@@ -2313,10 +2338,11 @@ function modalHTML(){
   if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
   if(m.kind==='treat'){
     const c = S.players[me()] && S.players[me()].cards[m.i]; if(!c || !TREATS[c.t]) return '';
-    const why = treatWhy(c);
-    return `<div class="modal handoff card-view" role="dialog" aria-label="${esc(TREATS[c.t].name)}"><div class="flip">${treatCard(c.t,'lg')}</div>
-      <p class="vh">${TREATS[c.t].text}</p>${why?`<p class="why">${why}</p>`:''}
-      <div class="actions center"><button class="btn small" onclick="G.close()">Keep it</button>${why?'':`<button class="btn primary" onclick="G.playCard(${m.i})">Play ${esc(TREATS[c.t].name)}</button>`}</div></div>`;
+    const why = treatWhy(c), nm = esc(TREATS[c.t].name);
+    const play = why ? '' : `<button class="btn primary pc-play" onclick="G.playCard(${m.i})">Play ${nm}</button>`;
+    return `<div class="card-stage" onclick="if(event.target===this)G.putBack()" aria-label="${nm}">
+      <div class="stage-card" id="stage-card">${treatCard(c.t,'lg',{why, play})}
+        <button class="stage-x" onclick="G.putBack()" aria-label="Put ${nm} back in your paw">\u00d7</button></div></div>`;
   }
   if(m.kind==='stolen') return `<div class="modal handoff"><div class="big-ic">${resIcon(m.r,90)}</div><h2>You swiped ${RINFO[m.r].name}</h2><p>Taken from ${pname(m.from)}.</p><div class="actions center"><button class="btn primary" onclick="G.close()">Nice</button></div></div>`;
   if(m.kind==='gift'){
@@ -2630,8 +2656,10 @@ const G = {
     else ui.modal={kind};
     render();
   },
-  close(){ ui.modal=null; render(); },
-  card(i){ ui.modal={kind:'treat', i}; ui.refocus='.card-view .btn'; render(); },
+  close(){ if(ui.modal && ui.modal.kind==='treat') return G.putBack(); ui.modal=null; render(); },
+  card(i){ ui.modal={kind:'treat', i}; ui.refocus='.stage-card .pc-play, .stage-card .stage-x'; render(); },
+  putBack(){ const sc = $('#stage-card'); if(!sc || ui.putting) { ui.modal=null; render(); return; }
+    ui.putting = true; stageSlide(sc, true, ()=>{ ui.putting = false; ui.modal=null; render(); }); },
   playCard(i){ ui.modal=null; flyPlayed(i); playTreat(i); render(); },
   hand(k, up){ setHand(k, up===undefined ? !(k && (ui.handUp||{})[k]) : up); },
   hideWin(){ ui.hideWin=true; render(); },
