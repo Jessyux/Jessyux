@@ -396,6 +396,28 @@ body{overflow-x:clip}
 .crew .seat.add small{display:block;font-weight:700;color:var(--plum-2);font-size:.8rem;line-height:1.25}
 .crew-go{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
 .btn.big{font-size:1.15rem;padding:.6em 1.6em}
+.seat-note{display:block;min-height:1.2em;margin-top:4px;font-size:.72rem;font-weight:700;color:var(--plum-2);line-height:1.2}
+.seat input[aria-invalid="true"]{border-color:var(--strawberry);box-shadow:0 0 0 3px #FFD0DA}
+.seat input::placeholder{color:#A792AC}
+.crew .hint.alert{margin:16px 0 0}
+.lb-card{margin-top:18px}
+.raft.two .lb-card{grid-column:1/-1}
+.lb{width:100%;border-collapse:collapse;margin-top:12px;font-variant-numeric:tabular-nums}
+.lb th,.lb td{text-align:right;padding:.45em .6em;border-bottom:2px dashed #E6D6EA}
+.lb th:nth-child(2),.lb td:nth-child(2),.lb tbody th{text-align:left}
+.lb thead th{font-size:.8rem;color:var(--plum-2);font-weight:900;border-bottom:2.5px solid var(--plum)}
+.lb tbody th{font-weight:900}
+.lb td:first-child{text-align:left;color:var(--plum-2);font-weight:900;width:3.5em}
+.lb tbody tr:first-child td:first-child,.lb tbody tr:first-child th{color:var(--plum)}
+.lb tbody tr:first-child{background:#FFF4D2}
+.lb tr.hi th{text-decoration:underline;text-decoration-color:var(--strawberry);text-decoration-thickness:3px;text-underline-offset:3px}
+.win-lb{margin-top:16px;text-align:left}
+.win-lb h3{font-size:1.1rem}
+.win-lb .lb{margin-top:6px}
+.win-lb tr{position:relative}
+.climb{display:inline-block;margin-left:6px;padding:.05em .55em;border:2px solid var(--plum);border-radius:999px;background:var(--mint);font-family:var(--body);font-size:.72rem;font-weight:900;vertical-align:middle}
+.climb.new{background:var(--butter)}
+.lb-earn{display:block;font-family:var(--body);font-weight:900;color:var(--strawberry);font-size:.78rem}
 .online-note{max-width:44ch;margin:16px auto 0;padding:0 16px;text-align:center;color:var(--plum-2);font-size:.9rem}
 @media (max-width:760px){
   .raft.two{grid-template-columns:1fr}
@@ -739,12 +761,50 @@ function newGame(seats, opts){
     rolled:false, dice:[1,1], rollN:0, hist:Array(13).fill(0), playedTreat:false,
     sub:null, subData:null, discardQ:[], offer:null,
     longest:-1, army:-1,
-    log:[], handoff:!opts.online, winner:-1
+    log:[], handoff:!opts.online, winner:-1,
+    gid: Date.now().toString(36)+Math.random().toString(36).slice(2,7)
   };
   log(`A new game begins on ${big?'Big Island':'Whisker Isles'}. ${pname(0)} places first.`);
 }
 
 /* take-backs only last for the turn in play, so a saved game never carries them */
+/* ---------- leaderboard: kept on this device, one row per player name ---------- */
+const BOARD_KEY = 'whisker-isles-leaderboard', SCORED_KEY = 'whisker-isles-scored';
+const PLACE_PTS = [3,2,1];
+const nameKey = n => String(n||'').trim().toLowerCase();
+function loadBoard(){ try{ const b = JSON.parse(store.get(BOARD_KEY)); return b && typeof b==='object' ? b : {}; }catch(e){ return {}; } }
+function boardRows(){ return Object.values(loadBoard()).sort((a,b)=>b.points-a.points || b.wins-a.wins || a.games-b.games || a.name.localeCompare(b.name)); }
+function boardRow(name){ return loadBoard()[nameKey(name)] || null; }
+/* the winner is 1st; everyone else by points, and cats on the same points share a place */
+function placings(){
+  const w = S.winner, rest = S.players.map((_,i)=>i).filter(i=>i!==w).sort((a,b)=>vp(b,true)-vp(a,true));
+  const out = [{i:w, place:1}];
+  rest.forEach((i,k)=>{ const prev = out[out.length-1];
+    out.push({i, place: k>0 && vp(i,true)===vp(prev.i,true) ? prev.place : k+2}); });
+  return out.map(o=>Object.assign(o, {pts: PLACE_PTS[o.place-1] || 0}));
+}
+function recordResult(){
+  if(!S || S.phase!=='over' || S.winner<0) return;
+  const id = S.gid || S.code || ('g'+S.players.map(p=>p.name).join('|')+':'+S.turn);
+  let done = []; try{ done = JSON.parse(store.get(SCORED_KEY)) || []; }catch(e){}
+  if(done.includes(id)) return;
+  const rankOf = rows => { const m = {}; rows.forEach((r,k)=>{ m[nameKey(r.name)] = {rank:k+1, points:r.points}; }); return m; };
+  const before = rankOf(boardRows());
+  const b = loadBoard(), now = Date.now();
+  placings().forEach(({i,place,pts})=>{
+    const nm = String(S.players[i].name||'').trim(), k = nameKey(nm); if(!k) return;
+    const r = b[k] || (b[k] = {name:nm, points:0, wins:0, games:0, last:0});
+    r.name = nm; r.games++; r.last = now; r.points += pts; if(place===1) r.wins++;
+  });
+  store.set(BOARD_KEY, JSON.stringify(b));
+  done.push(id); store.set(SCORED_KEY, JSON.stringify(done.slice(-300)));
+  ui.climb = {id, before, played:false};
+}
+function boardTable(rows, hi){
+  return `<table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th><th scope="col">Wins</th><th scope="col">Games</th></tr></thead>
+    <tbody>${rows.map((r,k)=>`<tr${hi && hi.includes(nameKey(r.name))?' class="hi"':''}><td>${k+1}</td><th scope="row">${esc(r.name)}</th><td><b>${r.points}</b></td><td>${r.wins}</td><td>${r.games}</td></tr>`).join('')}</tbody></table>`;
+}
+const LB_EMPTY = '<p class="muted">No finished games yet. A win scores 3 points, 2nd place 2 and 3rd place 1.</p>';
 function save(){ if(S && !S.online){ const u=S.undo; S.undo=[]; store.set(SAVE_KEY, JSON.stringify(S)); S.undo=u; } }
 function loadSave(){ try{ const s = JSON.parse(store.get(SAVE_KEY)); return s && s.players ? s : null; }catch(e){ return null; } }
 
@@ -1493,6 +1553,7 @@ function oddsChart(){
 let lastOverlay = '';
 function renderOverlay(){
   const o = $('#overlay');
+  if(S && S.phase==='over') recordResult();
   let html = '';
   if(S){
     if(S.phase==='over' && !ui.hideWin) html = winHTML();
@@ -1510,6 +1571,7 @@ function renderOverlay(){
   o.innerHTML = full;
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
+  if(S && S.phase==='over' && !ui.hideWin) playClimb();
 }
 /* full-screen confetti for the winner, in the island's colours */
 function confetti(){
@@ -1582,18 +1644,52 @@ function offerWaitHTML(){
     <p>You give ${describe(o.give)||'nothing'} and get ${describe(o.get)||'nothing'}. Waiting for ${pname(o.to)} to answer.</p>
     <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button></div></div>`;
 }
+function winBoard(){
+  const rows = boardRows(); if(!rows.length) return '';
+  const mine = S.players.map(p=>nameKey(p.name));
+  const c = ui.climb && ui.climb.id===(S.gid || S.code || ('g'+S.players.map(p=>p.name).join('|')+':'+S.turn)) ? ui.climb : null;
+  const shown = rows.map((r,k)=>({r,k})).filter(({r,k})=>k<5 || mine.includes(nameKey(r.name)));
+  return `<div class="win-lb"><h3>Leaderboard</h3><table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th></tr></thead><tbody>${shown.map(({r,k})=>{
+    const key = nameKey(r.name), was = c && c.before[key], up = c && mine.includes(key) ? (was ? was.rank-(k+1) : 'new') : 0;
+    const badge = up==='new' ? '<span class="climb new">New</span>' : up>0 ? `<span class="climb">Up ${up}</span>` : '';
+    return `<tr${mine.includes(key)?' class="hi"':''} data-k="${esc(key)}"${c&&mine.includes(key)?` data-from="${was?was.rank:rows.length+1}" data-p0="${was?was.points:0}"`:''}><td>${k+1}</td><th scope="row">${esc(r.name)} ${badge}</th><td><b class="lb-pts">${r.points}</b></td></tr>`; }).join('')}</tbody></table></div>`;
+}
+/* rows that climbed slide up from where they were, their points count up, and a badge pops */
+function playClimb(){
+  const c = ui.climb; if(!c || c.played) return;
+  const tb = document.querySelector('.win-lb tbody'); if(!tb) return;
+  c.played = true;
+  const trs = [...tb.rows], h = trs[0] ? trs[0].getBoundingClientRect().height : 36;
+  trs.forEach(tr=>{
+    if(tr.dataset.from===undefined) return;
+    const now = [...tb.rows].indexOf(tr), shownFrom = Math.min(+tr.dataset.from-1, trs.length), dy = (shownFrom-now)*h;
+    const pts = tr.querySelector('.lb-pts'), end = +pts.textContent, start = +tr.dataset.p0, badge = tr.querySelector('.climb');
+    if(reduceMotion){ return; }
+    pts.textContent = start; if(badge) badge.style.opacity = 0;
+    const delay = 900;
+    if(dy>0) tr.animate([{transform:`translateY(${dy}px)`},{transform:`translateY(${dy}px)`,offset:.25},{transform:'translateY(-6px)',offset:.8},{transform:'translateY(0)'}],{duration:1300,delay,easing:'cubic-bezier(.3,0,.25,1)',fill:'backwards'});
+    tr.animate([{background:'#FFF4D2'},{background:'#FFD36E',offset:.5},{background:''}],{duration:1600,delay:delay+700});
+    const t0 = performance.now()+delay+300;
+    const tick = t=>{ const f = Math.max(0,Math.min(1,(t-t0)/900)); pts.textContent = Math.round(start+(end-start)*f); if(f<1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    if(badge) badge.animate([{opacity:0,transform:'scale(.3) rotate(-12deg)'},{opacity:1,transform:'scale(1.35) rotate(6deg)',offset:.6},{opacity:1,transform:'scale(1) rotate(0)'}],{duration:600,delay:delay+1200,fill:'forwards',easing:'ease-out'});
+  });
+}
 function winHTML(){
   const w = S.winner;
-  const order = S.players.map((_,i)=>i).sort((a,b)=>vp(b,true)-vp(a,true));
+  const order = placings(), ORD = ['1st','2nd','3rd'];
   return `<div class="modal handoff win"><div class="cheer"><span class="yay y1">✦</span><span class="yay y2">♥</span><span class="yay y3">✦</span><span class="yay y4">♥</span>${portrait(S.players[w],'win')}</div>
     <h2>${S.online&&w===ON.seat?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
-    <div class="scores">${order.map(i=>`<div><span>${pname(i)}</span><b>${vp(i,true)} points</b></div>`).join('')}</div>
-    <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;
+    <div class="scores">${order.map(({i,place,pts})=>`<div><span>${ORD[place-1]||place+'th'} ${pname(i)}</span><b>${vp(i,true)} points${pts?` <small class="lb-earn">+${pts} leaderboard</small>`:''}</b></div>`).join('')}</div>
+    ${winBoard()}
+    <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn small" onclick="G.open('board')">Leaderboard</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;
 }
 function modalHTML(){
   const m = ui.modal;
   if(m.kind==='rules') return rulesHTML();
   if(m.kind==='cat') return catSheetHTML(m.i);
+  if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
+    return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. Kept on this device by name.</p>${rows.length?boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>You can come back with code <b>${esc(S.code)}</b> while the game is still running.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
@@ -1655,6 +1751,9 @@ function rulesHTML(){
     [`<span class="pill">Start</span>`, `The host taps <b>Start</b> once everyone is in. Lost connection? Open the link again to rejoin.`]
   ])}
   <p class="small">Playing in one room? Choose <b>Play on one device</b> and pass the screen. Hands stay hidden until each cat taps in.</p></section>
+
+  <section class="rule-block"><h3>Leaderboard</h3>
+  <p class="small">Every finished game counts. The winner gets <b>3 points</b>, 2nd place <b>2</b> and 3rd place <b>1</b>, and cats on the same points share a place. Points are kept by name on this device, so type your name the same way each time. Names already on the board pop up as you type.</p></section>
 
   <section class="rule-block"><h3>Setting up</h3>
   ${steps([
@@ -1720,7 +1819,8 @@ function breedPicker(sel, taken, fn){
   return `<div class="breeds" role="radiogroup" aria-label="Pick your cat">${BREEDS.map((b,i)=>`<button role="radio" aria-checked="${sel===i}" aria-label="${b.label}" title="${b.label}" ${taken.includes(i)?'disabled':''} onclick="${fn}(${i})" style="--pc:${b.color}">${catArt(i)}</button>`).join('')}</div>`;
 }
 function startScreen(){
-  if(!ui.seats) ui.seats = DEFAULT_NAMES.slice(0,3).map((n,i)=>({name:n, breed:i, color:i}));
+  if(!ui.seats) ui.seats = [0,1,2].map(i=>({name:'', breed:i, color:i}));
+  const rows = boardRows(), lbShown = ui.lbAll ? rows : rows.slice(0,5);
   if(!ui.form){
     const q = new URLSearchParams(location.search).get('game');
     ui.form = {name: store.get('whisker-isles-name') || '', breed: +(store.get('whisker-isles-breed')||0) || 0, code: q ? normCode(q) : ''};
@@ -1752,25 +1852,34 @@ function startScreen(){
       ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
       <section class="card crew" aria-labelledby="crew-h">
         <div class="crew-head">
-          <div><h2 id="crew-h">Who's playing?</h2><p class="muted">Pass one screen around. Tap a cat to change its look and colour.</p></div>
+          <div><h2 id="crew-h">Who's playing?</h2><p class="muted">Pass one screen around. Everyone types their name, and tapping a cat changes its look and colour.</p></div>
           <span class="isle-chip">${n>MAX_CLASSIC?'Big Island for 5 to 10 cats':'Classic island for 2 to 4 cats'}</span>
         </div>
         <div class="seats">${seats.map((s,i)=>`<div class="seat" style="--pc:${pcol(s)}">
           <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${catArt(s.breed)}</button>
-          <input value="${esc(s.name)}" maxlength="14" aria-label="Name for cat ${i+1}" oninput="G.seatName(${i},this.value)">
+          <input id="seat-name-${i}" value="${esc(s.name)}" maxlength="14" placeholder="Name" required list="wi-names" autocomplete="off" aria-label="Name for cat ${i+1}" aria-describedby="seat-note-${i}"${ui.badSeat===i?' aria-invalid="true"':''} oninput="G.seatName(${i},this.value)">
+          <small class="seat-note" id="seat-note-${i}">${seatNote(s.name)}</small>
           ${n>2?`<button class="x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}
         </div>`).join('')}
         ${n<MAX_CATS?`<button class="seat add" onclick="G.seatAdd()"><span>+</span>Add a cat${n===MAX_CLASSIC?'<small>A 5th cat makes it Big Island</small>':''}</button>`:''}</div>
+        ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
         <div class="crew-go">
           ${saved && saved.phase!=='over' ? `<button class="btn" onclick="G.resume()">Continue saved game</button>` : ''}
           <button class="btn primary big" onclick="G.start()">Start with ${n} cats</button>
         </div>
       </section>
       ${online}
+      <section class="card lb-card" aria-labelledby="lb-h">
+        <div class="crew-head"><h2 id="lb-h">Leaderboard</h2><span class="muted">Win 3, 2nd 2, 3rd 1</span></div>
+        ${rows.length ? boardTable(lbShown) + (rows.length>5 ? `<p class="center"><button class="btn small" onclick="G.lbAll()">${ui.lbAll?'Show top 5':'Show all '+rows.length}</button></p>` : '') : LB_EMPTY}
+      </section>
     </div>
+    <datalist id="wi-names">${rows.slice().sort((a,b)=>b.last-a.last).map(r=>`<option value="${esc(r.name)}"></option>`).join('')}</datalist>
     ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on jessyux.com.</p>' : ''}
   </main>`;
 }
+/* a returning player sees their total as they type */
+function seatNote(name){ const r = name && name.trim() && boardRow(name); return r ? `On the board with ${r.points} point${r.points===1?'':'s'}` : ''; }
 function catSheetHTML(i){
   const s = ui.seats[i]; if(!s) return '';
   const owner = c => ui.seats.find((x,j)=>j!==i&&x.color===c);
@@ -1816,7 +1925,17 @@ function lobbyScreen(){
 const G = {
   /* hot-seat setup */
   start(){
-    const seats = ui.seats.map(s=>({name:s.name.trim()||BREEDS[s.breed].label, breed:s.breed, color:s.color}));
+    /* names are how the leaderboard knows who played, so each cat needs its own */
+    const names = ui.seats.map(s=>s.name.trim());
+    const blank = names.findIndex(n=>!n);
+    const dup = names.findIndex((n,i)=>n && names.findIndex(m=>nameKey(m)===nameKey(n))!==i);
+    if(blank>=0 || dup>=0){
+      ui.badSeat = blank>=0 ? blank : dup;
+      ui.startErr = blank>=0 ? 'Every cat needs a name, so the leaderboard knows who played.' : `Two cats are called ${names[dup]}. Give each one its own name.`;
+      render(); const f=$('#seat-name-'+ui.badSeat); if(f) f.focus(); return;
+    }
+    ui.startErr = null; ui.badSeat = null;
+    const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color}));
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
   },
@@ -1826,12 +1945,13 @@ const G = {
     if(!S && ON.status==='lobby') leaveOnline();
     S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
   },
-  seatName(i,v){ ui.seats[i].name=v; },
+  seatName(i,v){ ui.seats[i].name=v; const n=$('#seat-note-'+i); if(n) n.textContent=seatNote(v); if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); } },
+  lbAll(){ ui.lbAll=!ui.lbAll; render(); },
   /* customise sheet: any cat for anyone, and a colour nobody else has */
   seatPick(i,b){ const s=ui.seats[i]; s.breed=b; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; render(); },
   seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; render(); },
-  seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:names[0]||('Cat '+(ui.seats.length+1)), breed:b}); ui.seats=fixColors(ui.seats); render(); },
-  seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); render(); },
+  seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:'', breed:b}); ui.seats=fixColors(ui.seats); render(); },
+  seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
   /* online setup */
   formName(v){ ui.form.name=v; store.set('whisker-isles-name', v); },
   formBreed(i){ ui.form.breed=i; store.set('whisker-isles-breed', String(i)); render(); },
