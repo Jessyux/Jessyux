@@ -32,6 +32,9 @@ html[data-jux-style="classic"] body{font-family:"Outfit",system-ui,sans-serif}
 :focus-visible{outline:3px solid var(--s-focus);outline-offset:2px}
 .hand{font-family:"Shadows Into Light","Comic Sans MS",cursive;color:var(--s-hand);text-shadow:var(--s-press)}
 h1.hand{margin:12px 0 4px;font-size:clamp(1.8rem,1rem + 1.5vw,2.6rem);font-weight:400;line-height:1.15}
+/* page titles match the portfolio (Gabarito); only the messages themselves are written in the sand */
+h1.sand-title{margin:12px 0 6px;font:800 clamp(1.8rem,1rem + 1.5vw,2.6rem)/1.15 "Gabarito",system-ui,sans-serif;color:inherit}
+html[data-jux-style="classic"] h1.sand-title{font-family:inherit;font-weight:700}
 .sand-sub{margin:0 0 22px;color:var(--s-soft)}
 .sand-sub a{color:inherit;font-weight:600}
 h2{margin:44px 0 14px;font:800 1.5rem/1.2 "Gabarito",system-ui,sans-serif;color:inherit}
