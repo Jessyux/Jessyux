@@ -1,4 +1,7 @@
 {
+  // Don't deploy from this branch. jessyux.com is deployed only from the whisker-isles branch, which takes in
+  // accessibility-playground and adds Whisker Isles (its online rooms and leaderboard bindings live there).
+  // A deploy from here would try to drop the game's rooms, and Cloudflare refuses that.
   "name": "jessyux",
   "compatibility_date": "2026-10-19",
   "main": "worker/index.mjs",
@@ -12,26 +15,15 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
-  // The Whisker Isles leaderboard is real and shared (tables in worker/whisker-schema.sql).
   // The sand message wall (tables in worker/schema.sql); SAND_SALT is a secret on this Worker.
   "d1_databases": [
-    { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" },
     { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "a48c2afe-8253-4b02-8ee0-5b32f25176f6" }
   ],
-  // Whisker Isles online games: one room per cat code, kept in the room's own storage (worker/whisker-room.mjs).
-  "durable_objects": {
-    "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ]
-  },
-  "migrations": [ { "tag": "v1", "new_sqlite_classes": ["WhiskerRoom"] } ],
   // Local testing (wrangler dev --env local) uses a placeholder sand database instead of the real one.
   "env": {
     "local": {
-      "durable_objects": {
-        "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ]
-      },
       "d1_databases": [
-        { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "00000000-0000-0000-0000-000000000000" },
-        { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" }
+        { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "00000000-0000-0000-0000-000000000000" }
       ]
     }
   }

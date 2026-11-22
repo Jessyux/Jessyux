@@ -27,7 +27,7 @@ function copy(rel){
 // the page itself, favicon and CV if they are in the project root
 // pm.html is the PM showcase: self-contained, unlinked, served at jessyux.com/pm
 // bps.html is the same showcase framed for Best Practice Software, served at jessyux.com/bps
-['index.html', 'pm.html', 'bps.html', 'product-manager.html', 'sand.html', 'sand-admin.html', 'whisker-isles.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
+['index.html', 'pm.html', 'bps.html', 'product-manager.html', 'sand.html', 'sand-admin.html', 'favicon.svg', 'Jessy_Chappell_CV.pdf'].forEach(f => { if (existsSync(resolve(ROOT, f))) copy(f); });
 
 // the playground's shared scripts and styles
 if (existsSync(resolve(ROOT, 'a11y'))) readdirSync(resolve(ROOT, 'a11y')).forEach(f => copy('a11y/' + f));
@@ -40,10 +40,8 @@ const refs = new Set(html.match(/img\/[\w\-./]+\.(?:webp|png|jpe?g|svg)/g) || []
 const vinyl = resolve(ROOT, 'img/vinyl');
 if (existsSync(vinyl)) readdirSync(vinyl).forEach(f => refs.add('img/vinyl/' + f));
 
-// the Home floatie (a11y/home-float.css) that every page and the game use to go back home
+// the Home floatie (a11y/home-float.css) that every page uses to go back home
 refs.add('img/floaties/home.webp');
-// Jessy's round photo in the game's top bar (whisker-isles.html), which opens About me
-refs.add('img/jessy-avatar.webp');
 
 let n = 0;
 [...refs].sort().forEach(rel => { if (copy(rel)) n++; });
