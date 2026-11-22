@@ -773,8 +773,19 @@ const BOARD_KEY = 'whisker-isles-leaderboard', SCORED_KEY = 'whisker-isles-score
 const PLACE_PTS = [3,2,1];
 const nameKey = n => String(n||'').trim().toLowerCase();
 function loadBoard(){ try{ const b = JSON.parse(store.get(BOARD_KEY)); return b && typeof b==='object' ? b : {}; }catch(e){ return {}; } }
-function boardRows(){ return Object.values(loadBoard()).sort((a,b)=>b.points-a.points || b.wins-a.wins || a.games-b.games || a.name.localeCompare(b.name)); }
-function boardRow(name){ return loadBoard()[nameKey(name)] || null; }
+/* the shared board comes from /api/leaderboard; if it can't be reached, this device's own board stands in */
+const LB_API = '/api/leaderboard';
+const LB = { rows:null, state:'loading', note:null };
+function localRows(){ return Object.values(loadBoard()).sort((a,b)=>b.points-a.points || b.wins-a.wins || a.games-b.games || a.name.localeCompare(b.name)); }
+function boardRows(){ return LB.rows || (LB.state==='off' ? localRows() : []); }
+function boardRow(name){ const k = nameKey(name); return boardRows().find(r=>nameKey(r.name)===k) || null; }
+function fetchBoard(){
+  fetch(LB_API, {headers:{accept:'application/json'}})
+    .then(r=>r.ok ? r.json() : Promise.reject(r.status))
+    .then(d=>{ LB.rows = Array.isArray(d.rows) ? d.rows : []; LB.state = 'ok'; })
+    .catch(()=>{ LB.state = 'off'; })
+    .then(()=>{ if(!S || S.phase==='over') render(); });
+}
 /* the winner is 1st; everyone else by points, and cats on the same points share a place */
 function placings(){
   const w = S.winner, rest = S.players.map((_,i)=>i).filter(i=>i!==w).sort((a,b)=>vp(b,true)-vp(a,true));
@@ -785,7 +796,8 @@ function placings(){
 }
 function recordResult(){
   if(!S || S.phase!=='over' || S.winner<0) return;
-  const id = S.gid || S.code || ('g'+S.players.map(p=>p.name).join('|')+':'+S.turn);
+  if(!S.gid) S.gid = Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const id = S.gid;
   let done = []; try{ done = JSON.parse(store.get(SCORED_KEY)) || []; }catch(e){}
   if(done.includes(id)) return;
   const rankOf = rows => { const m = {}; rows.forEach((r,k)=>{ m[nameKey(r.name)] = {rank:k+1, points:r.points}; }); return m; };
@@ -798,7 +810,19 @@ function recordResult(){
   });
   store.set(BOARD_KEY, JSON.stringify(b));
   done.push(id); store.set(SCORED_KEY, JSON.stringify(done.slice(-300)));
-  ui.climb = {id, before, played:false};
+  if(LB.state==='off'){ ui.climb = {id, before, played:false}; return; }
+  const sharedBefore = rankOf(LB.rows || []);
+  LB.note = 'Adding this game to the leaderboard…';
+  fetch(LB_API, {method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({gid:id, results: placings().map(({i,place})=>({name:String(S.players[i].name||'').trim(), place}))})})
+    .then(r=>r.json().then(d=>({ok:r.ok, d})))
+    .then(({ok,d})=>{
+      if(!ok) throw new Error(d && d.error || 'The leaderboard can\'t be reached right now.');
+      LB.rows = d.rows; LB.state = 'ok'; LB.note = null;
+      ui.climb = {id, before:sharedBefore, played:false};
+    })
+    .catch(e=>{ LB.note = `This game couldn't be added to the leaderboard. ${e.message && !/fetch|network/i.test(e.message) ? e.message : 'Check your connection.'}`; })
+    .then(()=>{ if(S && S.phase==='over') render(); });
 }
 function boardTable(rows, hi){
   return `<table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th><th scope="col">Wins</th><th scope="col">Games</th></tr></thead>
@@ -1645,11 +1669,12 @@ function offerWaitHTML(){
     <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button></div></div>`;
 }
 function winBoard(){
-  const rows = boardRows(); if(!rows.length) return '';
+  const rows = boardRows(), note = LB.note ? `<p class="muted small" role="status">${esc(LB.note)}</p>` : '';
+  if(!rows.length) return note;
   const mine = S.players.map(p=>nameKey(p.name));
-  const c = ui.climb && ui.climb.id===(S.gid || S.code || ('g'+S.players.map(p=>p.name).join('|')+':'+S.turn)) ? ui.climb : null;
+  const c = ui.climb && ui.climb.id===S.gid ? ui.climb : null;
   const shown = rows.map((r,k)=>({r,k})).filter(({r,k})=>k<5 || mine.includes(nameKey(r.name)));
-  return `<div class="win-lb"><h3>Leaderboard</h3><table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th></tr></thead><tbody>${shown.map(({r,k})=>{
+  return `<div class="win-lb"><h3>Leaderboard</h3>${note}<table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th></tr></thead><tbody>${shown.map(({r,k})=>{
     const key = nameKey(r.name), was = c && c.before[key], up = c && mine.includes(key) ? (was ? was.rank-(k+1) : 'new') : 0;
     const badge = up==='new' ? '<span class="climb new">New</span>' : up>0 ? `<span class="climb">Up ${up}</span>` : '';
     return `<tr${mine.includes(key)?' class="hi"':''} data-k="${esc(key)}"${c&&mine.includes(key)?` data-from="${was?was.rank:rows.length+1}" data-p0="${was?was.points:0}"`:''}><td>${k+1}</td><th scope="row">${esc(r.name)} ${badge}</th><td><b class="lb-pts">${r.points}</b></td></tr>`; }).join('')}</tbody></table></div>`;
@@ -1689,7 +1714,7 @@ function modalHTML(){
   if(m.kind==='rules') return rulesHTML();
   if(m.kind==='cat') return catSheetHTML(m.i);
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
-    return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. Kept on this device by name.</p>${rows.length?boardTable(rows, hi):LB_EMPTY}</div>`; }
+    return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>You can come back with code <b>${esc(S.code)}</b> while the game is still running.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
@@ -1753,7 +1778,7 @@ function rulesHTML(){
   <p class="small">Playing in one room? Choose <b>Play on one device</b> and pass the screen. Hands stay hidden until each cat taps in.</p></section>
 
   <section class="rule-block"><h3>Leaderboard</h3>
-  <p class="small">Every finished game counts. The winner gets <b>3 points</b>, 2nd place <b>2</b> and 3rd place <b>1</b>, and cats on the same points share a place. Points are kept by name on this device, so type your name the same way each time. Names already on the board pop up as you type.</p></section>
+  <p class="small">Every finished game counts. The winner gets <b>3 points</b>, 2nd place <b>2</b> and 3rd place <b>1</b>, and cats on the same points share a place. The leaderboard is shared by everyone who plays and kept by name, so type your name the same way each time. Names already on the board pop up as you type.</p></section>
 
   <section class="rule-block"><h3>Setting up</h3>
   ${steps([
@@ -1871,7 +1896,8 @@ function startScreen(){
       ${online}
       <section class="card lb-card" aria-labelledby="lb-h">
         <div class="crew-head"><h2 id="lb-h">Leaderboard</h2><span class="muted">Win 3, 2nd 2, 3rd 1</span></div>
-        ${rows.length ? boardTable(lbShown) + (rows.length>5 ? `<p class="center"><button class="btn small" onclick="G.lbAll()">${ui.lbAll?'Show top 5':'Show all '+rows.length}</button></p>` : '') : LB_EMPTY}
+        ${LB.state==='loading' ? '<p class="muted">Loading the leaderboard…</p>' : ''}${LB.state==='off' ? '<p class="muted small">The shared leaderboard can\'t be reached, so this shows games played on this device.</p>' : ''}
+        ${LB.state==='loading' ? '' : rows.length ? boardTable(lbShown) + (rows.length>5 ? `<p class="center"><button class="btn small" onclick="G.lbAll()">${ui.lbAll?'Show top 5':'Show all '+rows.length}</button></p>` : '') : LB_EMPTY}
       </section>
     </div>
     <datalist id="wi-names">${rows.slice().sort((a,b)=>b.last-a.last).map(r=>`<option value="${esc(r.name)}"></option>`).join('')}</datalist>
@@ -1941,6 +1967,7 @@ const G = {
   },
   resume(){ S = loadSave(); buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
   toStart(){
+    fetchBoard();
     if(S && S.online) leaveOnline(); else store.del(SAVE_KEY);
     if(!S && ON.status==='lobby') leaveOnline();
     S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
@@ -2023,6 +2050,7 @@ document.addEventListener('keydown', e=>{
 
 /* boot: rejoin an online game from the link, or show the start screen */
 (function boot(){
+  fetchBoard();
   const q = new URLSearchParams(location.search).get('game');
   render();
   if(q && ui.form.name.trim()){ ON.status='connecting'; connect(q); }

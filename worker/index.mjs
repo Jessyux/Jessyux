@@ -1,6 +1,9 @@
-/* Sand messages API. Only /api/* reaches this Worker (assets.run_worker_first);
-   the rest of the site stays static. */
+/* Sand messages API and the Whisker Isles leaderboard. Only /api/* reaches this Worker
+   (assets.run_worker_first); the rest of the site stays static. */
 import { validatePost, MAX_BYTES } from './validate.mjs';
+import { validateResult, listBoard, recordGame } from './leaderboard.mjs';
+
+const GAMES_PER_HOUR = 20;
 
 const WALL = 100;
 const RATE_LIMIT = 5;
@@ -80,10 +83,37 @@ async function remove(request, env, id) {
   return json(204);
 }
 
+async function leaderboard(request, env) {
+  const db = env.WHISKER_DB;
+  if (!db) return fail(503, 'The shared leaderboard isn\'t set up yet.');
+  if (request.method === 'GET') return json(200, { rows: await listBoard(db) });
+  if (request.method !== 'POST') return fail(405, 'Not allowed.');
+
+  const raw = await request.text();
+  if (raw.length > 4096) return fail(413, 'That result is too big.');
+  let body;
+  try { body = JSON.parse(raw); } catch { return fail(400, 'That result could not be read.'); }
+  const checked = validateResult(body);
+  if (!checked.ok) return fail(checked.status, checked.reason);
+
+  const now = Date.now();
+  const hash = hex(await sha256((request.headers.get('cf-connecting-ip') || 'local') + (env.SAND_SALT || '')));
+  await db.prepare('DELETE FROM rate WHERE at < ?').bind(now - 2 * HOUR).run();
+  const { count } = await db.prepare('SELECT COUNT(*) AS count FROM rate WHERE hash = ? AND at > ?').bind(hash, now - HOUR).first();
+  if (count >= GAMES_PER_HOUR) return fail(429, 'That\'s a lot of games for one hour. Scores will count again a little later.');
+  await db.prepare('INSERT INTO rate (hash, at) VALUES (?, ?)').bind(hash, now).run();
+
+  const added = await recordGame(db, checked.value, now);
+  return json(added ? 201 : 200, { added, rows: await listBoard(db) });
+}
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (pathname === '/api/leaderboard') {
+      try { return await leaderboard(request, env); } catch (e) { console.error(e); return fail(503, 'The leaderboard can\'t be reached right now.'); }
+    }
     try {
       if (pathname === '/api/sand') {
         if (request.method === 'GET') return await list(env);
