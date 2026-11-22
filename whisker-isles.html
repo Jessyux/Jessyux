@@ -175,6 +175,8 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .dock-secret{position:absolute;left:50%;bottom:calc(var(--pw) * .86 + var(--hcw) * 1.5 + 6px);z-index:31;background:var(--butter);border:2px solid var(--plum);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:900}
 .paw-hand.empty .pb,.paw-hand.empty .pt,.paw-hand:not(.empty) .po{display:none}
 .paw-hand.empty .dock-empty{bottom:calc(var(--pw) * .7)}
+/* an empty treat paw is just the open paw: the No treats yet note is kept for screen readers only */
+.treat-hand .dock-empty{width:1px;height:1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%)}
 .dock-tab .tab-n{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--strawberry);color:#fff;font-size:.72rem;display:grid;place-items:center}
 .dock-secret:empty,.paw-hand:not(.up) .dock-secret{display:none}
 /* the tab sits at the bottom corner of the screen on the outer side of each hand */
@@ -1787,6 +1789,13 @@ function endTurn(){
   S.cur = (S.cur+1)%S.players.length; S.turn++; S.rolled=false; S.playedTreat=false; S.handoff=!S.online;
   log(`${pname(S.cur)}'s turn.`);
   commit();
+  if(!S.online) toMap();
+}
+/* in person: when a turn passes, bring the map back into view so the next cat can roll straight away */
+function toMap(){
+  const b = $('#board'); if(!b) return;
+  const top = Math.max(0, b.getBoundingClientRect().top + window.scrollY - 12);
+  window.scrollTo({top, behavior: reduceMotion ? 'auto' : 'smooth'});
 }
 /* the host removes cat k: their beds and yarn leave the island, everyone after them moves up one seat */
 function dropCat(k){
@@ -3015,7 +3024,7 @@ const G = {
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
   /* turns */
-  startTurn(){ S.handoff=false; save(); render(); },
+  startTurn(){ S.handoff=false; save(); render(); toMap(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
