@@ -51,9 +51,10 @@ em{font-style:normal;color:var(--glow)}
 /* section eyebrow: depth range + zone + section role ---------------------- */
 .eyebrow{
   font-family:var(--mono);font-size:.72rem;letter-spacing:.17em;text-transform:uppercase;
-  color:var(--ink-faint);margin:0 0 1.6rem;display:flex;gap:.7em;align-items:center;flex-wrap:wrap;
+  color:var(--glow);margin:0 0 1.6rem;display:flex;gap:.7em;align-items:center;flex-wrap:wrap;
 }
-.eyebrow b{font-weight:500;color:var(--glow)}
+/* the section name leads in teal; the depth reading sits back in grey */
+.eyebrow b{font-weight:500;color:var(--ink-faint)}
 .eyebrow .bar{flex:1;min-width:24px;height:1px;background:var(--hull-2)}
 
 /* dive computer ----------------------------------------------------------- */
