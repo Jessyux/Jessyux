@@ -13,6 +13,28 @@ export function cleanTint(t) {
   return SLOTS.some(k => out[k]) ? out : null;
 }
 
+/* Each device's pid is its secret: it proves who is host and takes a seat back. Other players only ever see a
+   seat's public sid, so nobody can copy someone else's pid from a lobby message. */
+export function ensureSids(seats) {
+  const used = new Set(seats.map(s => s.sid).filter(Boolean));
+  for (const s of seats) if (!s.sid) {
+    let id; do { id = Math.random().toString(36).slice(2, 10); } while (used.has(id));
+    s.sid = id; used.add(id);
+  }
+  return seats;
+}
+
+/* the lobby as one player sees it: pids swapped for sids, and which seat is theirs */
+export function publicLobby(room, onlinePids, forPid) {
+  const sidOf = pid => (room.seats.find(s => s.pid === pid) || {}).sid || null;
+  return {
+    lobby: { code: room.code, host: sidOf(room.host), started: room.started,
+      seats: room.seats.map(({ pid, sid, ...rest }) => ({ ...rest, pid: sid })) },
+    online: onlinePids.map(sidOf).filter(Boolean),
+    you: sidOf(forPid),
+  };
+}
+
 /* a board colour for the seat with this pid: one of the game's 10, and not one another cat has picked */
 export const COLOR_COUNT = 10;
 export function pickColor(seats, pid, c) {

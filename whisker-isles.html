@@ -1852,8 +1852,12 @@ function markGame(code, state){
   if(i===0 && g[0].state===state) return;
   const prev = i>=0 ? g.splice(i,1)[0] : null;
   if(prev && GAME_RANK[prev.state] > GAME_RANK[state]) state = prev.state;
-  g.unshift({code, state, at:Date.now()});
+  g.unshift({code, state, at:Date.now(), host:!!(prev && prev.host)});
   store.set(GAMES_KEY, JSON.stringify(g.slice(0,8)));
+}
+function setGameHost(code, host){
+  const g = myGames(), x = g.find(y=>y.code===code);
+  if(x && !!x.host!==host){ x.host = host; store.set(GAMES_KEY, JSON.stringify(g)); }
 }
 function forgetGame(code){
   store.set(GAMES_KEY, JSON.stringify(myGames().filter(x=>x.code!==code)));
@@ -1895,11 +1899,12 @@ function connect(code){
 function onMsg(m){
   ON.offline=false;
   if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
-  if(m.type==='error' && m.kicked){ S = null; ui.modal = null; }
+  if(m.type==='error' && (m.kicked || m.deleted)){ S = null; ui.modal = null; if(m.deleted && ON.code) forgetGame(ON.code); }
   if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'',location.pathname); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
-    ON.lobby=m.lobby; ON.online=m.online||[];
-    ON.seat = m.lobby.seats.findIndex(s=>s.pid===ON.pid);
+    ON.lobby=m.lobby; ON.online=m.online||[]; ON.me=m.you||null;
+    ON.seat = m.lobby.seats.findIndex(s=>s.pid===ON.me);
+    if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
     if(!m.lobby.started){ ON.status='lobby'; S=null; render(); return; }
   }
@@ -1949,7 +1954,7 @@ function render(){
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
-    ${S.online && ON.lobby && ON.lobby.host===ON.pid ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
+    ${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
     <a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a>
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
@@ -2734,7 +2739,8 @@ function myGamesList(busy){
   if(!g.length) return '';
   const tag = {playing:'In play', pending:'Lobby, not started', over:'Finished'};
   const go = {playing:'Continue', pending:'Open lobby', over:'See result'};
-  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button><button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)}">Delete</button></span></li>`).join('');
+  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button>${x.host ? `<button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)} for everyone">Delete</button>`
+      : `<button class="btn small" onclick="G.unlist('${esc(x.code)}')" aria-label="Remove ${esc(x.code)} from my list">Remove from my list</button>`}</span></li>`).join('');
   return `<div class="my-games"><h3>Your online games</h3><ul>${rows}</ul></div>`;
 }
 function startScreen(){
@@ -2861,15 +2867,15 @@ const HOST_BADGE = `<span class="host-badge" title="Host" role="img" aria-label=
 const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 3h6v8l6 3c1.5.8 2 2 2 3.5V20H4V3z" fill="#F7A6A0" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 16h17" stroke="currentColor" stroke-width="2"/></svg>';
 /* your colour for beds and yarn on the board; colours other cats have are greyed out */
 function lobbyColorHTML(){
-  const L = ON.lobby, F = fixColors(L.seats), me = F.find(x=>x.pid===ON.pid); if(!me) return '';
-  const owner = c => F.find(x=>x.pid!==ON.pid && x.color===c);
+  const L = ON.lobby, F = fixColors(L.seats), me = F.find(x=>x.pid===ON.me); if(!me) return '';
+  const owner = c => F.find(x=>x.pid!==ON.me && x.color===c);
   return `<div class="field" style="margin-top:14px">Colour on the board</div>
     <div class="swatches" role="radiogroup" aria-label="Pick your colour on the board">${COLORS.map((c,k)=>{ const o = owner(k);
       return `<button role="radio" id="lc-col-${k}" aria-checked="${me.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.lobbyColor(${k})"></button>`; }).join('')}</div>`;
 }
 /* your own cat in the lobby: name, cat and colours */
 function lobbyCatHTML(){
-  const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return '';
+  const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s) return '';
   const bid = BREEDS[s.breed].id;
   return `<div class="modal cat-sheet"><div class="turn" style="margin-bottom:10px">${portrait(s)}<div><h2>Customise ${esc(s.name)}</h2><div class="sub">Changes show for everyone in the cat corner.</div></div></div>
     <form class="lc-name" onsubmit="event.preventDefault();G.lobbyRename()"><label class="field">Your name<input id="lc-name" maxlength="14" value="${esc(s.name)}" autocomplete="off"></label><button class="btn small">Save name</button></form>
@@ -2885,21 +2891,21 @@ function hostToolsHTML(){
   return `<div class="modal host-sheet"><div class="rules-head"><h2>Host tools</h2><button class="btn small" onclick="G.close()">Close</button></div>
     ${S.phase==='play' ? `<p><button class="btn primary" onclick="G.skip()">Skip ${esc(pname(S.cur))}'s turn</button></p>` : '<p class="muted">Turns can be skipped once setup is done.</p>'}
     <ul class="host-list">${L.seats.map((x,i)=>`<li><span class="dot" style="background:${S.players[i]?pcol(S.players[i]):'#ccc'}"></span><b>${esc(x.name)}</b>${x.pid===L.host?' <small>Host</small>':''}
-      ${x.pid===ON.pid ? '<small>You</small>' : hostActs(x)}</li>`).join('')}</ul>
+      ${x.pid===ON.me ? '<small>You</small>' : hostActs(x)}</li>`).join('')}</ul>
     <p class="muted small">Booting a cat takes their beds and yarn off the island. A game needs at least 2 cats. Hover an icon to see what it does.</p></div>`;
 }
 function lobbyScreen(){
-  const L = ON.lobby, isHost = L.host===ON.pid, n = L.seats.length;
+  const L = ON.lobby, isHost = L.host===ON.me, n = L.seats.length;
   const link = location.origin + location.pathname + '?game=' + L.code;
   const LS = fixColors(L.seats);
-  const mySeat = L.seats.find(s=>s.pid===ON.pid);
+  const mySeat = L.seats.find(s=>s.pid===ON.me);
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
   const away = s => !ON.online.includes(s.pid);
-  const cats = LS.map((s,i)=>`<li class="nook${s.pid===ON.pid?' me':''}${away(s)?' away':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
-      ${s.pid===ON.pid ? `<span class="nook-cat"><button class="nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
+  const cats = LS.map((s,i)=>`<li class="nook${s.pid===ON.me?' me':''}${away(s)?' away':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
+      ${s.pid===ON.me ? `<span class="nook-cat"><button class="nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
-      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small></li>`).join('');
+      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small></li>`).join('');
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
   const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
@@ -2974,27 +2980,38 @@ const G = {
   create(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } createOnline(); },
   firstRoll(){ firstRoll(); },
   rejoin(code){ ui.form.code = code; G.join(); },
-  forget(code){ if(!confirm(`Delete ${code} from your games? This only removes it from this device. Anyone still playing can carry on.`)) return; forgetGame(code); render(); },
+  forget(code){
+    if(!confirm(`Delete ${code} for everyone? The game and its saved progress are gone for all the cats in it.`)) return;
+    fetch(API + '/delete/' + code, {method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({pid: pidFor(code)})})
+      .then(r => r.json().catch(()=>({})).then(b => ({r, b})))
+      .then(({r, b}) => {
+        if(r.ok || r.status===404){ forgetGame(code); ON.err = null; }
+        else { ON.err = b.error || 'That game could not be deleted. Try again.'; if(r.status===403) setGameHost(code, false); }
+        render();
+      })
+      .catch(() => { ON.err = "Couldn't reach the game server, so the game wasn't deleted."; render(); });
+  },
+  unlist(code){ if(!confirm(`Remove ${code} from your list? The game carries on for everyone else, and you can rejoin with the code and your name.`)) return; forgetGame(code); render(); },
   forgetSave(){ if(!confirm("Delete your saved in-person game? You can't get it back.")) return; store.del(SAVE_KEY); render(); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   lobbyColor(c){
-    const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.pid); if(!s) return;
+    const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.me); if(!s) return;
     s.color = c; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', color:c}));
     ui.refocus = '#lc-col-'+c; render();
   },
-  lobbyTintReset(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return; s.tint=null; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:null})); render(); },
+  lobbyTintReset(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s) return; s.tint=null; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:null})); render(); },
   lobbyRename(){ ON.note = null; const v = $('#lc-name').value.trim(); if(!v){ ON.note='Add a name so friends know who you are.'; render(); return; } if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', name:v})); },
   lobbyTint(_, k, v){
-    const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return;
+    const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s) return;
     s.tint = Object.assign({coat:'',mark:'',iris:'',collar:''}, s.tint||{}, {[k]:v});
     if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:s.tint}));
     ui.refocus = '#cm-'+k+'-'+(v?v.slice(1):'orig'); render();
   },
-  lobbyDone(){ const el = $('#lc-name'), s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(el && s && el.value.trim() && el.value.trim()!==s.name) G.lobbyRename(); ui.modal=null; render(); },
-  makeHost(pid){ const L = ON.lobby; if(!L || L.host!==ON.pid || !ON.ws) return; const x = L.seats.find(q=>q.pid===pid); if(!x || !confirm(`Make ${x.name} the host? You won't be able to start, skip or remove cats after this.`)) return; ON.ws.send(JSON.stringify({type:'host', pid})); ui.modal=null; render(); },
+  lobbyDone(){ const el = $('#lc-name'), s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(el && s && el.value.trim() && el.value.trim()!==s.name) G.lobbyRename(); ui.modal=null; render(); },
+  makeHost(pid){ const L = ON.lobby; if(!L || L.host!==ON.me || !ON.ws) return; const x = L.seats.find(q=>q.pid===pid); if(!x || !confirm(`Make ${x.name} the host? You won't be able to start, skip or remove cats after this.`)) return; ON.ws.send(JSON.stringify({type:'host', pid})); ui.modal=null; render(); },
   kick(pid){
-    const L = ON.lobby; if(!L || L.host!==ON.pid || !ON.ws) return;
+    const L = ON.lobby; if(!L || L.host!==ON.me || !ON.ws) return;
     const k = L.seats.findIndex(q=>q.pid===pid); if(k<0) return;
     if(S && L.seats.length<=2){ alert('A game needs at least 2 cats, so nobody can be booted.'); return; }
     if(!confirm(`Boot ${L.seats[k].name} out of this game?${S?' Their beds and yarn leave the island.':''}`)) return;
@@ -3002,9 +3019,9 @@ const G = {
     const keep = S; S = JSON.parse(JSON.stringify(S)); dropCat(k); const next = S; S = keep;
     ON.ws.send(JSON.stringify({type:'kick', pid, base:ON.ver, state:next})); ui.modal=null; render();
   },
-  skip(){ if(!S || !ON.lobby || ON.lobby.host!==ON.pid || S.phase!=='play') return; ui.mode=null; skipTurn(); ui.modal=null; commit(); },
+  skip(){ if(!S || !ON.lobby || ON.lobby.host!==ON.me || S.phase!=='play') return; ui.mode=null; skipTurn(); ui.modal=null; commit(); },
   hostStart(){
-    const L = ON.lobby; if(L.host!==ON.pid || L.seats.length<2) return;
+    const L = ON.lobby; if(L.host!==ON.me || L.seats.length<2) return;
     newGame(L.seats.map(s=>({name:s.name, breed:s.breed, color:s.color, tint:s.tint||null})), {online:true, code:L.code});
     ON.ws.send(JSON.stringify({type:'start', state:S}));
     S = null;   // wait for the server to confirm, so every screen starts together

@@ -5,16 +5,18 @@
 //   hello {pid, name, breed}   join the lobby, or take your seat again (same device id, or same name on a new device)
 //   breed {breed}              change your cat while in the lobby
 //   seat {name?, breed?, tint?} change your name, cat or colours while in the lobby
-//   host {pid}                 host only: hand the host role to another cat
-//   kick {pid, base?, state?}  host only: remove a cat (in a game, with the state that has them taken out)
+//   host {pid}                 host only: hand the host role to another cat (pid here is the seat's public id)
+//   kick {pid, base?, state?}  host only: remove a cat by public id (in a game, with the state that has them taken out)
 //   start {state}              host only: start the game with this first state
 //   state {base, state}        the state after your move; accepted when base matches the room's version
 // Server to client:
-//   lobby {lobby, online, state?, ver?}   who is in, who is connected, and the game once it has started
+//   lobby {lobby, online, you, state?, ver?}   who is in, who is connected, your seat, and the game once started.
+//     Seats, host and online use each seat's public id; a device's own pid is never sent to anyone else.
+// HTTP: POST /api/whisker-isles/delete/<code> {pid}  the host deletes the game for everyone
 //   error {message, kicked?}   the connection ends
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
-import { cleanTint, renameSeat, pickColor } from './whisker-seat.mjs';
+import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -46,6 +48,13 @@ export async function whiskerIsles(request, env, pathname) {
     if (request.headers.get('Upgrade') !== 'websocket') return json(426, { error: 'Open this with a WebSocket.' });
     return env.ROOMS.get(env.ROOMS.idFromName(m[1])).fetch(new Request(`https://room/ws?code=${m[1]}`, request));
   }
+  const d = pathname.match(/^\/api\/whisker-isles\/delete\/([a-z0-9-]{1,40})$/);
+  if (d) {
+    if (request.method !== 'POST') return json(405, { error: 'Not allowed.' });
+    if (!CODE_RE.test(d[1])) return json(400, { error: 'Game codes look like sleepy-tuna-42.' });
+    let pid = ''; try { pid = String((await request.json()).pid || '').slice(0, 64); } catch (e) { /* no body */ }
+    return env.ROOMS.get(env.ROOMS.idFromName(d[1])).fetch('https://room/delete', { method: 'POST', body: JSON.stringify({ pid }) });
+  }
   return json(404, { error: 'Not found.' });
 }
 
@@ -64,6 +73,18 @@ export class WhiskerRoom extends DurableObject {
       await this.put({ code, host: null, seats: [], started: false, ver: 0, state: null, created: Date.now() });
       return json(201, { code });
     }
+    if (url.pathname === '/delete') {
+      const room = await this.room();
+      if (!room) return json(404, { error: 'This game is already gone.' });
+      const { pid } = await request.json();
+      if (!pid || room.host !== pid) return json(403, { error: 'Only the host can delete this game.' });
+      for (const w of this.ctx.getWebSockets()) {
+        this.send(w, { type: 'error', deleted: true, message: 'The host deleted this game.' });
+        w.serializeAttachment({ pid: null }); try { w.close(1000, 'deleted'); } catch (e) { /* closed */ }
+      }
+      await this.ctx.storage.deleteAll(); this._room = null;
+      return json(200, { ok: true });
+    }
     if (url.pathname === '/ws') {
       const pair = new WebSocketPair(), [client, server] = Object.values(pair);
       this.ctx.acceptWebSocket(server);
@@ -75,14 +96,16 @@ export class WhiskerRoom extends DurableObject {
 
   online() { return this.ctx.getWebSockets().map(ws => (ws.deserializeAttachment() || {}).pid).filter(Boolean); }
   send(ws, msg) { try { ws.send(JSON.stringify(msg)); } catch (e) { /* closed */ } }
-  lobbyMsg(room, withState) {
-    const msg = { type: 'lobby', lobby: { code: room.code, host: room.host, seats: room.seats, started: room.started }, online: this.online() };
+  lobbyMsg(room, withState, forPid) {
+    const msg = { type: 'lobby', ...publicLobby(room, this.online(), forPid) };
     if (withState && room.started) { msg.state = room.state; msg.ver = room.ver; }
     return msg;
   }
   broadcast(room, withState, except) {
-    const msg = this.lobbyMsg(room, withState);
-    for (const ws of this.ctx.getWebSockets()) if (ws !== except && (ws.deserializeAttachment() || {}).pid) this.send(ws, msg);
+    for (const ws of this.ctx.getWebSockets()) {
+      const pid = (ws.deserializeAttachment() || {}).pid;
+      if (ws !== except && pid) this.send(ws, this.lobbyMsg(room, withState, pid));
+    }
   }
   fail(ws, message) { this.send(ws, { type: 'error', message }); try { ws.close(1000, 'error'); } catch (e) { /* closed */ } }
 
@@ -92,6 +115,7 @@ export class WhiskerRoom extends DurableObject {
     const room = await this.room();
     if (!room) return this.fail(ws, 'There is no game with that code. Check the code, or create a new game.');
     const me = (ws.deserializeAttachment() || {}).pid;
+    ensureSids(room.seats);
 
     if (m.type === 'hello') {
       const pid = String(m.pid || '').slice(0, 64), name = String(m.name || '').trim().slice(0, MAX_NAME);
@@ -109,12 +133,12 @@ export class WhiskerRoom extends DurableObject {
         if (!name) return this.fail(ws, 'Add your name so friends know who you are.');
         if (room.seats.length >= MAX_SEATS) return this.fail(ws, `This game is full: ${MAX_SEATS} cats is the most.`);
         seat = { pid, name, breed: clampBreed(m.breed) };
-        room.seats.push(seat);
+        room.seats.push(seat); ensureSids(room.seats);
         if (!room.host) room.host = pid;
       }
       ws.serializeAttachment({ pid });
       await this.put(room);
-      this.send(ws, this.lobbyMsg(room, true));
+      this.send(ws, this.lobbyMsg(room, true, pid));
       this.broadcast(room, false, ws);
       return;
     }
@@ -136,20 +160,22 @@ export class WhiskerRoom extends DurableObject {
       await this.put(room); this.broadcast(room, false); return;
     }
     if (m.type === 'host') {
-      if (room.host !== me || !room.seats.some(s => s.pid === m.pid)) return;
-      room.host = m.pid;
+      const to = room.seats.find(s => s.sid === m.pid);
+      if (room.host !== me || !to) return;
+      room.host = to.pid;
       await this.put(room); this.broadcast(room, room.started); return;
     }
     if (m.type === 'kick') {
-      if (room.host !== me || m.pid === me) return;
-      const k = room.seats.findIndex(s => s.pid === m.pid); if (k < 0) return;
+      const k = room.seats.findIndex(s => s.sid === m.pid);
+      if (room.host !== me || k < 0 || room.seats[k].pid === me) return;
+      const out = room.seats[k].pid;
       if (room.started) {
-        if (room.seats.length <= 2 || m.base !== room.ver || !validState(m.state, room.seats.length - 1)) { this.send(ws, this.lobbyMsg(room, true)); return; }
+        if (room.seats.length <= 2 || m.base !== room.ver || !validState(m.state, room.seats.length - 1)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
         room.state = m.state; room.ver++;
       }
-      room.seats.splice(k, 1); room.banned = [...(room.banned || []), m.pid];
+      room.seats.splice(k, 1); room.banned = [...(room.banned || []), out];
       await this.put(room);
-      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === m.pid) {
+      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === out) {
         this.send(w, { type: 'error', kicked: true, message: 'The host removed you from this game.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'removed'); } catch (e) { /* closed */ }
       }
@@ -162,7 +188,7 @@ export class WhiskerRoom extends DurableObject {
     }
     if (m.type === 'state') {
       if (!room.started || !room.seats.some(s => s.pid === me)) return;
-      if (m.base !== room.ver || !validState(m.state, room.seats.length)) { this.send(ws, this.lobbyMsg(room, true)); return; }
+      if (m.base !== room.ver || !validState(m.state, room.seats.length)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
       room.state = m.state; room.ver++;
       await this.put(room); this.broadcast(room, true, ws); return;
     }
