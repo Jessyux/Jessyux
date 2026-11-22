@@ -444,8 +444,17 @@ svg :focus{outline:none}
 @keyframes bob{50%{transform:translateY(-3px)}}
 
 /* ---------- overlay ---------- */
-.overlay{position:fixed;inset:0;background:rgba(58,35,65,.55);display:grid;place-items:center;padding:16px;z-index:20;overflow:auto}
-.modal{background:var(--milk);border:3px solid var(--plum);border-radius:30px;box-shadow:6px 6px 0 var(--plum);padding:22px 22px 20px;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.overlay{position:fixed;inset:0;background:rgba(58,35,65,.55);display:grid;place-items:safe center;padding:16px;z-index:20;overflow:auto}
+.modal{background:var(--milk);border:3px solid var(--plum);border-radius:30px;box-shadow:6px 6px 0 var(--plum);padding:22px 22px 20px;width:min(520px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto}
+/* phones: 100dvh is the screen between the browser bars (100vh runs under them and cut the top off),
+   and the sheet keeps even, smaller margins so the text has room */
+@media (max-width:600px){
+  .overlay{padding:10px 10px max(10px, env(safe-area-inset-bottom))}
+  .modal{border-radius:24px;padding:16px 16px 18px;max-height:calc(100dvh - 20px);box-shadow:4px 4px 0 var(--plum)}
+  .modal.rules,.modal.lb-modal,.modal.host-sheet{padding-top:0}
+  .rules-head{padding:14px 0 10px;gap:10px}
+  .rules-head h2{font-size:1.45rem;margin:0}
+}
 .modal h2{font-size:1.5rem;margin-bottom:6px}
 .modal p{margin:.3em 0 .8em}
 .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
