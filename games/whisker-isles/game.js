@@ -1017,6 +1017,39 @@ function renderOverlay(){
   lastOverlay = full;
   o.innerHTML = full;
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
+  if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
+}
+/* full-screen confetti for the winner, in the island's colours */
+function confetti(){
+  if(reduceMotion) return;
+  const cv = document.createElement('canvas'); cv.className = 'confetti'; cv.setAttribute('aria-hidden','true');
+  document.body.appendChild(cv);
+  const dpr = Math.min(2, window.devicePixelRatio||1), ctx = cv.getContext('2d');
+  const size = ()=>{ cv.width = innerWidth*dpr; cv.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); };
+  size(); addEventListener('resize', size);
+  const cols = ['#FF8A3D','#F58AB8','#8EDFC0','#FFD36E','#B9A2E6','#6FB7FF','#F2607F','#fff'];
+  const W = ()=>innerWidth, H = ()=>innerHeight, parts = [];
+  const add = (x,y,vx,vy)=>parts.push({x,y,vx,vy,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,w:6+Math.random()*7,h:4+Math.random()*5,c:cols[Math.random()*cols.length|0],k:Math.random()<.18?'heart':Math.random()<.35?'dot':'rect',sw:Math.random()*6.28});
+  const burst = ()=>{ for(let i=0;i<90;i++){ add(0, H()*.75, 6+Math.random()*10, -(9+Math.random()*10)); add(W(), H()*.75, -(6+Math.random()*10), -(9+Math.random()*10)); } };
+  burst(); setTimeout(burst, 700);
+  let rain = 0; const rainT = setInterval(()=>{ for(let i=0;i<14;i++) add(Math.random()*W(), -20, (Math.random()-.5)*2, 1+Math.random()*2); if(++rain>40) clearInterval(rainT); }, 90);
+  const heart = (w)=>{ ctx.beginPath(); ctx.moveTo(0,w*.35); ctx.bezierCurveTo(-w,-w*.3,-w*.4,-w,0,-w*.35); ctx.bezierCurveTo(w*.4,-w,w,-w*.3,0,w*.35); ctx.fill(); };
+  const t0 = performance.now();
+  (function frame(t){
+    ctx.clearRect(0,0,W(),H());
+    for(const p of parts){
+      p.vy += .32; p.vx *= .985; p.vy = Math.min(p.vy, 5.5); p.sw += .08;
+      p.x += p.vx + Math.sin(p.sw)*.8; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.strokeStyle = '#3A2341'; ctx.lineWidth = 1.2;
+      if(p.k==='heart') heart(p.w*.9);
+      else if(p.k==='dot'){ ctx.beginPath(); ctx.arc(0,0,p.h*.8,0,6.28); ctx.fill(); ctx.stroke(); }
+      else { const sx = Math.cos(p.sw*1.6); ctx.fillRect(-p.w/2,-p.h/2*sx,p.w,p.h*sx); ctx.strokeRect(-p.w/2,-p.h/2*sx,p.w,p.h*sx); }
+      ctx.restore();
+    }
+    for(let i=parts.length-1;i>=0;i--) if(parts[i].y>H()+40) parts.splice(i,1);
+    if(t-t0 < 9000 && (parts.length || t-t0<4500)) requestAnimationFrame(frame);
+    else { removeEventListener('resize', size); cv.remove(); }
+  })(t0);
 }
 function handoffHTML(){
   const pl = P();
@@ -1060,7 +1093,7 @@ function offerWaitHTML(){
 function winHTML(){
   const w = S.winner;
   const order = S.players.map((_,i)=>i).sort((a,b)=>vp(b,true)-vp(a,true));
-  return `<div class="modal handoff win">${portrait(S.players[w].breed,'win')}
+  return `<div class="modal handoff win"><div class="cheer"><span class="yay y1">✦</span><span class="yay y2">♥</span><span class="yay y3">✦</span><span class="yay y4">♥</span>${portrait(S.players[w].breed,'win')}</div>
     <h2>${S.online&&w===ON.seat?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
     <div class="scores">${order.map(i=>`<div><span>${pname(i)}</span><b>${vp(i,true)} points</b></div>`).join('')}</div>
     <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;

@@ -304,6 +304,16 @@ div.build{cursor:default}
 
 /* ---------- win ---------- */
 .win .portrait{width:170px;height:170px;margin:0 auto 10px;border-width:4px}
+/* the winner hops and wiggles while little stars and hearts pop around them */
+.cheer{position:relative;width:170px;margin:0 auto 10px}
+.cheer .portrait{margin:0;animation:cheer 1.1s cubic-bezier(.3,.7,.4,1) infinite;transform-origin:50% 90%}
+@keyframes cheer{0%,100%{transform:translateY(0) rotate(0) scale(1,1)}15%{transform:translateY(0) scale(1.08,.9)}40%{transform:translateY(-26px) rotate(-7deg) scale(.96,1.06)}60%{transform:translateY(-26px) rotate(7deg)}85%{transform:translateY(0) scale(1.06,.94)}}
+.yay{position:absolute;font-size:1.6rem;color:#FFD36E;-webkit-text-stroke:1.5px var(--plum);opacity:0;animation:yay 1.1s ease-out infinite;pointer-events:none}
+.yay.y1{left:-18px;top:30px}.yay.y2{right:-20px;top:20px;color:#F58AB8;animation-delay:.25s}
+.yay.y3{right:-6px;top:110px;animation-delay:.55s}.yay.y4{left:-4px;top:118px;color:#F58AB8;animation-delay:.8s}
+@keyframes yay{0%{opacity:0;transform:scale(.3) translateY(0)}30%{opacity:1;transform:scale(1.15) translateY(-8px)}100%{opacity:0;transform:scale(.8) translateY(-26px)}}
+.confetti{position:fixed;inset:0;width:100vw;height:100vh;z-index:60;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.cheer .portrait,.yay{animation:none}.yay{opacity:1}}
 .scores{display:grid;gap:6px;margin-top:10px;text-align:left}
 .scores div{display:flex;justify-content:space-between;border-bottom:2px dotted #E6D3E9;padding:3px 0}
 
