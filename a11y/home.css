@@ -87,6 +87,8 @@ html[data-jux-motion="calm"] .cs-pop.on{transition:opacity .15s,visibility 0s}
 html[data-jux-style="classic"] .cs-pop{display:none}
 /* zoom scales the card width too, so larger text stays inside a phone screen */
 @media(max-width:760px){
+  /* phones: the cards stack in one column and the page scrolls down through them */
+  #cs{grid-auto-flow:row;grid-auto-columns:auto;grid-auto-rows:max-content;justify-content:center;align-content:start;overflow-x:hidden;padding:12px 16px 120px}
   html[data-jux-size="2"] #cs .cs-card{width:calc(84vw/1.25)}
   html[data-jux-size="3"] #cs .cs-card{width:calc(84vw/1.5)}
 }

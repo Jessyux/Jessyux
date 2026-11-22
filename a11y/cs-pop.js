@@ -30,9 +30,14 @@
     if(!shot||!shot.naturalWidth)return;
     if(!pop)make();
     var r=shot.getBoundingClientRect(),pad=16;
-    /* the floatie menu sits above the cards; the pop-out may pass over it */
-    /* the whole screenshot, scaled down to fit the room above the card's text; the card keeps its size */
-    var maxH=Math.max(r.height,r.bottom-pad),maxW=Math.min(innerWidth-pad*2,720);
+    /* the whole screenshot, sized from the screen height (about 45% of it), and never higher than
+       just under the floatie menu's labels, so those icons stay clear */
+    var roof=pad;
+    document.querySelectorAll('.float,.float .tag').forEach(function(f){
+      var b=f.getBoundingClientRect();
+      if(b.height&&b.bottom<r.top&&b.bottom+8>roof)roof=b.bottom+8;
+    });
+    var maxH=Math.max(r.height,Math.min(r.bottom-roof,innerHeight*.45)),maxW=Math.min(innerWidth-pad*2,r.width*1.3);
     var k=Math.min(maxW/shot.naturalWidth,maxH/shot.naturalHeight,1);
     var w=shot.naturalWidth*k,h=shot.naturalHeight*k;
     var x=Math.min(Math.max(r.left+r.width/2-w/2,pad),innerWidth-pad-w);
