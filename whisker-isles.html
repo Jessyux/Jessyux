@@ -175,6 +175,9 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .dock-secret{position:absolute;left:50%;bottom:calc(var(--pw) * .86 + var(--hcw) * 1.5 + 6px);z-index:31;background:var(--butter);border:2px solid var(--plum);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:900}
 .paw-hand.empty .pb,.paw-hand.empty .pt,.paw-hand:not(.empty) .po{display:none}
 .paw-hand.empty .dock-empty{bottom:calc(var(--pw) * .7)}
+/* an empty treat paw is just the open paw: the No treats yet note is kept for screen readers only */
+/* the No resources yet note only floats above the paw while it's lifted */
+.treat-hand .dock-empty,.res-hand:not(.up) .dock-empty{width:1px;height:1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%)}
 .dock-tab .tab-n{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--strawberry);color:#fff;font-size:.72rem;display:grid;place-items:center}
 .dock-secret:empty,.paw-hand:not(.up) .dock-secret{display:none}
 /* the tab sits at the bottom corner of the screen on the outer side of each hand */
@@ -419,6 +422,10 @@ svg :focus{outline:none}
 .modal p{margin:.3em 0 .8em}
 .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 .handoff{text-align:center}
+.offer-hand{margin:10px 0}
+.offer-hand ul{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.offer-hand li{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:2px solid var(--plum);border-radius:999px;background:color-mix(in srgb, var(--tile) 35%, #fff);font-weight:800;font-size:.85rem}
+.offer-hand li .ic{width:26px;height:26px}
 .handoff .portrait{width:150px;height:150px;margin:0 auto 12px;border-width:4px}
 .steppers{display:grid;gap:8px}
 .stepper{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;border:2.5px solid var(--plum);border-radius:var(--r-md);padding:5px 8px;background:var(--tile)}
@@ -606,9 +613,11 @@ div.build{cursor:default}
 .breeds button img,.breeds button svg{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
 .breeds button[aria-checked="true"]{box-shadow:0 0 0 3px var(--butter),0 0 0 6px var(--plum)}
 .breeds button:disabled{opacity:.3;filter:grayscale(1)}
-.online-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+/* Create, or, the code box and Join stay on one line, even on a phone: the code box takes what's left */
+.online-actions{display:flex;gap:8px;align-items:center;margin-top:16px}
+.online-actions .btn{white-space:nowrap;flex:none}
 .online-actions .or{color:var(--plum-2);font-weight:700}
-.join{display:flex;gap:8px;flex:1;min-width:220px}
+.join{display:flex;gap:8px;flex:1;min-width:0}
 .join input{margin:0;flex:1;min-width:0}
 /* ---------- start screen: the island floats in a full-width sea ---------- */
 body{overflow-x:clip}
@@ -1787,6 +1796,13 @@ function endTurn(){
   S.cur = (S.cur+1)%S.players.length; S.turn++; S.rolled=false; S.playedTreat=false; S.handoff=!S.online;
   log(`${pname(S.cur)}'s turn.`);
   commit();
+  if(!S.online) toMap();
+}
+/* in person: when a turn passes, bring the map back into view so the next cat can roll straight away */
+function toMap(){
+  const b = $('#board'); if(!b) return;
+  const top = Math.max(0, b.getBoundingClientRect().top + window.scrollY - 12);
+  window.scrollTo({top, behavior: reduceMotion ? 'auto' : 'smooth'});
 }
 /* the host removes cat k: their beds and yarn leave the island, everyone after them moves up one seat */
 function dropCat(k){
@@ -2293,7 +2309,8 @@ function pawFan(cards, step){
 function renderDock(){
   const el = $('#dock'); if(!el) return;
   const mine = me(), mp = mine>=0 ? S.players[mine] : null;
-  const hide = !dockOn() || !mp || (S.handoff && !S.online) || S.phase==='over';
+  /* in person, the paws hide while a trade is with the other cat, so neither sees the other's cards */
+  const hide = !dockOn() || !mp || (S.handoff && !S.online) || (!S.online && (S.offer || S.handback!=null)) || S.phase==='over';
   document.body.classList.toggle('has-dock', !hide);
   if(hide){ el.classList.add('gone'); el.innerHTML = ''; ui.dockPrev = null; return; }
   el.classList.remove('gone');
@@ -2440,6 +2457,7 @@ function renderOverlay(){
     else if(S.handoff && !S.online) html = handoffHTML();
     else if(discardSeat()>=0) html = discardHTML();
     else if(S.sub==='steal' && myTurn()) html = stealHTML();
+    else if(S.handback!=null && !S.online) html = handbackHTML();
     else if(S.offer && (!S.online || ON.seat===S.offer.to)) html = offerHTML();
     else if(S.offer && S.online && ON.seat===S.offer.from) html = offerWaitHTML();
     else if(ui.modal) html = modalHTML();
@@ -2517,12 +2535,28 @@ function stealHTML(){
 }
 function offerHTML(){
   const o = S.offer, q = S.players[o.to];
+  /* in person: pass the screen first. Nothing about the other cat's cards shows until they say it's them,
+     so they can still say no without giving away what they hold */
+  if(!S.online && !o.seen) return `<div class="modal handoff">${portrait(q)}
+    <h2>Pass the screen to ${pname(o.to)}</h2>
+    <p>${pname(o.from)} wants to trade with you. Your cards stay hidden until you tap.</p>
+    <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button><button class="btn primary" autofocus onclick="G.offerSeen()">I'm ${pname(o.to)}, show me</button></div></div>`;
   const ok = RES.every(r=>q.res[r]>=o.get[r]);
+  const held = RES.filter(r=>q.res[r]>0);
   return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${S.online?'A trade offer':pname(o.to)+', a trade offer'}</h2></div></div>
     <p><b>${pname(o.from)} gives you:</b> ${describe(o.give)||'nothing'}</p>
     <p><b>You give ${pname(o.from)}:</b> ${describe(o.get)||'nothing'}</p>
+    ${S.online?'':`<div class="offer-hand"><div class="sec-label">Your cards</div>${held.length?`<ul>${held.map(r=>`<li style="--tile:${RINFO[r].fill}">${resIcon(r)}<span>${RINFO[r].name}</span><b>×${q.res[r]}</b></li>`).join('')}</ul>`:'<p class="empty">No cards yet</p>'}</div>`}
     ${ok?'':`<p class="hint alert">You don't have enough to accept this.</p>`}
     <div class="actions"><button class="btn" onclick="G.tradeDecline()">No thanks</button><button class="btn primary" ${ok?'':'disabled'} onclick="G.tradeAccept()">Accept trade</button></div></div>`;
+}
+/* in person, after the other cat answers: hand the screen back before the trader's paws show again */
+function handbackHTML(){
+  const k = S.handback;
+  return `<div class="modal handoff">${portrait(S.players[k])}
+    <h2>Pass the screen back to ${pname(k)}</h2>
+    <p>${esc(S.handbackNote||'')}</p>
+    <div class="actions center"><button class="btn primary" autofocus onclick="G.handBack()">I'm ${pname(k)}, carry on</button></div></div>`;
 }
 function offerWaitHTML(){
   const o = S.offer;
@@ -2779,7 +2813,7 @@ function startScreen(){
           <button class="btn primary" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>
           <span class="or">or</span>
           <form class="join" onsubmit="event.preventDefault();G.join()">
-            <input id="on-code" value="${esc(ui.form.code)}" placeholder="sleepy-tuna-42" aria-label="Game code" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)">
+            <input id="on-code" value="${esc(ui.form.code)}" placeholder="Code" aria-label="Game code" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)">
             <button class="btn" ${busy?'disabled':''}>${ON.status==='connecting'?'Joining…':'Join'}</button>
           </form>
         </div>
@@ -3032,7 +3066,7 @@ const G = {
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
   /* turns */
-  startTurn(){ S.handoff=false; save(); render(); },
+  startTurn(){ S.handoff=false; save(); render(); toMap(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
@@ -3064,12 +3098,15 @@ const G = {
   tradeGet(r,d){ const m=ui.modal, n=m.get[r]+d; if(n<0||n>9) return; m.get[r]=n; if(n>0) m.give[r]=0; renderOverlay(); },
   tradeOffer(){ const m=ui.modal; S.offer={from:S.cur, to:m.partner, give:{...m.give}, get:{...m.get}}; ui.modal=null; commit(); },
   tradeCancel(){ if(!S.offer) return; log(`${pname(S.offer.from)} withdraws a trade offer.`); S.offer=null; commit(); },
-  tradeDecline(){ if(!S.offer) return; log(`${pname(S.offer.to)} turns down a trade.`); S.offer=null; commit(); },
+  tradeDecline(){ if(!S.offer) return; const o=S.offer; log(`${pname(o.to)} turns down a trade.`); if(!S.online && o.seen){ S.handback=o.from; S.handbackNote=`${pname(o.to)} said no thanks.`; } S.offer=null; commit(); },
+  offerSeen(){ if(!S.offer || S.online) return; S.offer.seen=true; save(); render(); },
+  handBack(){ S.handback=null; S.handbackNote=null; save(); render(); },
   tradeAccept(){
     const o=S.offer; if(!o) return; const a=S.players[o.from], b=S.players[o.to];
     if(!RES.every(r=>a.res[r]>=o.give[r] && b.res[r]>=o.get[r])) return;
     RES.forEach(r=>{ a.res[r]+=o.get[r]-o.give[r]; b.res[r]+=o.give[r]-o.get[r]; });
     log(`${pname(o.from)} trades ${describe(o.give)||'nothing'} to ${pname(o.to)} for ${describe(o.get)||'nothing'}.`);
+    if(!S.online){ S.handback=o.from; S.handbackNote=`${pname(o.to)} took the trade.`; }
     S.offer=null; commit();
   }
 };
