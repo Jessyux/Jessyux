@@ -13,7 +13,17 @@
   function markSeen(storage){
     try{storage.setItem(KEY,'1')}catch(e){}
   }
-  if(typeof module!=='undefined'&&module.exports)module.exports={shouldShow:shouldShow,markSeen:markSeen,KEY:KEY};
+  /* Feature flag: the question is hidden from visitors for now. Open any page with
+     ?welcome=1 to turn it on in this browser, and ?welcome=0 to hide it again. */
+  var FLAG='jux-welcome-flag';
+  function welcomeFlag(store,search){
+    try{
+      var m=/[?&]welcome=([01])/.exec(search||'');
+      if(m){if(m[1]==='1')store.setItem(FLAG,'1');else store.removeItem(FLAG)}
+      return store.getItem(FLAG)==='1';
+    }catch(e){return false}
+  }
+  if(typeof module!=='undefined'&&module.exports)module.exports={shouldShow:shouldShow,markSeen:markSeen,welcomeFlag:welcomeFlag,KEY:KEY,FLAG:FLAG};
   if(!g||!g.document)return;
 
   var d=g.document,dlg,body;
@@ -95,6 +105,7 @@
 
   g.juxWelcome={open:open,shouldShow:shouldShow};
   if(d.documentElement.classList.contains('embed')||!g.juxHome)return;
+  if(!welcomeFlag(storage(),g.location&&g.location.search))return; /* flag off: no question, no panel action */
   if(g.juxPanel)juxPanel.addAction('Change what brought you here',open);
   whenLoaded(function(){
     if(shouldShow(storage(),juxHome.view()))open();
