@@ -2106,7 +2106,7 @@ const navIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 /* the full label on wider screens, a one-word label on phones; the full one is always the accessible name */
 function navAct(icon, label, short, on){ return `<button class="wi-act" onclick="${on}" aria-label="${label}">${navIcon(icon)}<span class="long">${label}</span><span class="short" aria-hidden="true">${short}</span></button>`; }
 function homeAct(){ return `<a class="wi-act" href="/" aria-label="Home">${navIcon('home')}<span class="long">Home</span><span class="short" aria-hidden="true">Home</span></a>`; }
-function meLink(){ return `<a class="wi-me" href="/#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
+function meLink(){ return `<a class="wi-me" href="/?from=game#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
 function renderBoard(){
   const svg = $('#board');
   if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
