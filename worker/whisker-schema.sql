@@ -5,8 +5,10 @@ CREATE TABLE IF NOT EXISTS players (
   points INTEGER NOT NULL DEFAULT 0,
   wins INTEGER NOT NULL DEFAULT 0,
   games INTEGER NOT NULL DEFAULT 0,
-  last INTEGER NOT NULL
+  last INTEGER NOT NULL,
+  cat TEXT                       -- JSON {b: breed id, t: {coat, mark, iris, collar}} of the cat last played
 );
+-- for a database made before the cat column: ALTER TABLE players ADD COLUMN cat TEXT;
 CREATE INDEX IF NOT EXISTS players_rank ON players (points DESC, wins DESC, games ASC);
 
 -- each finished game counts once

@@ -12,6 +12,22 @@ const PLACE_POINTS = [3, 2, 1];
 export const pointsFor = (place) => PLACE_POINTS[place - 1] || 0;
 const refuse = (status, reason) => ({ ok: false, status, reason });
 
+/* the cat each player last played as: a premade breed plus optional colours. Anything unknown is dropped, never refused. */
+export const BREED_IDS = ['ginger', 'tuxedo', 'calico', 'siamese', 'grey', 'black', 'persian', 'tortie', 'fold', 'bengal'];
+const TINT_KEYS = ['coat', 'mark', 'iris', 'collar'];
+export function cleanCat(c) {
+  if (!c || typeof c !== 'object' || !BREED_IDS.includes(c.b)) return null;
+  const t = c.t && typeof c.t === 'object' ? c.t : {};
+  const out = {};
+  for (const k of TINT_KEYS) {
+    const v = t[k] == null ? '' : t[k];
+    if (v !== '' && !(typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v))) return null;
+    out[k] = v.toLowerCase();
+  }
+  return { b: c.b, t: out };
+}
+const readCat = (text) => { try { return cleanCat(JSON.parse(text)); } catch (e) { return null; } };
+
 /* returns {ok:true,value:{gid,results}} or {ok:false,status,reason} */
 export function validateResult(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return refuse(400, 'That result could not be read.');
@@ -26,7 +42,7 @@ export function validateResult(body) {
     if (!name) return refuse(400, 'Every player needs a name.');
     if ([...name].length > MAX_NAME) return refuse(400, `Names can be up to ${MAX_NAME} characters.`);
     if (isBlocked(name)) return refuse(422, `"${name}" can't go on the leaderboard. Try another name.`);
-    results.push({ name, key: name.toLowerCase(), place: r.place, points: pointsFor(r.place) });
+    results.push({ name, key: name.toLowerCase(), place: r.place, points: pointsFor(r.place), cat: cleanCat(r.cat) });
   }
   if (new Set(results.map((r) => r.key)).size !== results.length) return refuse(400, 'Each player needs their own name.');
   if (results.filter((r) => r.place === 1).length !== 1) return refuse(400, 'A game has one winner.');
@@ -36,9 +52,9 @@ export function validateResult(body) {
 
 export async function listBoard(db) {
   const { results } = await db
-    .prepare('SELECT name, points, wins, games, last FROM players ORDER BY points DESC, wins DESC, games ASC, name ASC LIMIT ?')
+    .prepare('SELECT name, points, wins, games, last, cat FROM players ORDER BY points DESC, wins DESC, games ASC, name ASC LIMIT ?')
     .bind(BOARD_SIZE).all();
-  return results;
+  return results.map((r) => ({ ...r, cat: r.cat ? readCat(r.cat) : null }));
 }
 
 /* adds a game's points once; a repeat of the same game id changes nothing */
@@ -48,10 +64,10 @@ export async function recordGame(db, { gid, results }, now) {
   await db.batch([
     db.prepare('INSERT INTO games (gid, at) VALUES (?, ?)').bind(gid, now),
     ...results.map((r) => db.prepare(
-      `INSERT INTO players (key, name, points, wins, games, last) VALUES (?, ?, ?, ?, 1, ?)
+      `INSERT INTO players (key, name, points, wins, games, last, cat) VALUES (?, ?, ?, ?, 1, ?, ?)
        ON CONFLICT(key) DO UPDATE SET name = excluded.name, points = points + excluded.points,
-         wins = wins + excluded.wins, games = games + 1, last = excluded.last`,
-    ).bind(r.key, r.name, r.points, r.place === 1 ? 1 : 0, now)),
+         wins = wins + excluded.wins, games = games + 1, last = excluded.last, cat = COALESCE(excluded.cat, cat)`,
+    ).bind(r.key, r.name, r.points, r.place === 1 ? 1 : 0, now, r.cat ? JSON.stringify(r.cat) : null)),
   ]);
   return true;
 }
