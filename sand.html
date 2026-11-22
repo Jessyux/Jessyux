@@ -60,7 +60,11 @@
 
   <!-- the writing panel floats over the bottom of the page, on a light glass -->
   <form id="sand-form" class="sand-panel" novalidate aria-labelledby="write">
-    <h1 id="write" class="sand-title" tabindex="-1">Write a message in the sand</h1>
+    <div class="sand-head">
+      <h1 id="write" class="sand-title" tabindex="-1">Write a message in the sand</h1>
+      <button type="button" class="sand-fold" id="sand-fold" aria-expanded="true" aria-controls="sand-body" aria-label="Collapse the writing panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+    <div id="sand-body">
     <p class="sand-sub">Say hello, leave a thought or draw something.</p>
     <fieldset class="sand-kinds">
       <legend class="sand-sr">How would you like to write?</legend>
@@ -92,6 +96,7 @@
     <div class="sand-trap" aria-hidden="true"><label>Website <input type="text" id="sand-website" tabindex="-1" autocomplete="off"></label></div>
     <p class="sand-public">Public as soon as you post. Please don't include personal details.</p>
     <p class="sand-status" id="post-status" role="status"></p>
+    </div>
   </form>
 </main>
 <div class="sand-shore" aria-hidden="true"></div>
@@ -103,6 +108,18 @@
 /* keep the last messages clear of the floating panel: the page leaves room for its height */
 (function(){var f=document.getElementById('sand-form');function fit(){document.documentElement.style.setProperty('--panel-h',f.offsetHeight+'px')}
 if(window.ResizeObserver)new ResizeObserver(fit).observe(f);addEventListener('resize',fit);fit();})();
+/* fold the panel down to its title and back; the choice is remembered in this browser */
+(function(){var f=document.getElementById('sand-form'),b=document.getElementById('sand-fold'),body=document.getElementById('sand-body'),K='jux-sand-folded';
+function set(folded,save){body.hidden=folded;f.classList.toggle('folded',folded);b.setAttribute('aria-expanded',String(!folded));
+b.setAttribute('aria-label',folded?'Expand the writing panel':'Collapse the writing panel');
+if(save)try{folded?localStorage.setItem(K,'1'):localStorage.removeItem(K)}catch(e){}}
+var start=false;try{start=localStorage.getItem(K)==='1'}catch(e){}
+set(start,false);
+b.addEventListener('click',function(){set(!body.hidden,true)});
+/* the head is a big target too: tapping the title of a folded panel opens it */
+document.querySelector('.sand-head .sand-title').addEventListener('click',function(){if(body.hidden)set(false,true)});
+/* "Write" links elsewhere jump to the panel, so open it on the way */
+addEventListener('hashchange',function(){if(location.hash==='#write')set(false,true)});})();
 </script>
 </body>
 </html>

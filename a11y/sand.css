@@ -145,3 +145,12 @@ html[data-jux-motion="calm"] .msg path.writing{stroke-dasharray:none;stroke-dash
 #sand-form .sand-status{min-height:0;margin:4px 0 0}
 #sand-form .sand-status:empty{display:none}
 html[data-jux-contrast="high"] #sand-form.sand-panel{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #000}
+/* collapse and expand: the head stays, the rest folds away */
+.sand-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sand-fold{flex:none;display:grid;place-items:center;width:36px;height:36px;padding:0;border-radius:999px;border:1.5px solid var(--s-line);background:rgba(255,255,255,.35);color:inherit;cursor:pointer}
+.sand-fold svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+#sand-form.folded .sand-fold svg{transform:rotate(180deg)}
+#sand-form.folded .sand-title{cursor:pointer}
+#sand-form.folded{padding-bottom:clamp(14px,2vw,22px)}
+#sand-body[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.sand-fold svg{transition:none}}
