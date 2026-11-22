@@ -719,6 +719,20 @@ body{overflow-x:clip}
 .nook.empty .ghost{display:block;width:72px;height:72px;border-radius:50%;border:3px dashed var(--plum-2);background:rgba(255,255,255,.55)}
 .nook.empty b{color:var(--plum-2)}
 .lobby-go{justify-content:space-between}
+.nook-edit{position:relative;z-index:1;margin-bottom:-22px;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
+.nook-edit .pencil{position:absolute;right:-4px;bottom:2px;width:28px;height:28px;border-radius:50%;background:var(--butter);border:2.5px solid var(--plum);display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum)}
+.nook-edit .tip{position:absolute;left:50%;top:-30px;transform:translateX(-50%);background:var(--plum);color:#fff;font-size:.75rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.nook-edit:hover .tip,.nook-edit:focus-visible .tip{opacity:1}
+.nook-edit:focus-visible .portrait{outline:3px solid var(--plum);outline-offset:3px}
+.host-acts{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+.btn.tiny{font-size:.72rem;padding:2px 8px;border-width:2px;box-shadow:1px 2px 0 var(--plum)}
+.cozy-tip{text-align:center;font-weight:800;font-size:.85rem;background:rgba(255,252,244,.9);border-radius:12px;padding:4px 10px;max-width:46ch;margin:2px auto 0}
+.lc-name{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.lc-name .field{flex:1;min-width:160px}
+.host-list{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.host-list li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:2px solid var(--plum);border-radius:14px;padding:6px 10px;background:#fff}
+.host-list .dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--plum)}
+.host-list .host-acts{margin:0 0 0 auto}
 .lobby .card h2{margin-bottom:10px}
 .credit{text-align:center;font-size:.85rem;font-weight:700;color:var(--plum-2);margin:18px 0 6px}
 .credit a{color:var(--plum);font-weight:900}
@@ -1729,6 +1743,41 @@ function endTurn(){
   log(`${pname(S.cur)}'s turn.`);
   commit();
 }
+/* the host removes cat k: their beds and yarn leave the island, everyone after them moves up one seat */
+function dropCat(k){
+  const name = pname(k), wasCur = S.cur===k;
+  const re = i => i===k ? -1 : i>k ? i-1 : i;
+  for(const v of Object.keys(S.bld)){ const b = S.bld[v]; if(b.p===k) delete S.bld[v]; else b.p = re(b.p); }
+  for(const e of Object.keys(S.roads)){ if(S.roads[e]===k) delete S.roads[e]; else S.roads[e] = re(S.roads[e]); }
+  S.players.splice(k, 1);
+  const n = S.players.length;
+  S.longest = re(S.longest); S.army = re(S.army); if(S.winner>=0) S.winner = re(S.winner);
+  if(S.offer && (S.offer.from===k || S.offer.to===k)) S.offer = null;
+  else if(S.offer){ S.offer.from = re(S.offer.from); S.offer.to = re(S.offer.to); }
+  S.discardQ = (S.discardQ||[]).filter(i=>i!==k).map(re);
+  const st = S.setup;
+  if(S.phase==='setup' && st.step==='roll'){
+    st.first = {rolls:Array(n).fill(null), live:[...Array(n).keys()]}; S.cur = 0;
+  } else if(S.phase==='setup'){
+    const before = st.order.slice(0, st.i).filter(x=>x===k).length;
+    st.order = st.order.filter(x=>x!==k).map(re); st.i -= before;
+    if(wasCur){ st.step = 'bed'; st.lastBed = null; }
+    if(st.i >= st.order.length){ S.phase = 'play'; S.cur = 0; S.rolled = false; }
+    else S.cur = wasCur ? st.order[st.i] : re(S.cur);
+  } else if(wasCur){
+    S.cur = k % n; S.turn++; S.rolled = false; S.playedTreat = false; S.sub = null; S.subData = null;
+  } else S.cur = re(S.cur);
+  updateLongest();
+  log(`${name} left the game. Their beds and yarn are gone from the island.`);
+}
+/* the host moves play on when a cat is stuck or away */
+function skipTurn(){
+  if(S.phase!=='play') return;
+  const who = S.cur;
+  S.sub = null; S.subData = null; S.offer = null;
+  S.cur = (S.cur+1) % S.players.length; S.turn++; S.rolled = false; S.playedTreat = false;
+  log(`The host skipped ${pname(who)}'s turn. It's ${pname(S.cur)}'s turn.`);
+}
 function commit(){ if(!placing) S.undo = []; placing = false; checkWin(); save(); pushState(); render(); }
 
 /* =====================================================================
@@ -1777,10 +1826,13 @@ function connect(code){
 }
 function onMsg(m){
   ON.offline=false;
+  if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
+  if(m.type==='error' && m.kicked){ S = null; ui.modal = null; }
   if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'',location.pathname); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
     ON.lobby=m.lobby; ON.online=m.online||[];
     ON.seat = m.lobby.seats.findIndex(s=>s.pid===ON.pid);
+    if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
     if(!m.lobby.started){ ON.status='lobby'; S=null; render(); return; }
   }
   if(m.state){ applyRemote(m.state, m.ver); }
@@ -1828,6 +1880,7 @@ function render(){
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Friends join with this code. Tap to copy it." onclick="G.copy('${esc(S.code)}', this, 'Code copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
+    ${S.online && ON.lobby && ON.lobby.host===ON.pid ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
     <a class="btn small" href="/">Back to portfolio</a>
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
@@ -2448,6 +2501,8 @@ function modalHTML(){
   const m = ui.modal;
   if(m.kind==='rules') return rulesHTML();
   if(m.kind==='cat') return catSheetHTML(m.i);
+  if(m.kind==='mycat') return lobbyCatHTML();
+  if(m.kind==='host') return hostToolsHTML();
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='newgame') return S && S.online
@@ -2690,17 +2745,18 @@ function seatNote(name){ const r = name && name.trim() && boardRow(name); return
 const COATS = [['#FFFFFF','White'],['#FFF1DC','Cream'],['#F3C46B','Golden'],['#F8AD69','Ginger'],['#9B6A4A','Brown'],['#8B94AE','Grey'],['#C9B3E6','Lilac'],['#F2A7C3','Pink'],['#3A3640','Black']];
 const MARKS = [['#E58046','Orange'],['#9B6A2F','Caramel'],['#674D4B','Chocolate'],['#2E2A33','Black'],['#71728B','Grey'],['#9B7FD1','Purple'],['#2BA89A','Teal'],['#FFFFFF','White']];
 const EYES = [['#5DBB4A','Green'],['#4C93DC','Blue'],['#E8A23A','Amber'],['#F2D23B','Yellow'],['#8A5A3C','Brown'],['#9B7FD1','Violet'],['#E0335A','Ruby']];
-function catMaker(i, s){
+function catMaker(i, s, fn){
+  fn = fn || 'G.catSet';
   const t = s.tint || {}, cfg = RECOLOUR[BREEDS[s.breed].id];
   const row = (k, list, label) => `<div class="field">${label}</div><div class="swatches" role="radiogroup" aria-label="${label}">
-    <button role="radio" id="cm-${k}-orig" class="orig" aria-checked="${!t[k]}" aria-label="Original" title="Original" onclick="G.catSet(${i},'${k}','')">Original</button>
-    ${list.map(([v,n])=>`<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${t[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="G.catSet(${i},'${k}','${v}')"></button>`).join('')}</div>`;
+    <button role="radio" id="cm-${k}-orig" class="orig" aria-checked="${!t[k]}" aria-label="Original" title="Original" onclick="${fn}(${i},'${k}','')">Original</button>
+    ${list.map(([v,n])=>`<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${t[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="${fn}(${i},'${k}','${v}')"></button>`).join('')}</div>`;
   return `<div class="cat-maker">
     ${cfg.coat.length ? row('coat', COATS, 'Coat') : '<p class="muted small">This cat\'s speckled coat keeps its colours. Its eyes and collar can change.</p>'}
     ${cfg.mark.length ? row('mark', MARKS, 'Markings') : ''}
     ${row('iris', EYES, 'Eyes')}
     ${row('collar', COLORS.map((c,k)=>[c, COLOR_NAMES[k]]), 'Collar')}
-    <p class="center" style="margin:12px 0 0"><button class="btn small" onclick="G.catReset(${i})">Back to the original colours</button></p>
+    <p class="center" style="margin:12px 0 0"><button class="btn small" onclick="${fn==='G.catSet'?`G.catReset(${i})`:'G.lobbyTintReset()'}">Back to the original colours</button></p>
   </div>`;
 }
 function catSheetHTML(i){
@@ -2715,6 +2771,31 @@ function catSheetHTML(i){
       return `<button role="radio" aria-checked="${s.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.seatColor(${i},${k})"></button>`; }).join('')}</div>
     <div class="actions center" style="margin-top:18px"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
 }
+const PENCIL = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4L19 9l-4-4L4 16z" fill="#fff" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2.4"/></svg>';
+/* host buttons under another cat: hand over the host role, or remove them */
+function hostActs(s){
+  return `<span class="host-acts"><button class="btn tiny" onclick="G.makeHost('${esc(s.pid)}')">Make host</button><button class="btn tiny" onclick="G.kick('${esc(s.pid)}')">Remove</button></span>`;
+}
+/* your own cat in the lobby: name, cat and colours */
+function lobbyCatHTML(){
+  const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return '';
+  const bid = BREEDS[s.breed].id;
+  return `<div class="modal cat-sheet"><div class="turn" style="margin-bottom:10px">${portrait(s)}<div><h2>Customise ${esc(s.name)}</h2><div class="sub">Changes show for everyone in the cat corner.</div></div></div>
+    <form class="lc-name" onsubmit="event.preventDefault();G.lobbyRename()"><label class="field">Your name<input id="lc-name" maxlength="14" value="${esc(s.name)}" autocomplete="off"></label><button class="btn small">Save name</button></form>
+    ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
+    <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.lobbyBreed')}
+    ${ART.has('cat-'+bid) && RECOLOUR[bid] ? `<div class="field" style="margin-top:12px">Colours</div>${catMaker(-1, s, 'G.lobbyTint')}` : ''}
+    <div class="actions center" style="margin-top:18px"><button class="btn primary" onclick="G.lobbyDone()">Done</button></div></div>`;
+}
+/* in a game, the host's tools: skip the turn, pass the host role, remove a cat */
+function hostToolsHTML(){
+  const L = ON.lobby; if(!S || !L) return '';
+  return `<div class="modal host-sheet"><div class="rules-head"><h2>Host tools</h2><button class="btn small" onclick="G.close()">Close</button></div>
+    ${S.phase==='play' ? `<p><button class="btn primary" onclick="G.skip()">Skip ${esc(pname(S.cur))}'s turn</button></p>` : '<p class="muted">Turns can be skipped once setup is done.</p>'}
+    <ul class="host-list">${L.seats.map((x,i)=>`<li><span class="dot" style="background:${S.players[i]?pcol(S.players[i]):'#ccc'}"></span><b>${esc(x.name)}</b>${x.pid===L.host?' <small>Host</small>':''}
+      ${x.pid===ON.pid ? '<small>You</small>' : hostActs(x)}</li>`).join('')}</ul>
+    <p class="muted small">Removing a cat takes their beds and yarn off the island. A game needs at least 2 cats.</p></div>`;
+}
 function lobbyScreen(){
   const L = ON.lobby, isHost = L.host===ON.pid, n = L.seats.length;
   const link = location.origin + location.pathname + '?game=' + L.code;
@@ -2723,11 +2804,12 @@ function lobbyScreen(){
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
   const away = s => !ON.online.includes(s.pid);
   const cats = LS.map((s,i)=>`<li class="nook${s.pid===ON.pid?' me':''}${away(s)?' away':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
-      <span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}</span>
+      ${s.pid===ON.pid ? `<button class="nook-cat nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>`
+        : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
-      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small></li>`).join('');
+      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small>${isHost && s.pid!==ON.pid ? hostActs(s) : ''}</li>`).join('');
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
-  const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Saved for a friend</b><small>Waiting…</small></li>`).join('');
+  const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Pending</b></li>`).join('');
   return `<main class="start lobby">
     <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
@@ -2739,10 +2821,11 @@ function lobbyScreen(){
         <span class="code-label">Game code</span><span class="code-txt">${esc(L.code)}</span><span class="code-hint" aria-live="polite">Tap to copy</span>
       </button>
       <p class="center"><button class="btn small" onclick="G.copy('${esc(link)}', this, 'Link copied')">Copy invite link</button></p>
+      ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
       <ul class="nooks" aria-label="Cats in the lobby">${cats}${empty}</ul>
+      ${mySeat ? '<p class="cozy-tip">Tap the pencil on your cat to change your name, cat or colours.</p>' : ''}
       <p class="muted center small">${n>MAX_CLASSIC?'Big Island':'Classic island'}, up to ${MAX_CATS} cats. The game is saved under this code, so you can come back to it any time.</p>
     </section>
-    ${mySeat?`<section class="card"><h2>Your cat</h2>${breedPicker(mySeat.breed, [], 'G.lobbyBreed')}</section>`:''}
     <div class="online-actions lobby-go">
       <button class="btn" onclick="G.toStart()">Leave</button>
       ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Waiting for a friend to join'}</button>`
@@ -2802,9 +2885,29 @@ const G = {
   rejoin(code){ ui.form.code = code; G.join(); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
+  lobbyTintReset(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return; s.tint=null; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:null})); render(); },
+  lobbyRename(){ ON.note = null; const v = $('#lc-name').value.trim(); if(!v){ ON.note='Add a name so friends know who you are.'; render(); return; } if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', name:v})); },
+  lobbyTint(_, k, v){
+    const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return;
+    s.tint = Object.assign({coat:'',mark:'',iris:'',collar:''}, s.tint||{}, {[k]:v});
+    if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:s.tint}));
+    ui.refocus = '#cm-'+k+'-'+(v?v.slice(1):'orig'); render();
+  },
+  lobbyDone(){ const el = $('#lc-name'), s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(el && s && el.value.trim() && el.value.trim()!==s.name) G.lobbyRename(); ui.modal=null; render(); },
+  makeHost(pid){ const L = ON.lobby; if(!L || L.host!==ON.pid || !ON.ws) return; const x = L.seats.find(q=>q.pid===pid); if(!x || !confirm(`Make ${x.name} the host? You won't be able to start, skip or remove cats after this.`)) return; ON.ws.send(JSON.stringify({type:'host', pid})); ui.modal=null; render(); },
+  kick(pid){
+    const L = ON.lobby; if(!L || L.host!==ON.pid || !ON.ws) return;
+    const k = L.seats.findIndex(q=>q.pid===pid); if(k<0) return;
+    if(S && L.seats.length<=2){ alert('A game needs at least 2 cats, so nobody can be removed.'); return; }
+    if(!confirm(`Remove ${L.seats[k].name} from this game?${S?' Their beds and yarn leave the island.':''}`)) return;
+    if(!S){ ON.ws.send(JSON.stringify({type:'kick', pid})); return; }
+    const keep = S; S = JSON.parse(JSON.stringify(S)); dropCat(k); const next = S; S = keep;
+    ON.ws.send(JSON.stringify({type:'kick', pid, base:ON.ver, state:next})); ui.modal=null; render();
+  },
+  skip(){ if(!S || !ON.lobby || ON.lobby.host!==ON.pid || S.phase!=='play') return; ui.mode=null; skipTurn(); ui.modal=null; commit(); },
   hostStart(){
     const L = ON.lobby; if(L.host!==ON.pid || L.seats.length<2) return;
-    newGame(L.seats.map(s=>({name:s.name, breed:s.breed})), {online:true, code:L.code});
+    newGame(L.seats.map(s=>({name:s.name, breed:s.breed, tint:s.tint||null})), {online:true, code:L.code});
     ON.ws.send(JSON.stringify({type:'start', state:S}));
     S = null;   // wait for the server to confirm, so every screen starts together
   },

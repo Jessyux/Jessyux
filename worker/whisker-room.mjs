@@ -4,12 +4,17 @@
 // Client to server (WebSocket messages, JSON):
 //   hello {pid, name, breed}   join the lobby, or take your seat again (same device id, or same name on a new device)
 //   breed {breed}              change your cat while in the lobby
+//   seat {name?, breed?, tint?} change your name, cat or colours while in the lobby
+//   host {pid}                 host only: hand the host role to another cat
+//   kick {pid, base?, state?}  host only: remove a cat (in a game, with the state that has them taken out)
 //   start {state}              host only: start the game with this first state
 //   state {base, state}        the state after your move; accepted when base matches the room's version
 // Server to client:
 //   lobby {lobby, online, state?, ver?}   who is in, who is connected, and the game once it has started
-//   error {message}
+//   error {message, kicked?}   the connection ends
+//   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
+import { cleanTint, renameSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -91,6 +96,7 @@ export class WhiskerRoom extends DurableObject {
     if (m.type === 'hello') {
       const pid = String(m.pid || '').slice(0, 64), name = String(m.name || '').trim().slice(0, MAX_NAME);
       if (!pid) return this.fail(ws, 'Something went wrong joining. Reload and try again.');
+      if ((room.banned || []).includes(pid)) return this.fail(ws, 'The host removed you from this game.');
       let seat = room.seats.find(s => s.pid === pid);
       // a player on a new laptop or phone takes their seat back by typing the same name
       if (!seat && name) {
@@ -119,6 +125,34 @@ export class WhiskerRoom extends DurableObject {
       const seat = room.seats.find(s => s.pid === me); if (!seat) return;
       seat.breed = clampBreed(m.breed);
       await this.put(room); this.broadcast(room, false); return;
+    }
+    if (m.type === 'seat') {
+      if (room.started) return;
+      const seat = room.seats.find(s => s.pid === me); if (!seat) return;
+      if ('name' in m) { const r = renameSeat(room.seats, me, m.name); if (!r.ok) return this.send(ws, { type: 'oops', message: r.error }); seat.name = r.name; }
+      if ('breed' in m) seat.breed = clampBreed(m.breed);
+      if ('tint' in m) seat.tint = cleanTint(m.tint);
+      await this.put(room); this.broadcast(room, false); return;
+    }
+    if (m.type === 'host') {
+      if (room.host !== me || !room.seats.some(s => s.pid === m.pid)) return;
+      room.host = m.pid;
+      await this.put(room); this.broadcast(room, room.started); return;
+    }
+    if (m.type === 'kick') {
+      if (room.host !== me || m.pid === me) return;
+      const k = room.seats.findIndex(s => s.pid === m.pid); if (k < 0) return;
+      if (room.started) {
+        if (room.seats.length <= 2 || m.base !== room.ver || !validState(m.state, room.seats.length - 1)) { this.send(ws, this.lobbyMsg(room, true)); return; }
+        room.state = m.state; room.ver++;
+      }
+      room.seats.splice(k, 1); room.banned = [...(room.banned || []), m.pid];
+      await this.put(room);
+      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === m.pid) {
+        this.send(w, { type: 'error', kicked: true, message: 'The host removed you from this game.' });
+        w.serializeAttachment({ pid: null }); try { w.close(1000, 'removed'); } catch (e) { /* closed */ }
+      }
+      this.broadcast(room, room.started); return;
     }
     if (m.type === 'start') {
       if (room.started || room.host !== me || room.seats.length < 2 || !validState(m.state, room.seats.length)) return;
