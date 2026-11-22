@@ -52,26 +52,25 @@
 </svg>
 <main class="sand-page">
   <a class="sand-back" href="/">Back to the portfolio</a>
-  <h1 class="sand-title">Write me a message in the sand</h1>
-  <p class="sand-sub">Say hello, leave a thought, or draw something. <a href="#write">Write yours</a></p>
 
-  <section class="sand-wall-sec" aria-labelledby="wall-title">
-    <h2 id="wall-title">Messages so far</h2>
+  <section class="sand-wall-sec" aria-label="Messages in the sand">
     <p class="sand-status" id="wall-status" role="status"></p>
     <ul class="wall" id="wall"></ul>
   </section>
 
-  <form id="sand-form" novalidate>
-    <h2 id="write" tabindex="-1">Leave yours</h2>
+  <!-- the writing panel floats over the bottom of the page, on a light glass -->
+  <form id="sand-form" class="sand-panel" novalidate aria-labelledby="write">
+    <h1 id="write" class="sand-title" tabindex="-1">Write a message in the sand</h1>
+    <p class="sand-sub">Say hello, leave a thought or draw something.</p>
     <fieldset class="sand-kinds">
-      <legend>How would you like to write?</legend>
+      <legend class="sand-sr">How would you like to write?</legend>
       <label><input type="radio" name="kind" value="text" checked><span>Type</span></label>
       <label><input type="radio" name="kind" value="draw"><span>Draw</span></label>
     </fieldset>
 
     <div id="type-box">
-      <label class="sand-field" for="sand-text">Your message</label>
-      <div class="sand-write"><textarea id="sand-text" class="hand" maxlength="140" rows="3" aria-describedby="sand-count"></textarea></div>
+      <label class="sand-sr" for="sand-text">Your message</label>
+      <div class="sand-write"><textarea id="sand-text" class="hand" maxlength="140" rows="2" aria-describedby="sand-count"></textarea></div>
       <p class="sand-count" id="sand-count">0 of 140</p>
     </div>
 
@@ -80,17 +79,18 @@
       <div class="sand-tools">
         <button type="button" class="sand-btn" id="undo">Undo</button>
         <button type="button" class="sand-btn" id="clear">Clear</button>
-        <p id="draw-note" role="status"></p>
       </div>
+      <p id="draw-note" role="status"></p>
     </div>
 
-    <label class="sand-field" for="sand-name">First name (optional)
-      <input type="text" id="sand-name" maxlength="30" autocomplete="given-name">
-    </label>
+    <div class="sand-send">
+      <label class="sand-field" for="sand-name">Name (optional)
+        <input type="text" id="sand-name" maxlength="30" autocomplete="given-name">
+      </label>
+      <button type="submit" class="sand-btn go" id="post" disabled>Post</button>
+    </div>
     <div class="sand-trap" aria-hidden="true"><label>Website <input type="text" id="sand-website" tabindex="-1" autocomplete="off"></label></div>
-
-    <p class="sand-public">Your message is public as soon as you post it. Please don't include personal details.</p>
-    <button type="submit" class="sand-btn go" id="post" disabled>Post</button>
+    <p class="sand-public">Public as soon as you post. Please don't include personal details.</p>
     <p class="sand-status" id="post-status" role="status"></p>
   </form>
 </main>
@@ -99,5 +99,10 @@
 <script src="/a11y/panel.js"></script>
 <script>juxPanel.mount({view:'sand',showFloatingButton:true})</script>
 <script src="/a11y/sand.js"></script>
+<script>
+/* keep the last messages clear of the floating panel: the page leaves room for its height */
+(function(){var f=document.getElementById('sand-form');function fit(){document.documentElement.style.setProperty('--panel-h',f.offsetHeight+'px')}
+if(window.ResizeObserver)new ResizeObserver(fit).observe(f);addEventListener('resize',fit);fit();})();
+</script>
 </body>
 </html>
