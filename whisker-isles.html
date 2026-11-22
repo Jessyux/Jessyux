@@ -126,6 +126,10 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
   #board{max-height:calc(100svh - var(--dockv,0px) - 330px);min-height:260px}
   .panel{position:static;max-height:none;overflow:visible}
 }
+/* phones: the map spans the full column, as wide as the cards below it, instead of being capped by the screen height */
+@media (max-width: 600px){
+  #board{max-height:none;min-height:0}
+}
 
 /* ---------- turn card ---------- */
 .turn{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center}
