@@ -64,15 +64,18 @@ em{font-style:normal;color:var(--glow)}
   width:84px;display:none;text-align:right;
 }
 /* Home sits at the top of the map, in the same small spaced mono as the readings below it */
+/* the same Home floatie as everywhere else in the portfolio (a11y/home-float.css): the inflatable house over a "Home" pill */
 #rail .railhome{
-  display:flex;align-items:center;gap:.55em;width:max-content;margin:0 0 1.4rem auto;
-  padding:6px 10px 6px 8px;border:1px solid rgba(94,242,200,.4);border-radius:999px;
-  font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--glow);text-decoration:none;background:rgba(2,16,26,.35);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;margin:0 0 1.4rem auto;
+  text-decoration:none;color:#EAF6F4;-webkit-tap-highlight-color:transparent;
 }
-#rail .railhome svg{width:13px;height:13px;flex:none}
-#rail .railhome:hover{background:rgba(94,242,200,.12)}
-#rail .railhome:focus-visible{outline:2px solid var(--glow);outline-offset:3px}
+#rail .railhome img{display:block;width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,20,30,.35));transition:transform .25s cubic-bezier(.2,.9,.3,1.2)}
+#rail .railhome span{font:600 12.5px/1.3 "Hanken Grotesk",system-ui,sans-serif;white-space:nowrap;color:#EAF6F4;background:rgba(3,34,46,.8);border:1px solid rgba(94,242,200,.28);border-radius:999px;padding:4px 12px}
+#rail .railhome:hover img{transform:translateY(-3px) rotate(-3deg)}
+#rail .railhome:hover span{border-color:rgba(94,242,200,.6)}
+#rail .railhome:focus-visible{outline:none}
+#rail .railhome:focus-visible span{outline:2px solid var(--glow);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){#rail .railhome img{transition:none}#rail .railhome:hover img{transform:none}}
 #rail .read{font-family:var(--mono);font-size:1.45rem;color:var(--glow);font-variant-numeric:tabular-nums;line-height:1}
 #rail .unit{font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;color:var(--ink-faint);text-transform:uppercase}
 /* the label is the title of the section you are in, in the original map style; room for three lines */
@@ -357,7 +360,7 @@ html::-webkit-scrollbar,html.embed::-webkit-scrollbar{width:0;height:0;display:n
 @media(max-width:999px){
   html:not(.embed) #rail{display:block;position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));right:auto;transform:none;width:auto}
   html:not(.embed) #rail>div{display:none}
-  html:not(.embed) #rail .railhome{margin:0;padding:9px 14px 9px 11px;font-size:.68rem;background:rgba(2,16,26,.62);box-shadow:0 8px 20px -10px rgba(0,8,16,.6)}
+  html:not(.embed) #rail .railhome{margin:0}
   html:not(.embed) #mread{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
 }
 

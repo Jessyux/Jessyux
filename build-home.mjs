@@ -40,6 +40,9 @@ const refs = new Set(html.match(/img\/[\w\-./]+\.(?:webp|png|jpe?g|svg)/g) || []
 const vinyl = resolve(ROOT, 'img/vinyl');
 if (existsSync(vinyl)) readdirSync(vinyl).forEach(f => refs.add('img/vinyl/' + f));
 
+// the Home floatie (a11y/home-float.css) that every page and the game use to go back home
+refs.add('img/floaties/home.webp');
+
 let n = 0;
 [...refs].sort().forEach(rel => { if (copy(rel)) n++; });
 console.log(`dist/index.html + ${n} images copied.`);
