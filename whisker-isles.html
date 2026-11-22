@@ -2437,6 +2437,14 @@ function rulesHTML(){
   ])}
   <p class="small">Beds need one empty corner between them and any other bed. Placed one in the wrong spot? Tap it, or tap <b>Take back last piece</b>, and place it again. Tap <b>Next cat</b> when you're happy.</p></section>
 
+  <section class="rule-block"><h3>Your turn</h3>
+  ${steps([
+    [`<span class="mini-dice">${[3,4].map(n=>`<span class="die" aria-hidden="true">${Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('')}</span>`).join('')}</span>`, `<b>Roll.</b> Every tile with that number gives a card to each bed touching it. Towers get two.`],
+    [`<span class="pill">Build</span>`, `<b>Build, trade and play one treat</b>, in any order.`],
+    [`<span class="pill">End</span>`, `<b>End your turn.</b> The next cat goes.`]
+  ])}
+  <p class="small"><b>Changed your mind?</b> Bought a bed, path or tower and want it somewhere else? Tap it on the same turn to take it back and get your cards back. You can keep taking pieces back, newest first, until you trade, buy or play a treat, or end your turn. Pieces from earlier turns and free paths from a Yarn spree stay put.</p></section>
+
   <section class="rule-block"><h3>Resources</h3>
   <p class="small">Each tile makes one resource card when its number is rolled. The Nap spot makes nothing.</p>
   <div class="rule-paws">
@@ -2446,13 +2454,11 @@ function rulesHTML(){
   <p class="small">Your cat's left paw holds your resources in its own colours: one card for each resource you have, with a badge for how many. When you have none, the paw is open and empty. Tap <b>Resources</b> at the bottom of the board to lift the paw for a closer look and to see how many cards you hold in total. Tap it again to lower it.</p>
   <div class="res-cards">${RES.map(r=>`<div role="img" aria-label="${RINFO[r].name}: ${USE[r]}">${resCard(r,null,'md','Used for '+USE[r].toLowerCase())}</div>`).join('')}</div></section>
 
-  <section class="rule-block"><h3>Your turn</h3>
-  ${steps([
-    [`<span class="mini-dice">${[3,4].map(n=>`<span class="die" aria-hidden="true">${Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('')}</span>`).join('')}</span>`, `<b>Roll.</b> Every tile with that number gives a card to each bed touching it. Towers get two.`],
-    [`<span class="pill">Build</span>`, `<b>Build, trade and play one treat</b>, in any order.`],
-    [`<span class="pill">End</span>`, `<b>End your turn.</b> The next cat goes.`]
-  ])}
-  <p class="small"><b>Changed your mind?</b> Bought a bed, path or tower and want it somewhere else? Tap it on the same turn to take it back and get your cards back. You can keep taking pieces back, newest first, until you trade, buy or play a treat, or end your turn. Pieces from earlier turns and free paths from a Yarn spree stay put.</p></section>
+  <section class="rule-block"><h3>Treat cards</h3>
+  <div class="rule-paws">${rulePaw(cat, 'treat', ['zoomies','spree','gift'].map(t=>`<span class="card-btn">${treatCard(t,'sm')}</span>`), 'Your cat\'s right paw holds your treat cards')}</div>
+  <p class="small">Treats sit in the right paw. Tap <b>Treats</b> to lift it, then tap a card to slide it out of the paw and read it. Tap <b>Play</b> under the card to use it, or close it to put it back.</p>
+  <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div role="img" aria-label="${esc(TREATS[k].name)}: ${esc(TREATS[k].text)}">${treatCard(k,'md')}</div>`).join('')}</div>
+  <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
 
   <section class="rule-block"><h3>Build cards</h3>
   <div class="build-grid">
@@ -2478,12 +2484,6 @@ function rulesHTML(){
     <div class="award-card">${awardSVG('longest',72)}<div><b>Longest yarn</b><span class="plus">+2 points</span><small>For the first unbroken trail of 5 or more yarn paths. A longer trail steals it.</small></div></div>
     <div class="award-card zoom">${awardSVG('zoomiest',72)}<div><b>Zoomiest cat</b><span class="plus">+2 points</span><small>For the first cat to play 3 Zoomies. Playing more Zoomies steals it.</small></div></div>
   </div></section>
-
-  <section class="rule-block"><h3>Treat cards</h3>
-  <div class="rule-paws">${rulePaw(cat, 'treat', ['zoomies','spree','gift'].map(t=>`<span class="card-btn">${treatCard(t,'sm')}</span>`), 'Your cat\'s right paw holds your treat cards')}</div>
-  <p class="small">Treats sit in the right paw. Tap <b>Treats</b> to lift it, then tap a card to slide it out of the paw and read it. Tap <b>Play</b> under the card to use it, or close it to put it back.</p>
-  <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div role="img" aria-label="${esc(TREATS[k].name)}: ${esc(TREATS[k].text)}">${treatCard(k,'md')}</div>`).join('')}</div>
-  <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
 
   <div class="actions"><button class="btn primary" onclick="G.close()">Back to the game</button></div></div>`;
 }
