@@ -44,6 +44,12 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 .btn:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--plum)}
 .btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--plum)}
 .btn:disabled{opacity:.42;box-shadow:none}
+a.btn{color:var(--plum);text-decoration:none}
+.back-row{max-width:1100px;margin:0 auto 6px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,44px));gap:8px}
+.swatches button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--plum);background:var(--sw);padding:0}
+.swatches button[aria-checked="true"]{box-shadow:0 0 0 3px var(--butter),0 0 0 6px var(--plum)}
+.swatches button:disabled{opacity:.28;background:repeating-linear-gradient(45deg,var(--sw) 0 5px,#fff 5px 9px)}
 .btn.primary{background:var(--butter)}
 .btn.hot{background:var(--strawberry);color:#fff}
 .btn.small{padding:.3em .75em;font-size:.88rem;border-width:2.5px;box-shadow:2px 2px 0 var(--plum)}
@@ -161,6 +167,12 @@ details[open] summary{margin-bottom:8px}
 .hot-v circle{fill:var(--butter);stroke:var(--plum);stroke-width:3;animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 .hot-v:hover circle,.hot-v:focus circle{fill:#fff}
 .hot-e{cursor:pointer}
+.undo-hit{cursor:pointer}
+.undo-hit .hit{fill:transparent}
+.undo-hit .ring{fill:none;stroke:#fff;stroke-width:3;stroke-dasharray:4 5;stroke-linecap:round;opacity:.9}
+.undo-hit line.ring{stroke-width:16;opacity:.45}
+.undo-hit:hover .ring,.undo-hit:focus .ring{stroke:var(--butter);opacity:1}
+.rb-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .hot-e line.show{stroke:var(--butter);stroke-width:10;stroke-linecap:round;stroke-dasharray:2 12;animation:dash 1s linear infinite}
 .hot-e:hover line.show,.hot-e:focus line.show{stroke:#fff;stroke-dasharray:none}
 .hot-h{cursor:pointer}
@@ -418,6 +430,19 @@ const BREEDS = [
   {id:'fold',    label:'Lilac fold',   base:'#D8CCE8', mark:'#BFAED6', muzzle:'#E6DDF0', iris:'#F2A93B', color:'#3D8FE0'},
   {id:'bengal',  label:'Bengal',       base:'#F3C46B', mark:'#9B6A2F', muzzle:'#FBE3B5', iris:'#7CCB5B', color:'#6DAE3A'}
 ];
+/* each player has their own colour, so two players can pick the same cat and still tell their pieces apart */
+const COLORS = BREEDS.map(b=>b.color);
+const COLOR_NAMES = ['Orange','Indigo','Pink','Teal','Slate','Gold','Purple','Brown','Blue','Green'];
+function pcol(pl){ return COLORS[pl.color!=null ? pl.color : pl.breed]; }
+/* keeps a chosen colour if it's free, then tries the cat's own colour, then the first free one */
+function fixColors(seats){
+  const used = [];
+  return seats.map(x=>{
+    let c = x.color!=null && !used.includes(x.color) ? x.color
+      : !used.includes(x.breed) ? x.breed : COLORS.findIndex((_,k)=>!used.includes(k));
+    used.push(c); return Object.assign({}, x, {color:c});
+  });
+}
 const DEFAULT_NAMES = ['Mochi','Biscuit','Sushi','Pudding','Dumpling','Noodle','Tofu','Waffle','Pickles','Bean'];
 const TREATS = {
   zoomies:{name:'Zoomies',         art:'treat-zoomies',   text:'Move the Vacuum and take a card from a cat next to it. Counts toward Zoomiest cat.'},
@@ -509,8 +534,9 @@ function catArt(bi, mood){
   const key = 'cat-'+BREEDS[bi].id+(mood==='win'?'-win':'');
   return ART.has(key) ? `<img src="${artSrc(key)}" alt="">` : catSVG(bi,mood);
 }
-function portrait(bi, mood){
-  return `<span class="portrait" style="--pc:${BREEDS[bi].color}">${catArt(bi,mood)}</span>`;
+function portrait(x, mood){
+  const bi = typeof x==='object' ? x.breed : x, c = typeof x==='object' ? pcol(x) : BREEDS[bi].color;
+  return `<span class="portrait" style="--pc:${c}">${catArt(bi,mood)}</span>`;
 }
 
 /* resource glyphs drawn in a -20..20 box */
@@ -654,6 +680,7 @@ function makeBoard(radius){
 
 function newGame(seats, opts){
   opts = opts || {};
+  seats = fixColors(seats);
   const n = seats.length;
   const radius = n > MAX_CLASSIC ? 3 : 2;
   const board = makeBoard(radius);
@@ -663,7 +690,7 @@ function newGame(seats, opts){
   S = {
     online: !!opts.online, code: opts.code || null,
     board, deck,
-    players: seats.map(s=>({name:s.name, breed:s.breed, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
+    players: seats.map(s=>({name:s.name, breed:s.breed, color:s.color, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
     bld:{}, roads:{}, vac: board.tiles.findIndex(t=>t.type==='nap'),
     cur:0, turn:1, phase:'setup',
     setup:{i:0, step:'bed', lastBed:null, order:[...Array(n).keys(), ...[...Array(n).keys()].reverse()]},
@@ -759,8 +786,33 @@ function checkWin(){
 }
 
 /* ---------- actions ---------- */
+/* each placement keeps a snapshot from just before it, so the cat can take it back.
+   Anything else that changes the game (a roll, a trade, a treat, ending the turn) clears them. */
+let placing = false;
+function snap(k, at){
+  const u = S.undo || []; S.undo = null;
+  const j = JSON.stringify(S);
+  S.undo = u; u.push({j, k, at}); placing = true;
+}
+function undoPlace(){
+  if(!S.undo || !S.undo.length || !myTurn()) return;
+  const top = S.undo.pop(), rest = S.undo, name = pname(S.cur);
+  S = JSON.parse(top.j); S.undo = rest; ui.mode = null;
+  log(`${name} takes back a ${top.k==='bed'?'cat bed':top.k==='tower'?'cat tower':'yarn path'}.`);
+  placing = true; commit();
+}
+function setupNext(){
+  if(S.phase!=='setup' || S.setup.step!=='done' || !myTurn()) return;
+  S.setup.i++;
+  if(S.setup.i >= S.setup.order.length){
+    S.phase='play'; S.cur=0; S.rolled=false; S.handoff=!S.online;
+    log(`Setup done. ${pname(0)}, roll the dice to start.`);
+  } else { S.cur = S.setup.order[S.setup.i]; S.setup.step='bed'; S.setup.lastBed=null; if(!S.online && S.setup.order[S.setup.i-1]!==S.cur) S.handoff=true; }
+  commit();
+}
 function placeBed(v){
   const p = S.cur, pl = P();
+  snap('bed', 'v'+v);
   if(S.phase==='setup'){
     S.bld[v] = {p, t:'bed'}; pl.pieces.bed--;
     S.setup.lastBed = v; S.setup.step = 'path';
@@ -779,14 +831,11 @@ function placeBed(v){
 }
 function placePath(e){
   const p = S.cur, pl = P();
+  snap('path', 'e'+e);
   S.roads[e] = p; pl.pieces.path--;
   if(S.phase==='setup'){
     log(`${pname(p)} rolls out a yarn path.`);
-    S.setup.i++;
-    if(S.setup.i >= S.setup.order.length){
-      S.phase='play'; S.cur=0; S.rolled=false; S.handoff=!S.online;
-      log(`Setup done. ${pname(0)}, roll the dice to start.`);
-    } else { S.cur = S.setup.order[S.setup.i]; S.setup.step='bed'; S.setup.lastBed=null; if(!S.online && S.setup.order[S.setup.i-1]!==S.cur) S.handoff=true; }
+    S.setup.step = 'done';   // waits for Next cat, so the pieces can still be taken back
   } else if(S.sub==='spree'){
     S.subData.left--; log(`${pname(p)} rolls out a free yarn path.`);
     if(S.subData.left<=0 || pl.pieces.path<=0 || validPaths(p).length===0){ S.sub=null; S.subData=null; ui.mode=null; }
@@ -800,6 +849,7 @@ function placePath(e){
 }
 function placeTower(v){
   const pl = P();
+  snap('tower', 'v'+v);
   pay(pl.res, COST.tower); S.bld[v].t='tower'; pl.pieces.tower--; pl.pieces.bed++; ui.mode=null;
   log(`${pname(S.cur)} upgrades to a cat tower.`);
   commit();
@@ -978,7 +1028,7 @@ function endTurn(){
   log(`${pname(S.cur)}'s turn.`);
   commit();
 }
-function commit(){ checkWin(); save(); pushState(); render(); }
+function commit(){ if(!placing) S.undo = []; placing = false; checkWin(); save(); pushState(); render(); }
 
 /* =====================================================================
    Online play
@@ -1077,6 +1127,7 @@ function render(){
     <aside class="panel" id="panel"></aside>
   </div>`;
   $('#tools').innerHTML = `${S.online?`<span class="code-chip" title="Friends join with this code">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></span>`:''}
+    <a class="btn small" href="/">Back to portfolio</a>
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
   renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
@@ -1118,16 +1169,20 @@ function renderRollbar(){
     : ui.rolling ? 'Rolling…'
     : S.rolled ? (sum===7 ? 'Rolled 7. The Vacuum switches on.' : `Rolled ${sum}. A ${sum} comes up ${pips(sum)} in 36 rolls (${Math.round(pips(sum)/36*100)}%).`)
     : `${pname(S.cur)} rolls next.`;
-  const p = S.cur, cp = P(), br = BREEDS[cp.breed], mine = me();
+  const p = S.cur, cp = P(), br = {color:pcol(cp)}, mine = me();
   const youLabel = S.online ? (mine===p ? 'Your turn' : `${pname(p)}'s turn`) : pname(p);
   const pts = vp(p,false);
   const h = hintText(); const hObj = typeof h==='string'?{t:h}:h;
   el.innerHTML = `
     <div class="rb-turn turn-card" style="--pc:${br.color}">
-      <div class="turn">${portrait(cp.breed)}<div><div class="who">${youLabel}</div>
+      <div class="turn">${portrait(cp)}<div><div class="who">${youLabel}</div>
         <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
       <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
-      ${ui.mode && !S.sub && mt ? `<button class="btn small" onclick="G.mode(null)">Cancel building</button>` : ''}
+      ${(ui.mode && !S.sub && mt) || canUndo() || (S.phase==='setup' && S.setup.step==='done' && mt) ? `<div class="rb-acts">
+        ${ui.mode && !S.sub && mt ? `<button class="btn small" onclick="G.mode(null)">Cancel building</button>` : ''}
+        ${canUndo() ? `<button class="btn small" onclick="G.undo()">Take back last piece</button>` : ''}
+        ${S.phase==='setup' && S.setup.step==='done' && mt ? `<button class="btn small primary" onclick="G.setupNext()">${S.setup.i+1>=S.setup.order.length?'Start the game':'Next cat'}</button>` : ''}
+      </div>` : ''}
     </div>
     <div class="rb-cols">
     <div class="rb-dice">
@@ -1146,6 +1201,7 @@ function miniMark(){ return `<svg viewBox="0 0 100 100" aria-hidden="true"><path
 function hexPoints(cx,cy,r,rot){ rot=rot||0; return Array.from({length:6},(_,i)=>{ const a=Math.PI/180*(60*i-30+rot); return (cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1); }).join(' '); }
 function pips(n){ return 6-Math.abs(7-n); }
 
+function canUndo(){ return S && S.undo && S.undo.length && myTurn() && !(S.handoff && !S.online) && !ui.modal && !S.offer && S.phase!=='over' && !['discard','vacuum','steal'].includes(S.sub); }
 function boardMode(){
   if((S.handoff && !S.online) || S.phase==='over' || ui.modal || S.offer || !myTurn()) return null;
   if(S.phase==='setup') return S.setup.step;
@@ -1209,7 +1265,7 @@ function renderBoard(){
     out += `</g>`;
   });
   Object.entries(S.roads).forEach(([e,p])=>{
-    const a=V[E[e].a], b=V[E[e].b], c=BREEDS[S.players[p].breed].color;
+    const a=V[E[e].a], b=V[E[e].b], c=pcol(S.players[p]);
     const x1=a.x+(b.x-a.x)*.16, y1=a.y+(b.y-a.y)*.16, x2=a.x+(b.x-a.x)*.84, y2=a.y+(b.y-a.y)*.84;
     out += `<g aria-hidden="true"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3A2341" stroke-width="12" stroke-linecap="round"/>
       <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="7" stroke-linecap="round"/>
@@ -1218,10 +1274,19 @@ function renderBoard(){
   const vh = HEX[S.vac];
   out += `<g transform="translate(${vh.x} ${vh.y-14})" aria-label="The Vacuum"><g class="vac-bob">${vacuumSVG()}</g></g>`;
   Object.entries(S.bld).forEach(([v,b])=>{
-    const c = BREEDS[S.players[b.p].breed].color;
+    const c = pcol(S.players[b.p]);
     out += `<g transform="translate(${V[v].x} ${V[v].y}) scale(1.15)" aria-hidden="true">${b.t==='tower'?towerShape(c):bedShape(c)}</g>`;
   });
   const mode = boardMode(), p = S.cur;
+  const top = S.undo && S.undo.length && S.undo[S.undo.length-1];
+  if(top && canUndo()){
+    const k = top.k==='bed'?'cat bed':top.k==='tower'?'cat tower':'yarn path';
+    if(top.at[0]==='v'){ const q=V[+top.at.slice(1)];
+      out += `<g class="undo-hit" data-u="1" tabindex="0" role="button" aria-label="Take back this ${k}"><circle class="ring" cx="${q.x}" cy="${q.y}" r="21"/><circle class="hit" cx="${q.x}" cy="${q.y}" r="22"/></g>`;
+    } else { const ed=E[+top.at.slice(1)], a=V[ed.a], b=V[ed.b];
+      out += `<g class="undo-hit" data-u="1" tabindex="0" role="button" aria-label="Take back this ${k}"><line class="ring" x1="${a.x+(b.x-a.x)*.16}" y1="${a.y+(b.y-a.y)*.16}" x2="${a.x+(b.x-a.x)*.84}" y2="${a.y+(b.y-a.y)*.84}"/><line x1="${a.x+(b.x-a.x)*.2}" y1="${a.y+(b.y-a.y)*.2}" x2="${a.x+(b.x-a.x)*.8}" y2="${a.y+(b.y-a.y)*.8}" stroke="transparent" stroke-width="22"/></g>`;
+    }
+  }
   if(mode==='bed') validBeds(p, S.phase==='setup').forEach(v=>{
     out += `<g class="hot-v" data-v="${v}" tabindex="0" role="button" aria-label="Place a cat bed here"><circle cx="${V[v].x}" cy="${V[v].y}" r="9"/><circle class="hit" cx="${V[v].x}" cy="${V[v].y}" r="18"/></g>`;
   });
@@ -1256,7 +1321,7 @@ function hintText(){
       return {alert:true, t:`Waiting for ${S.discardQ.map(pname).join(', ')} to drop cards.`};
     }
     if(S.offer && S.offer.to===ON.seat) return `${pname(S.offer.from)} sent you a trade offer.`;
-    if(S.phase==='setup') return `${cur} is placing a ${S.setup.step==='bed'?'cat bed':'yarn path'}.`;
+    if(S.phase==='setup') return S.setup.step==='done' ? `${cur} is checking their spot.` : `${cur} is placing a ${S.setup.step==='bed'?'cat bed':'yarn path'}.`;
     if(S.sub==='vacuum') return {alert:true, t:`${cur} is moving the Vacuum.`};
     if(ON.seat<0) return `You're watching. ${cur} is taking a turn.`;
     return `${cur} is taking a turn.`;
@@ -1265,7 +1330,8 @@ function hintText(){
     const round = S.setup.i < S.players.length ? 'first' : 'second';
     return S.setup.step==='bed'
       ? `Tap a glowing spot to place your ${round} cat bed.${round==='second'?' It collects one card from each tile it touches.':''}`
-      : `Now roll out a yarn path from that bed.`;
+      : S.setup.step==='path' ? `Now roll out a yarn path from that bed. Changed your mind? Tap the bed to take it back.`
+      : `Happy with that spot? Tap Next cat. To move a piece, tap it to take it back.`;
   }
   if(S.sub==='discard') return {alert:true, t: S.online ? `The Vacuum! Waiting for ${S.discardQ.map(pname).join(', ')} to drop cards.` : `The Vacuum! Cats holding more than 7 cards drop half.`};
   if(S.sub==='vacuum') return {alert:true, t:`Tap a tile to send the Vacuum there. That tile stops producing.`};
@@ -1276,11 +1342,12 @@ function hintText(){
   if(ui.mode==='path') return `Tap a glowing edge to roll out yarn.`;
   if(ui.mode==='tower') return `Tap one of your cat beds to upgrade it.`;
   if(!S.rolled) return `Roll the dice to see which tiles produce.`;
+  if(S.undo && S.undo.length) return `Tap the piece you just placed to take it back. Trading, buying or playing a treat, or ending your turn, locks it in.`;
   return `Build, trade or play a treat, then end your turn.`;
 }
 
 function renderPanel(){
-  const p = S.cur, cp = P(), br = BREEDS[cp.breed];
+  const p = S.cur, cp = P(), br = {color:pcol(cp)};
   const mine = me(), mp = mine>=0 ? S.players[mine] : null;
   const play = S.phase==='play', mt = myTurn();
   const free = play && mt && S.rolled && !S.sub && !S.offer;
@@ -1298,8 +1365,8 @@ function renderPanel(){
   html += `<section class="card cats-card">
     <h3>Cats</h3>
     <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}" data-i="${i}">
-      ${portrait(q.breed)}
-      <div><div class="nm"><span class="dot" style="background:${BREEDS[q.breed].color}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
+      ${portrait(q)}
+      <div><div class="nm"><span class="dot" style="background:${pcol(q)}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
       <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div></div>
       <div class="badges">${S.longest===i?`<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',36)}</span>`:''}${S.army===i?`<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',36)}</span>`:''}</div>
       <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
@@ -1435,7 +1502,7 @@ function confetti(){
 }
 function handoffHTML(){
   const pl = P();
-  return `<div class="modal handoff">${portrait(pl.breed)}
+  return `<div class="modal handoff">${portrait(pl)}
     <h2>${pname(S.cur)}'s turn</h2>
     <p>${S.phase==='setup'?'Place a cat bed and a yarn path.':'Pass the screen to '+pname(S.cur)+'. Their paws stay hidden until they tap.'}</p>
     <div class="actions center"><button class="btn primary" autofocus onclick="G.startTurn()">I'm ${pname(S.cur)}, let's go</button></div></div>`;
@@ -1448,19 +1515,19 @@ function discardHTML(){
   const p = discardSeat(), pl = S.players[p];
   if(!ui.discardSel || ui.discardFor!==p){ ui.discardSel = emptyRes(); ui.discardFor = p; }
   const need = Math.floor(total(pl.res)/2), got = total(ui.discardSel);
-  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(pl.breed)}<div><h2>${S.online?'The Vacuum is coming':pname(p)+', the Vacuum is coming'}</h2></div></div>
+  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(pl)}<div><h2>${S.online?'The Vacuum is coming':pname(p)+', the Vacuum is coming'}</h2></div></div>
     <p>You hold ${total(pl.res)} cards. ${S.online?'':'Pass the screen to '+pname(p)+' and '}Choose ${need} to drop.</p>
     ${stepperRows(ui.discardSel, pl.res, 'G.discardStep', true)}
     <div class="actions"><button class="btn hot" ${got===need?'':'disabled'} onclick="G.confirmDiscard()">Drop ${got} of ${need}</button></div></div>`;
 }
 function stealHTML(){
   return `<div class="modal"><h2>Swipe a card</h2><p>These cats live next to the Vacuum. Pick one to take a random card from.</p>
-    <div class="partner">${S.subData.victims.map(v=>`<button onclick="G.steal(${v})">${portrait(S.players[v].breed)}${pname(v)} (${total(S.players[v].res)})</button>`).join('')}</div></div>`;
+    <div class="partner">${S.subData.victims.map(v=>`<button onclick="G.steal(${v})">${portrait(S.players[v])}${pname(v)} (${total(S.players[v].res)})</button>`).join('')}</div></div>`;
 }
 function offerHTML(){
   const o = S.offer, q = S.players[o.to];
   const ok = RES.every(r=>q.res[r]>=o.get[r]);
-  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q.breed)}<div><h2>${S.online?'A trade offer':pname(o.to)+', a trade offer'}</h2></div></div>
+  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${S.online?'A trade offer':pname(o.to)+', a trade offer'}</h2></div></div>
     <p><b>${pname(o.from)} gives you:</b> ${describe(o.give)||'nothing'}</p>
     <p><b>You give ${pname(o.from)}:</b> ${describe(o.get)||'nothing'}</p>
     ${ok?'':`<p class="hint alert">You don't have enough to accept this.</p>`}
@@ -1468,14 +1535,14 @@ function offerHTML(){
 }
 function offerWaitHTML(){
   const o = S.offer;
-  return `<div class="modal handoff">${portrait(S.players[o.to].breed)}<h2>Offer sent</h2>
+  return `<div class="modal handoff">${portrait(S.players[o.to])}<h2>Offer sent</h2>
     <p>You give ${describe(o.give)||'nothing'} and get ${describe(o.get)||'nothing'}. Waiting for ${pname(o.to)} to answer.</p>
     <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button></div></div>`;
 }
 function winHTML(){
   const w = S.winner;
   const order = S.players.map((_,i)=>i).sort((a,b)=>vp(b,true)-vp(a,true));
-  return `<div class="modal handoff win"><div class="cheer"><span class="yay y1">✦</span><span class="yay y2">♥</span><span class="yay y3">✦</span><span class="yay y4">♥</span>${portrait(S.players[w].breed,'win')}</div>
+  return `<div class="modal handoff win"><div class="cheer"><span class="yay y1">✦</span><span class="yay y2">♥</span><span class="yay y3">✦</span><span class="yay y4">♥</span>${portrait(S.players[w],'win')}</div>
     <h2>${S.online&&w===ON.seat?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
     <div class="scores">${order.map(i=>`<div><span>${pname(i)}</span><b>${vp(i,true)} points</b></div>`).join('')}</div>
     <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;
@@ -1483,6 +1550,7 @@ function winHTML(){
 function modalHTML(){
   const m = ui.modal;
   if(m.kind==='rules') return rulesHTML();
+  if(m.kind==='cat') return catSheetHTML(m.i);
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>You can come back with code <b>${esc(S.code)}</b> while the game is still running.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
@@ -1515,7 +1583,7 @@ function modalHTML(){
     const big = {litter:9,yarn:9,nip:9,nib:9,fish:9};
     return `<div class="modal wide"><h2>Trade with a cat</h2>
       <div class="sec-label">With</div>
-      <div class="partner">${others.map(i=>`<button aria-pressed="${m.partner===i}" onclick="G.tradePartner(${i})">${portrait(S.players[i].breed)}${pname(i)} (${total(S.players[i].res)})</button>`).join('')}</div>
+      <div class="partner">${others.map(i=>`<button aria-pressed="${m.partner===i}" onclick="G.tradePartner(${i})">${portrait(S.players[i])}${pname(i)} (${total(S.players[i].res)})</button>`).join('')}</div>
       <div class="cols"><div><div class="sec-label">You give</div>${stepperRows(m.give, pl.res, 'G.tradeGive', true)}</div>
       <div><div class="sec-label">You want</div>${stepperRows(m.get, big, 'G.tradeGet', false)}</div></div>
       <div class="actions"><button class="btn" onclick="G.close()">Close</button><button class="btn primary" ${m.partner!=null&&(total(m.give)||total(m.get))?'':'disabled'} onclick="G.tradeOffer()">${m.partner!=null?'Offer to '+pname(m.partner):'Pick a cat'}</button></div></div>`;
@@ -1551,7 +1619,7 @@ function rulesHTML(){
     [pathPic, `Then a free <b>yarn path</b> along an edge touching that bed.`],
     [`${bedPic}${pathPic}`, `Go round again in reverse order. Your second bed collects one card from each tile it touches.`]
   ])}
-  <p class="small">Beds need one empty corner between them and any other bed.</p></section>
+  <p class="small">Beds need one empty corner between them and any other bed. Placed one in the wrong spot? Tap it, or tap <b>Take back last piece</b>, and place it again. Tap <b>Next cat</b> when you're happy.</p></section>
 
   <section class="rule-block"><h3>Resources</h3>
   <p class="small">Each tile makes one resource when its number is rolled. The Nap spot makes nothing.</p>
@@ -1562,7 +1630,8 @@ function rulesHTML(){
     [`<span class="mini-dice">${[3,4].map(n=>`<span class="die" aria-hidden="true">${Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('')}</span>`).join('')}</span>`, `<b>Roll.</b> Every tile with that number gives a card to each bed touching it. Towers get two.`],
     [`<span class="pill">Build</span>`, `<b>Build, trade and play one treat</b>, in any order.`],
     [`<span class="pill">End</span>`, `<b>End your turn.</b> The next cat goes.`]
-  ])}</section>
+  ])}
+  <p class="small"><b>Changed your mind?</b> Tap the bed, path or tower you just built to take it back and get your cards back. You can keep taking pieces back, newest first, until you trade, buy or play a treat, or end your turn.</p></section>
 
   <section class="rule-block"><h3>Build cards</h3>
   <div class="build-grid">
@@ -1608,7 +1677,7 @@ function breedPicker(sel, taken, fn){
   return `<div class="breeds" role="radiogroup" aria-label="Pick your cat">${BREEDS.map((b,i)=>`<button role="radio" aria-checked="${sel===i}" aria-label="${b.label}" title="${b.label}" ${taken.includes(i)?'disabled':''} onclick="${fn}(${i})" style="--pc:${b.color}">${catArt(i)}</button>`).join('')}</div>`;
 }
 function startScreen(){
-  if(!ui.seats) ui.seats = DEFAULT_NAMES.slice(0,3).map((n,i)=>({name:n, breed:i}));
+  if(!ui.seats) ui.seats = DEFAULT_NAMES.slice(0,3).map((n,i)=>({name:n, breed:i, color:i}));
   if(!ui.form){
     const q = new URLSearchParams(location.search).get('game');
     ui.form = {name: store.get('whisker-isles-name') || '', breed: +(store.get('whisker-isles-breed')||0) || 0, code: q ? normCode(q) : ''};
@@ -1617,6 +1686,7 @@ function startScreen(){
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
   return `<main class="start">
+    <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
     ${heroHTML()}
     ${ON.err?`<p class="hint alert" role="alert" style="max-width:680px;margin:14px auto 0">${esc(ON.err)}</p>`:''}
     <div class="modes">
@@ -1641,9 +1711,9 @@ function startScreen(){
       </section>`}
       <section class="card mode">
         <h2>Play on one device</h2>
-        <p class="muted">Pass the screen around. ${n>MAX_CLASSIC?'<b>Big Island</b> for 5 to 10 cats.':'Classic island for 2 to 4 cats. Add a 5th for Big Island.'}</p>
+        <p class="muted">Pass the screen around. Tap a cat to pick its look and colour. ${n>MAX_CLASSIC?'<b>Big Island</b> for 5 to 10 cats.':'Classic island for 2 to 4 cats. Add a 5th for Big Island.'}</p>
         <div class="seats">${seats.map((s,i)=>`<div class="seat">
-          <button class="portrait" style="--pc:${BREEDS[s.breed].color}" onclick="G.seatBreed(${i})" aria-label="Change cat for ${esc(s.name)}" title="Tap to change cat">${catArt(s.breed)}</button>
+          <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${catArt(s.breed)}</button>
           <input value="${esc(s.name)}" maxlength="14" aria-label="Name for cat ${i+1}" oninput="G.seatName(${i},this.value)">
           ${n>2?`<button class="x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}
         </div>`).join('')}
@@ -1657,12 +1727,23 @@ function startScreen(){
     <p class="center" style="margin-top:18px"><button class="btn small" onclick="G.open('rules')">How to play</button></p>
   </main>`;
 }
+function catSheetHTML(i){
+  const s = ui.seats[i]; if(!s) return '';
+  const owner = c => ui.seats.find((x,j)=>j!==i&&x.color===c);
+  return `<div class="modal cat-sheet"><div class="turn" style="margin-bottom:10px">${portrait(s)}<div><h2>Customise ${esc(s.name.trim()||BREEDS[s.breed].label)}</h2><div class="sub">Cats can match. Colours can't, so everyone can spot their pieces.</div></div></div>
+    <div class="field">Cat</div>${breedPicker(s.breed, [], 'G.seatPick.bind(null,'+i+')')}
+    <div class="field" style="margin-top:14px">Colour</div>
+    <div class="swatches" role="radiogroup" aria-label="Pick a colour">${COLORS.map((c,k)=>{ const o=owner(k);
+      return `<button role="radio" aria-checked="${s.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.seatColor(${i},${k})"></button>`; }).join('')}</div>
+    <div class="actions center" style="margin-top:18px"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
+}
 function lobbyScreen(){
   const L = ON.lobby, isHost = L.host===ON.pid, n = L.seats.length;
   const link = location.origin + location.pathname + '?game=' + L.code;
-  const taken = L.seats.filter(s=>s.pid!==ON.pid).map(s=>s.breed);
+  const LS = fixColors(L.seats);
   const mySeat = L.seats.find(s=>s.pid===ON.pid);
   return `<main class="start lobby">
+    <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
     <section class="card code-card">
       <p class="muted">Share this code so friends can join</p>
       <div class="big-code">${esc(L.code)}</div>
@@ -1673,9 +1754,9 @@ function lobbyScreen(){
     </section>
     <section class="card">
       <h2>${n} cat${n===1?'':'s'} in the lobby <small class="muted">${n>MAX_CLASSIC?'Big Island':'Classic island'}, up to ${MAX_CATS}</small></h2>
-      <div class="lobby-seats">${L.seats.map(s=>`<div class="lseat${s.pid===ON.pid?' me':''}">
-        ${portrait(s.breed)}<b>${esc(s.name)}</b><small>${s.pid===L.host?'Host':''}${s.pid===ON.pid?(s.pid===L.host?' · you':'You'):''}${!ON.online.includes(s.pid)?' · away':''}</small></div>`).join('')}</div>
-      ${mySeat?`<div class="field" style="margin-top:14px">Your cat</div>${breedPicker(mySeat.breed, taken, 'G.lobbyBreed')}`:''}
+      <div class="lobby-seats">${LS.map(s=>`<div class="lseat${s.pid===ON.pid?' me':''}">
+        ${portrait(s)}<b>${esc(s.name)}</b><small>${s.pid===L.host?'Host':''}${s.pid===ON.pid?(s.pid===L.host?' · you':'You'):''}${!ON.online.includes(s.pid)?' · away':''}</small></div>`).join('')}</div>
+      ${mySeat?`<div class="field" style="margin-top:14px">Your cat</div>${breedPicker(mySeat.breed, [], 'G.lobbyBreed')}`:''}
       <div class="online-actions">
         <button class="btn" onclick="G.toStart()">Leave</button>
         ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Waiting for a friend to join'}</button>`
@@ -1691,7 +1772,7 @@ function lobbyScreen(){
 const G = {
   /* hot-seat setup */
   start(){
-    const seats = ui.seats.map(s=>({name:s.name.trim()||BREEDS[s.breed].label, breed:s.breed}));
+    const seats = ui.seats.map(s=>({name:s.name.trim()||BREEDS[s.breed].label, breed:s.breed, color:s.color}));
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
   },
@@ -1702,13 +1783,10 @@ const G = {
     S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
   },
   seatName(i,v){ ui.seats[i].name=v; },
-  seatBreed(i){
-    const used = ui.seats.filter((s,j)=>j!==i).map(s=>s.breed);
-    let b = ui.seats[i].breed;
-    for(let k=0;k<BREEDS.length;k++){ b=(b+1)%BREEDS.length; if(!used.includes(b)) break; }
-    ui.seats[i].breed=b; render();
-  },
-  seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed); const b=BREEDS.findIndex((_,i)=>!used.includes(i)); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:names[0]||('Cat '+(ui.seats.length+1)), breed:b}); render(); },
+  /* customise sheet: any cat for anyone, and a colour nobody else has */
+  seatPick(i,b){ const s=ui.seats[i]; s.breed=b; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; render(); },
+  seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; render(); },
+  seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:names[0]||('Cat '+(ui.seats.length+1)), breed:b}); ui.seats=fixColors(ui.seats); render(); },
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); render(); },
   /* online setup */
   formName(v){ ui.form.name=v; store.set('whisker-isles-name', v); },
@@ -1726,11 +1804,12 @@ const G = {
   copy(text, btn){ navigator.clipboard && navigator.clipboard.writeText(text).then(()=>{ btn.textContent='Copied'; setTimeout(()=>render(),1200); }); },
   /* turns */
   startTurn(){ S.handoff=false; save(); render(); },
-  roll, endTurn, buyTreat, playTreat,
+  roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
     if(kind==='bank') ui.modal={kind, give:null, get:null};
     else if(kind==='trade') ui.modal={kind, partner:null, give:emptyRes(), get:emptyRes()};
+    else if(kind==='cat') ui.modal={kind, i:arguments[1]};
     else ui.modal={kind};
     render();
   },
@@ -1764,7 +1843,8 @@ window.G = G;
 
 /* board clicks and keyboard */
 function boardAct(t){
-  const g = t.closest('[data-v],[data-e],[data-h],[data-t]'); if(!g) return;
+  const g = t.closest('[data-u],[data-v],[data-e],[data-h],[data-t]'); if(!g) return;
+  if(g.dataset.u!==undefined){ if(canUndo()) undoPlace(); return; }
   const mode = boardMode();
   if(g.dataset.v!==undefined && mode==='bed'){ const v=+g.dataset.v; if(canBed(S.cur,v,S.phase==='setup')) placeBed(v); }
   else if(g.dataset.t!==undefined && mode==='tower'){ placeTower(+g.dataset.t); }
