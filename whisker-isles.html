@@ -2809,7 +2809,7 @@ function lobbyScreen(){
       <span class="pillow" aria-hidden="true"></span>
       <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small>${isHost && s.pid!==ON.pid ? hostActs(s) : ''}</li>`).join('');
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
-  const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Pending</b></li>`).join('');
+  const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
     <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
