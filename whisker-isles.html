@@ -742,7 +742,19 @@ body{overflow-x:clip}
 .mg-tag.pending{background:#F3EEF5;border-style:dashed;color:var(--plum-2)}
 .mg-tag.over{background:#E2F8EF}
 .mg-btns{margin-left:auto;display:flex;gap:6px}
-.saved-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+.saved-games{margin:14px 0 4px}
+.save{border:2px solid var(--plum);border-radius:var(--r-md);background:#fff}
+.save summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;cursor:pointer;list-style:none;font-weight:800}
+.save summary::-webkit-details-marker{display:none}
+.save summary::after{content:"";margin-left:auto;width:8px;height:8px;border:solid var(--plum);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.save[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.save summary:focus-visible{outline:3px solid var(--plum);outline-offset:2px;border-radius:var(--r-md)}
+.sv-cats{font-family:var(--display);font-weight:400}
+.sv-when{font-size:.78rem;font-weight:700;color:var(--plum-2)}
+.sv-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 14px;margin:0;padding:2px 12px 10px}
+.sv-info dt{font-size:.74rem;font-weight:800;color:var(--plum-2)}
+.sv-info dd{margin:0;font-weight:800;font-size:.9rem}
+.sv-acts{display:flex;justify-content:flex-end;gap:8px;padding:0 12px 10px}
 .lb-name{display:inline-flex;align-items:center;gap:.55em;vertical-align:middle}
 .lb-cat{width:32px;height:32px;border-radius:50%;border:2px solid var(--plum);overflow:hidden;flex:none;display:grid;place-items:center;background:color-mix(in srgb, var(--pc,#eee) 28%, #fff)}
 .lb-cat img,.lb-cat svg{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
@@ -1467,8 +1479,36 @@ function boardTable(rows, hi){
     <tbody>${rows.map((r,k)=>`<tr${hi && hi.includes(nameKey(r.name))?' class="hi"':''}><td>${k+1}</td><th scope="row"><span class="lb-name">${rowCat(r)}<span class="lb-nm">${esc(r.name)}</span></span></th><td><b>${r.points}</b></td><td>${r.wins}</td><td>${r.games}</td></tr>`).join('')}</tbody></table>`;
 }
 const LB_EMPTY = '<p class="muted">No finished games yet. A win scores 3 points, 2nd place 2 and 3rd place 1.</p>';
-function save(){ if(S && !S.online){ const u=S.undo; S.undo=[]; store.set(SAVE_KEY, JSON.stringify(S)); S.undo=u; } }
-function loadSave(){ try{ const s = JSON.parse(store.get(SAVE_KEY)); return s && s.players ? s : null; }catch(e){ return null; } }
+/* in-person games: each one is saved on its own (SAVES_PFX + id), with a small index for the list on the start screen.
+   The index holds what the list shows: cats, when it began, when it was last played and how long it has been played. */
+const SAVES_INDEX = 'whisker-isles-saves-index', SAVES_PFX = 'whisker-isles-save-game-', MAX_SAVES = 10, GAP_CAP = 5*60*1000;
+const newSid = () => 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function savesIndex(){
+  let ix = null; try{ ix = JSON.parse(store.get(SAVES_INDEX)); }catch(e){}
+  if(!Array.isArray(ix)){
+    ix = [];
+    /* the one game older versions kept comes over as the first saved game; we don't know when it began, so it starts now */
+    try{ const old = JSON.parse(store.get(SAVE_KEY));
+      if(old && old.players && !old.online){ const id = newSid(), now = Date.now(); old.sid = id; old.created = now; old.playedMs = 0; old.lastAt = now;
+        store.set(SAVES_PFX+id, JSON.stringify(old)); ix.push(saveMeta(old, now)); store.del(SAVE_KEY); }
+    }catch(e){}
+    store.set(SAVES_INDEX, JSON.stringify(ix));
+  }
+  return ix.filter(x=>x && x.id);
+}
+function saveMeta(g, now){ return {id:g.sid, created:g.created||now, last:now, played:g.playedMs||0, cats:g.players.map(p=>p.name), turn:g.turn, phase:g.phase}; }
+function save(){
+  if(!S || S.online) return;
+  const now = Date.now();
+  if(!S.sid){ S.sid = newSid(); S.created = now; S.playedMs = 0; }
+  S.playedMs = (S.playedMs||0) + Math.min(Math.max(0, now-(S.lastAt||now)), GAP_CAP); S.lastAt = now;
+  const u = S.undo; S.undo = []; store.set(SAVES_PFX+S.sid, JSON.stringify(S)); S.undo = u;
+  let ix = savesIndex().filter(x=>x.id!==S.sid); ix.unshift(saveMeta(S, now));
+  ix.slice(MAX_SAVES).forEach(x=>store.del(SAVES_PFX+x.id)); ix = ix.slice(0,MAX_SAVES);
+  store.set(SAVES_INDEX, JSON.stringify(ix));
+}
+function loadSave(id){ try{ const g = JSON.parse(store.get(SAVES_PFX+id)); return g && g.players ? g : null; }catch(e){ return null; } }
+function deleteSave(id){ store.del(SAVES_PFX+id); store.set(SAVES_INDEX, JSON.stringify(savesIndex().filter(x=>x.id!==id))); }
 
 function log(msg){ S.log.unshift(msg); S.log.length = Math.min(S.log.length, 80); const l=$('#live'); if(l) l.textContent = msg.replace(/<[^>]+>/g,''); }
 const P = () => S.players[S.cur];
@@ -2780,7 +2820,7 @@ function modalHTML(){
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
-    : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
+    : `<div class="modal"><h2>${S && S.phase==='over' ? 'Back to the start?' : 'Leave this game?'}</h2><p>${S && S.phase==='over' ? 'This finished game stays in your saved games until you delete it.' : 'It stays saved on this device. Pick it from Saved games to carry on, or start another one.'}</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`;
   if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
   if(m.kind==='treat'){
     const c = S.players[me()] && S.players[me()].cards[m.i]; if(!c || !TREATS[c.t]) return '';
@@ -2943,6 +2983,24 @@ function myGamesList(busy){
       : `<button class="btn small" onclick="G.unlist('${esc(x.code)}')" aria-label="Remove ${esc(x.code)} from my list">Remove from my list</button>`}</span></li>`).join('');
   return `<div class="my-games"><h3>Your online games</h3><ul>${rows}</ul></div>`;
 }
+/* ---------- saved in-person games ---------- */
+function listNames(a){ return a.length<3 ? a.join(' & ') : a.slice(0,-1).join(', ')+' & '+a[a.length-1]; }
+function fmtPlayed(ms){ const m = Math.round(ms/60000); if(m<1) return 'under a minute'; if(m<60) return m+' min'; const h = Math.floor(m/60), r = m%60; return h+' h'+(r?' '+r+' min':''); }
+function fmtWhen(t){ const d = new Date(t), now = new Date(), day0 = x=>new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime(), diff = Math.round((day0(now)-day0(d))/864e5);
+  const time = d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  if(diff===0) return 'today, '+time; if(diff===1) return 'yesterday, '+time;
+  return d.toLocaleDateString([], {day:'numeric', month:'short', year: d.getFullYear()===now.getFullYear()?undefined:'numeric'})+', '+time; }
+function savedGamesHTML(){
+  const ix = savesIndex(); if(!ix.length) return '';
+  const tag = {setup:'Setting up', play:'In play', over:'Finished'};
+  const rows = ix.map(g=>{ const open = ui.openSave===g.id, st = g.phase==='over'?'over':g.phase==='setup'?'setup':'play', who = esc(listNames(g.cats));
+    return `<li><details class="save"${open?' open':''} ontoggle="G.openSave('${g.id}', this.open)">
+      <summary><span class="sv-cats">${who}</span><span class="mg-tag ${st==='over'?'over':st==='setup'?'pending':''}">${tag[st]}</span><span class="sv-when">${esc(fmtWhen(g.last))}</span></summary>
+      <dl class="sv-info"><div><dt>Cats</dt><dd>${who}</dd></div><div><dt>Time played</dt><dd>${fmtPlayed(g.played)}</dd></div><div><dt>Started</dt><dd>${esc(fmtWhen(g.created))}</dd></div><div><dt>Last played</dt><dd>${esc(fmtWhen(g.last))}</dd></div>${g.turn>1?`<div><dt>Turn</dt><dd>${g.turn}</dd></div>`:''}</dl>
+      <div class="sv-acts"><button class="btn small primary" onclick="G.resume('${g.id}')" aria-label="${st==='over'?'See the result of':'Continue'} the game with ${who}">${st==='over'?'See result':'Continue'}</button><button class="btn small" onclick="G.forgetSave('${g.id}')" aria-label="Delete the game with ${who}">Delete</button></div>
+    </details></li>`; }).join('');
+  return `<div class="my-games saved-games"><h3>Saved games</h3><ul>${rows}</ul></div>`;
+}
 function startScreen(){
   if(!ui.seats) ui.seats = [0,1].map(i=>({name:'', breed:i, color:i}));
   const rows = boardRows(), lbShown = ui.lbAll ? rows : rows.slice(0,5);
@@ -2950,7 +3008,6 @@ function startScreen(){
     const q = new URLSearchParams(location.search).get('game');
     ui.form = {name: store.get('whisker-isles-name') || '', breed: +(store.get('whisker-isles-breed')||0) || 0, code: q ? normCode(q) : ''};
   }
-  const saved = loadSave();
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
   const games = myGamesList(busy);
@@ -2965,7 +3022,7 @@ function startScreen(){
           <button class="where-opt" onclick="G.where('here')"><span class="where-ic together" aria-hidden="true"><img src="${artSrc('cat-ginger')}" alt=""><img src="${artSrc('cat-calico')}" alt=""></span><b>In person</b><span>Everyone shares one screen and passes it round.</span></button>
           <button class="where-opt" onclick="G.where('online')"><span class="where-ic apart" aria-hidden="true"><img src="${artSrc('cat-tuxedo')}" alt=""><i></i><img src="${artSrc('cat-siamese')}" alt=""></span><b>Online</b><span>Everyone plays on their own phone or laptop with a game code.</span></button>
         </div>
-        ${saved && saved.phase!=='over' ? `<p class="center saved-row"><button class="btn" onclick="G.resume()">Continue saved game</button> <button class="btn small" onclick="G.forgetSave()">Delete it</button></p>` : ''}
+        ${savedGamesHTML()}
         ${games}
       </section>`;
   const online = window.WI_OFFLINE ? '' : `<section class="card mode">
@@ -3006,8 +3063,8 @@ function startScreen(){
         </div>`).join('')}
         ${n<MAX_CATS?`<button class="seat add" onclick="G.seatAdd()"><span>+</span>Add a cat${n===MAX_CLASSIC?'<small>A 5th cat makes it Big Island</small>':''}</button>`:''}</div>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
+        ${savedGamesHTML()}
         <div class="crew-go">
-          ${saved && saved.phase!=='over' ? `<button class="btn" onclick="G.resume()">Continue saved game</button>` : ''}
           <button class="btn primary big" onclick="G.start()">Start with ${n} cats</button>
         </div>
         <p class="where-swap">${swap}</p>
@@ -3150,12 +3207,12 @@ const G = {
     ui.startErr = null; ui.badSeat = null;
     const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color, tint:hasTint(s.tint) ? Object.assign({}, s.tint) : null}));
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
-    newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
+    newGame(seats, {online:false}); S.sid = newSid(); S.created = Date.now(); S.playedMs = 0; S.lastAt = S.created; save(); render(); window.scrollTo(0,0);
   },
-  resume(){ S = loadSave(); if(S && !S.online && S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
+  resume(id){ S = loadSave(id); if(!S){ render(); return; } S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
   toStart(){
     fetchBoard();
-    if(S && S.online) leaveOnline(); else store.del(SAVE_KEY);
+    if(S && S.online) leaveOnline(); else if(S) save();
     if(!S && ON.status==='lobby') leaveOnline();
     S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
   },
@@ -3192,7 +3249,8 @@ const G = {
       .catch(() => { ON.err = "Couldn't reach the game server, so the game wasn't deleted."; render(); });
   },
   unlist(code){ if(!confirm(`Remove ${code} from your list? The game carries on for everyone else, and you can rejoin with the code and your name.`)) return; forgetGame(code); render(); },
-  forgetSave(){ if(!confirm("Delete your saved in-person game? You can't get it back.")) return; store.del(SAVE_KEY); render(); },
+  forgetSave(id){ const g = savesIndex().find(x=>x.id===id); if(!g || !confirm(`Delete the saved game with ${listNames(g.cats)}? You can't get it back.`)) return; deleteSave(id); if(ui.openSave===id) ui.openSave=null; render(); },
+  openSave(id, on){ ui.openSave = on ? id : (ui.openSave===id ? null : ui.openSave); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } askNotify(); ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   lobbyColor(c){
