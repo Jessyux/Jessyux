@@ -9,9 +9,10 @@
 //   kick {pid, base?, state?}  host only: remove a cat by public id (in a game, with the state that has them taken out)
 //   start {state}              host only: start the game with this first state
 //   state {base, state}        the state after your move; accepted when base matches the room's version
-//   convert {cats, state}      host, right after hello in a new room: bring a game played on one screen online. Every cat
-//                              starts on the host's device; a friend who joins takes the cat whose name they give.
-//   takeover {pid}             host only: take a cat back from a friend (pid is the seat's public id); it can be claimed again
+//   convert {cats, you, state} host, right after hello in a new room: bring a game played on one screen online. The host
+//                              plays cats[you]; every other cat is an open seat that a friend takes by joining with its
+//                              name. The game waits until every cat has a device.
+//   release {pid}              host only: free a friend's cat (pid is the seat's public id) so someone else can take it
 //   detach {base, state}       host only: move the game back to one screen; everyone else is disconnected and the room closes
 // Server to client:
 //   lobby {lobby, online, you, state?, ver?}   who is in, who is connected, your seat, and the game once started.
@@ -22,7 +23,7 @@
 //   error {message, kicked?}   the connection ends
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
-import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, hostedSeats, claimHosted, takeOver } from './whisker-seat.mjs';
+import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -129,16 +130,15 @@ export class WhiskerRoom extends DurableObject {
       if ((room.banned || []).includes(pid)) return this.fail(ws, 'The host removed you from this game.');
       let seat = room.seats.find(s => s.pid === pid);
       // a player on a new laptop or phone takes their seat back by typing the same name
-      // a game moved online from one screen: a friend takes over one of the cats the host is holding
-      if (!seat && room.started && hostedSeats(room).length) {
+      // a game moved online from one screen: a friend takes one of the cats still waiting for a device
+      if (!seat && room.started && openSeats(room).length) {
         if (!name) {
-          const free = hostedSeats(room).map(({ name, breed, color, tint }) => ({ name, breed, color, tint }));
+          const free = openSeats(room).map(({ name, breed, color, tint }) => ({ name, breed, color, tint }));
           return this.send(ws, { type: 'pick', code: room.code, cats: free });
         }
-        const claim = claimHosted(room, pid, name);
+        const claim = claimOpen(room, pid, name);
         if (claim.ok) seat = claim.seat;
         else if (!room.seats.some(s => key(s.name) === key(name))) return this.fail(ws, `There is no cat called ${name} in this game.`);
-        else if (claim.error.startsWith('The host has to')) return this.fail(ws, claim.error);
       }
       if (!seat && name) {
         const same = room.seats.find(s => key(s.name) === key(name));
@@ -192,7 +192,7 @@ export class WhiskerRoom extends DurableObject {
       }
       room.seats.splice(k, 1); room.banned = [...(room.banned || []), out];
       await this.put(room);
-      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === out) {
+      for (const w of this.ctx.getWebSockets()) if (out && (w.deserializeAttachment() || {}).pid === out) {
         this.send(w, { type: 'error', kicked: true, message: 'The host removed you from this game.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'removed'); } catch (e) { /* closed */ }
       }
@@ -200,16 +200,16 @@ export class WhiskerRoom extends DurableObject {
     }
     if (m.type === 'convert') {
       if (room.host !== me || room.started || room.seats.length !== 1) return;
-      const r = convertSeats(room, me, m.cats);
+      const r = convertSeats(room, me, m.cats, m.you);
       if (!r.ok) return this.send(ws, { type: 'oops', message: r.error });
       if (!validState(m.state, r.seats.length)) return this.send(ws, { type: 'oops', message: 'That game could not be moved online.' });
       room.seats = r.seats; ensureSids(room.seats);
       room.started = true; room.state = m.state; room.ver = 1;
       await this.put(room); this.broadcast(room, true); return;
     }
-    if (m.type === 'takeover') {
+    if (m.type === 'release') {
       if (!room.started) return;
-      const r = takeOver(room, me, m.pid); if (!r.ok) return;
+      const r = releaseSeat(room, me, m.pid); if (!r.ok) return;
       await this.put(room); this.broadcast(room, true); return;
     }
     if (m.type === 'detach') {
@@ -230,6 +230,8 @@ export class WhiskerRoom extends DurableObject {
     }
     if (m.type === 'state') {
       if (!room.started || !room.seats.some(s => s.pid === me)) return;
+      // nobody moves until every cat has a device
+      if (openSeats(room).length) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
       if (m.base !== room.ver || !validState(m.state, room.seats.length)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
       room.state = m.state; room.ver++;
       await this.put(room); this.broadcast(room, true, ws); return;

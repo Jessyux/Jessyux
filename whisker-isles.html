@@ -742,6 +742,11 @@ body{overflow-x:clip}
 .mg-tag.pending{background:#F3EEF5;border-style:dashed;color:var(--plum-2)}
 .mg-tag.over{background:#E2F8EF}
 .mg-btns{margin-left:auto;display:flex;gap:6px}
+.wait-cats{list-style:none;margin:12px 0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.wait-cats li{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px}
+.wait-cats .portrait{width:64px;height:64px}
+.wait-cats li.open .portrait{filter:grayscale(.8) opacity(.6);border-style:dashed}
+.wait-cats small{font-weight:800;color:var(--plum-2)}
 .pick-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;margin:14px 0}
 .pick-cat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border:3px solid var(--plum);border-radius:var(--r-md);background:#fff;box-shadow:3px 3px 0 var(--plum);font:inherit;font-weight:900;cursor:pointer;color:var(--plum)}
 .pick-cat:hover{background:var(--butter)}
@@ -1372,7 +1377,7 @@ function makeBoard(radius){
 }
 
 /* a fresh island is allowed only before anything is built on this one */
-function canReshuffle(){ return S && S.phase==='setup' && !Object.keys(S.bld).length && !Object.keys(S.roads).length && myTurn() && !(S.handoff && !S.online) && !needsHandoff() && !ui.modal; }
+function canReshuffle(){ return S && S.phase==='setup' && !Object.keys(S.bld).length && !Object.keys(S.roads).length && myTurn() && !(S.handoff && !S.online) && !ui.modal; }
 function reshuffle(){
   if(!canReshuffle()) return;
   S.board = makeBoard(S.board.radius);
@@ -1521,14 +1526,10 @@ const P = () => S.players[S.cur];
 const pname = i => esc(S.players[i].name);
 
 /* who is looking at this screen */
-/* In person one screen plays every cat. Online each device plays the cats it holds: usually one, but a game moved
-   online from one screen keeps the cats nobody has claimed on the host's device (ON.mine lists them). */
+/* In person one screen plays every cat. Online every cat has its own device (ON.mine is this device's seat). */
 function isMine(i){ return !S.online || ON.mine.includes(i); }
-function shared(){ return !S.online || ON.mine.length>1; }          // this screen is passed between cats
-function ackKey(){ return S.cur+'|'+S.turn+'|'+(S.setup ? S.setup.i : ''); }
-function needsHandoff(){ return !!(S.online && ON.mine.length>1 && ON.mine.includes(S.cur) && S.phase!=='over' && ui.ack!==ackKey()); }
-function canAct(i){ return S.online ? ON.mine.includes(i) && (ON.mine.length<2 || (i===S.cur && !needsHandoff())) : i===S.cur && !S.handoff; }
-function me(){ return S.online ? (ON.mine.includes(S.cur) ? S.cur : ON.seat) : S.cur; }
+function canAct(i){ return S.online ? ON.mine.includes(i) : i===S.cur && !S.handoff; }
+function me(){ return S.online ? ON.seat : S.cur; }
 function myTurn(){ return isMine(S.cur); }
 
 /* ---------- rules ---------- */
@@ -2096,7 +2097,7 @@ function onMsg(m){
   if(m.type==='detached'){
     const code = ON.code; leaveOnline(); if(code) forgetGame(code);
     S = m.state; S.online = false; delete S.code; S.undo = []; S.handoff = true; S.handback = null; S.handbackNote = null; S.lastAt = Date.now();
-    save(); buildGeo(S.board.radius); ui.modal = null; ui.ack = null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
+    save(); buildGeo(S.board.radius); ui.modal = null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
     toast('Back on one screen', `Pass the phone to ${S.players[S.cur].name} to carry on.`); return;
   }
   /* a started game with no name given: these are the cats a friend can take over */
@@ -2106,7 +2107,7 @@ function onMsg(m){
   if(m.type==='error' && (m.kicked || m.deleted || m.detached)){ S = null; ui.modal = null; if((m.deleted || m.detached) && ON.code) forgetGame(ON.code); }
   if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'',location.pathname); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
-    const wasLobby = ON.status==='lobby', prevPids = ON.lobby ? ON.lobby.seats.map(x=>x.pid) : null;
+    const wasLobby = ON.status==='lobby', prevPids = ON.lobby ? ON.lobby.seats.map(x=>x.pid) : null, prevOpen = ON.lobby ? ON.lobby.seats.filter(x=>x.open).map(x=>x.name) : null;
     ON.lobby=m.lobby; ON.online=m.online||[]; ON.me=m.you||null;
     /* the host hears about every cat that sits down, and when the cushions are all taken */
     if(prevPids && !m.lobby.started && m.you && m.lobby.host===m.you){
@@ -2116,6 +2117,12 @@ function onMsg(m){
         alertMe(n>=MAX_CATS ? 'Everyone is here' : `${joined.map(x=>x.name).join(' and ')} joined`, n>=MAX_CATS ? `All ${n} cushions are taken. Start the game when you're ready.` : `${n} cats are waiting${n>=2?'. You can start the game now.':'.'}`);
       }
     }
+    /* a game moved online from one screen: tell everyone when a cat gets its phone, and when the last one does */
+    if(prevOpen && prevOpen.length && m.lobby.started){
+      const nowOpen = m.lobby.seats.filter(x=>x.open).map(x=>x.name), took = prevOpen.filter(n=>!nowOpen.includes(n));
+      if(took.length && nowOpen.length) alertMe(`${took.join(' and ')} joined`, `${nowOpen.length} more ${nowOpen.length>1?'cats need':'cat needs'} a phone.`);
+      else if(took.length) alertMe('Everyone is here', 'Every cat has a phone. The game carries on.');
+    }
     if(wasLobby && m.lobby.started) alertMe('The game has started', ON.me && m.lobby.host===ON.me ? 'Everyone is in. Good luck!' : 'The host started the game. Head back to play.');
     ON.mine = Array.isArray(m.mine) ? m.mine : (ON.me ? [m.lobby.seats.findIndex(s=>s.pid===ON.me)].filter(i=>i>=0) : []);
     ON.seat = ON.mine.length ? ON.mine[0] : -1;
@@ -2123,7 +2130,7 @@ function onMsg(m){
     if(ON.convert && !m.lobby.started && m.you && m.lobby.host===m.you){
       const c = ON.convert; ON.convert = null;
       const st = JSON.parse(JSON.stringify(S)); st.undo = []; st.online = true; st.code = ON.code; st.handoff = false; st.handback = null; st.handbackNote = null; delete st.lastAt;
-      ui.ackNext = true; ON.ws.send(JSON.stringify({type:'convert', cats:c.cats, state:st})); return;
+      ui.wentOnline = true; ON.ws.send(JSON.stringify({type:'convert', cats:c.cats, you:c.you, state:st})); return;
     }
     if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
@@ -2138,7 +2145,7 @@ function applyRemote(state, ver){
   const had = !!(S && S.online), prevCur = had ? S.cur : null, hadOffer = had && offerMine(S.offer), wasDiscarding = had && discardSeat()>=0;
   if(!S) setTimeout(()=>window.scrollTo(0,0));
   S = state; ON.ver = ver; ON.status='playing';
-  if(ui.ackNext){ ui.ackNext = false; ui.ack = ackKey(); if(S.sid) setSaveCode(S.sid, ON.code); toast(`Online: ${ON.code}`, 'Friends open the code and pick a cat. Tap the code to copy a link.'); }
+  if(ui.wentOnline){ ui.wentOnline = false; if(S.sid) setSaveCode(S.sid, ON.code); }
   if(ON.mine.length && S.phase!=='over'){
     if(had && ON.mine.includes(S.cur) && !ON.mine.includes(prevCur)) alertMe(`Your turn, ${S.players[S.cur].name}`, S.phase==='setup' ? 'Time to place your cat bed and yarn path.' : 'Roll the dice.');
     else if(had && offerMine(S.offer) && !hadOffer) alertMe('Trade offer', `${S.players[S.offer.from].name} wants to trade with you.`);
@@ -2271,9 +2278,9 @@ function miniMark(){ return `<svg viewBox="0 0 100 100" aria-hidden="true"><path
 function hexPoints(cx,cy,r,rot){ rot=rot||0; return Array.from({length:6},(_,i)=>{ const a=Math.PI/180*(60*i-30+rot); return (cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1); }).join(' '); }
 function pips(n){ return 6-Math.abs(7-n); }
 
-function canUndo(){ const t = S && S.undo && S.undo[S.undo.length-1]; return !!t && t.turn===S.turn && t.cur===S.cur && t.si===(S.phase==='setup'?S.setup.i:-1) && myTurn() && !(S.handoff && !S.online) && !needsHandoff() && !ui.modal && !S.offer && S.phase!=='over' && !['discard','vacuum','steal'].includes(S.sub); }
+function canUndo(){ const t = S && S.undo && S.undo[S.undo.length-1]; return !!t && t.turn===S.turn && t.cur===S.cur && t.si===(S.phase==='setup'?S.setup.i:-1) && myTurn() && !(S.handoff && !S.online) && !ui.modal && !S.offer && S.phase!=='over' && !['discard','vacuum','steal'].includes(S.sub); }
 function boardMode(){
-  if((S.handoff && !S.online) || needsHandoff() || S.phase==='over' || ui.modal || S.offer || !myTurn()) return null;
+  if((S.handoff && !S.online) || S.phase==='over' || ui.modal || S.offer || !myTurn()) return null;
   if(S.phase==='setup') return S.setup.step;
   if(S.sub==='vacuum') return 'vacuum';
   if(S.sub==='spree') return 'path';
@@ -2535,7 +2542,7 @@ function renderDock(){
   const el = $('#dock'); if(!el) return;
   const mine = me(), mp = mine>=0 ? S.players[mine] : null;
   /* in person, the paws hide while a trade is with the other cat, so neither sees the other's cards */
-  const hide = !dockOn() || !mp || (S.handoff && !S.online) || needsHandoff() || (shared() && (S.offer || S.handback!=null || (S.online && !myTurn()))) || S.phase==='over';
+  const hide = !dockOn() || !mp || (S.handoff && !S.online) || (!S.online && (S.offer || S.handback!=null)) || S.phase==='over';
   document.body.classList.toggle('has-dock', !hide);
   if(hide){ el.classList.add('gone'); el.innerHTML = ''; ui.dockPrev = null; return; }
   el.classList.remove('gone');
@@ -2687,10 +2694,11 @@ function renderOverlay(){
   let html = '';
   if(S){
     if(S.phase==='over' && !ui.hideWin) html = winHTML();
-    else if((S.handoff && !S.online) || needsHandoff()) html = handoffHTML();
+    else if(openCats().length) html = waitingHTML();
+    else if(S.handoff && !S.online) html = handoffHTML();
     else if(discardSeat()>=0) html = discardHTML();
     else if(S.sub==='steal' && myTurn()) html = stealHTML();
-    else if(S.handback!=null && shared() && isMine(S.handback)) html = handbackHTML();
+    else if(S.handback!=null && !S.online) html = handbackHTML();
     else if(S.offer && offerTo(S.offer).some(isMine)) html = offerHTML();
     else if(S.offer && S.online && ON.mine.includes(S.offer.from)) html = offerWaitHTML();
     else if(ui.modal) html = modalHTML();
@@ -2743,6 +2751,16 @@ function confetti(){
   })(t0);
 }
 /* in person the turn starts from this popup; in play its button is Roll dice, so the roll happens as the screen is taken */
+/* a game moved online from one screen: nobody plays until every cat has its own device */
+function openCats(){ return S && S.online && ON.lobby ? ON.lobby.seats.map((x,i)=>x.open?i:-1).filter(i=>i>=0) : []; }
+function waitingHTML(){
+  const L = ON.lobby, open = openCats(), isHost = L.host===ON.me, link = location.origin + location.pathname + '?game=' + L.code;
+  return `<div class="modal handoff waiting"><h2>Waiting for ${open.length>1 ? open.length+' cats' : esc(L.seats[open[0]].name)}</h2>
+    <p>Every cat needs its own phone. Open the code on another device and pick a cat.</p>
+    <p><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button></p>
+    <ul class="wait-cats">${L.seats.map((x,i)=>`<li class="${x.open?'open':'here'}">${portrait(x)}<b>${esc(x.name)}</b><small>${x.open?'Needs a phone':ON.mine.includes(i)?'You':'Here'}</small></li>`).join('')}</ul>
+    <div class="actions center">${isHost ? `<button class="btn" onclick="G.goInPerson()">Back to one screen</button>` : `<button class="btn" onclick="G.toStart()">Leave game</button>`}</div></div>`;
+}
 function handoffHTML(){
   const pl = P(), rollNow = S.phase==='play' && !S.rolled;
   return `<div class="modal handoff">${portrait(pl)}
@@ -2760,8 +2778,8 @@ function discardHTML(){
   const p = discardSeat(), pl = S.players[p];
   if(!ui.discardSel || ui.discardFor!==p){ ui.discardSel = emptyRes(); ui.discardFor = p; }
   const need = Math.floor(total(pl.res)/2), got = total(ui.discardSel);
-  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(pl)}<div><h2>${!shared()?'The Vacuum is coming':pname(p)+', the Vacuum is coming'}</h2></div></div>
-    <p>You hold ${total(pl.res)} cards. ${!shared()?'':'Pass the screen to '+pname(p)+' and '}Choose ${need} to drop.</p>
+  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(pl)}<div><h2>${S.online?'The Vacuum is coming':pname(p)+', the Vacuum is coming'}</h2></div></div>
+    <p>You hold ${total(pl.res)} cards. ${S.online?'':'Pass the screen to '+pname(p)+' and '}Choose ${need} to drop.</p>
     ${stepperRows(ui.discardSel, pl.res, 'G.discardStep', true)}
     <div class="actions"><button class="btn hot" ${got===need?'':'disabled'} onclick="G.confirmDiscard()">Drop ${got} of ${need}</button></div></div>`;
 }
@@ -2774,18 +2792,18 @@ function offerHTML(){
   const passed = (o.declined||[]).length;
   /* in person: pass the screen first. Nothing about this cat's cards shows until they say it's them,
      so they can still say no without giving away what they hold */
-  if(shared() && !o.seen) return `<div class="modal handoff">${portrait(q)}
+  if(!S.online && !o.seen) return `<div class="modal handoff">${portrait(q)}
     <h2>Pass the screen to ${pname(who)}</h2>
     <p>${passed ? `${pname(o.from)}'s offer goes to ${pname(who)} next.` : `${pname(o.from)} wants to trade with you.`} Your cards stay hidden until you tap.</p>
     <div class="actions center">${passed?'':`<button class="btn" onclick="G.tradeCancel()">Cancel offer</button>`}<button class="btn primary" autofocus onclick="G.offerSeen()">I'm ${pname(who)}, show me</button></div></div>`;
   const ok = RES.every(r=>q.res[r]>=o.get[r]);
   const held = RES.filter(r=>q.res[r]>0);
   const others = offerTo(o).filter(i=>i!==who);
-  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${!shared()?'A trade offer':pname(who)+', a trade offer'}</h2></div></div>
+  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${S.online?'A trade offer':pname(who)+', a trade offer'}</h2></div></div>
     <p><b>${pname(o.from)} gives you:</b> ${describe(o.give)||'nothing'}</p>
     <p><b>You give ${pname(o.from)}:</b> ${describe(o.get)||'nothing'}</p>
     ${others.length?`<p class="small muted">${S.online?`Also offered to ${others.map(pname).join(' and ')}. The first cat to accept gets it.`:`If you say no, it goes to ${others.map(pname).join(' then ')}.`}</p>`:''}
-    ${!shared()?'':`<div class="offer-hand"><div class="sec-label">Your cards</div>${held.length?`<ul>${held.map(r=>`<li style="--tile:${RINFO[r].fill}">${resIcon(r)}<span>${RINFO[r].name}</span><b>×${q.res[r]}</b></li>`).join('')}</ul>`:'<p class="empty">No cards yet</p>'}</div>`}
+    ${S.online?'':`<div class="offer-hand"><div class="sec-label">Your cards</div>${held.length?`<ul>${held.map(r=>`<li style="--tile:${RINFO[r].fill}">${resIcon(r)}<span>${RINFO[r].name}</span><b>×${q.res[r]}</b></li>`).join('')}</ul>`:'<p class="empty">No cards yet</p>'}</div>`}
     ${ok?'':`<p class="hint alert">You don't have enough to accept this.</p>`}
     <div class="actions"><button class="btn" onclick="G.tradeDecline()">No thanks</button><button class="btn primary" ${ok?'':'disabled'} onclick="G.tradeAccept()">Accept trade</button></div></div>`;
 }
@@ -2839,7 +2857,7 @@ function winHTML(){
   const w = S.winner;
   const order = placings(), ORD = ['1st','2nd','3rd'];
   return `<div class="modal handoff win"><div class="cheer"><span class="yay y1">✦</span><span class="yay y2">♥</span><span class="yay y3">✦</span><span class="yay y4">♥</span>${portrait(S.players[w],'win')}</div>
-    <h2>${S.online&&ON.mine.includes(w)&&ON.mine.length<2?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
+    <h2>${S.online&&ON.mine.includes(w)?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
     <div class="scores">${order.map(({i,place,pts})=>`<div><span>${ORD[place-1]||place+'th'} ${pname(i)}</span><b>${vp(i,true)} points${pts?` <small class="lb-earn">+${pts} leaderboard</small>`:''}</b></div>`).join('')}</div>
     ${winBoard()}
     <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn small" onclick="G.open('board')">Leaderboard</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;
@@ -2853,8 +2871,8 @@ function modalHTML(){
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='goonline') return `<div class="modal"><h2>Play online?</h2>
-    <p>This game gets a cat code. Friends open the code and pick one of your cats, keeping its name and everything it holds. You carry on with every cat nobody takes, here on this phone.</p>
-    <p class="muted small">You can move the game back to one screen any time from Host tools.</p>
+    <p>Every cat needs its own phone. This game gets a cat code: you carry on as ${esc(S.players[S.cur].name)}, and each friend opens the code and picks one of the other cats, keeping its name and everything it holds.</p>
+    <p class="muted small">The game waits until every cat has a phone. You can move it back to one screen any time.</p>
     <div class="actions"><button class="btn" onclick="G.close()">Not now</button><button class="btn primary" ${ON.status==='creating'?'disabled':''} onclick="G.goOnline()">${ON.status==='creating'?'Making a code…':'Make a code'}</button></div></div>`;
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
@@ -3187,7 +3205,7 @@ function hostToolsHTML(){
     ${S.phase==='play' ? `<p><button class="btn primary" onclick="G.skip()">Skip ${esc(pname(S.cur))}'s turn</button></p>` : '<p class="muted">Turns can be skipped once setup is done.</p>'}
     <p><button class="btn" onclick="G.goInPerson()">Back to one screen</button><br><small class="muted">Friends on their own devices are disconnected and every cat plays on this phone again.</small></p>
     <ul class="host-list">${L.seats.map((x,i)=>`<li><span class="dot" style="background:${S.players[i]?pcol(S.players[i]):'#ccc'}"></span><b>${esc(x.name)}</b>${x.pid===L.host?' <small>Host</small>':''}
-      ${ON.mine.includes(i) ? `<small>${x.hosted?'On this phone, waiting for a friend':'You'}</small>` : hostActs(x)+`<button class="btn tiny" onclick="G.takeOver('${esc(x.pid)}')">Take back</button>`}</li>`).join('')}</ul>
+      ${ON.mine.includes(i) ? '<small>You</small>' : x.open ? '<small>Needs a phone</small>' : hostActs(x)+`<button class="btn tiny" onclick="G.release('${esc(x.pid)}')">Free cat</button>`}</li>`).join('')}</ul>
     <p class="muted small">Booting a cat takes their beds and yarn off the island. A game needs at least 2 cats. Hover an icon to see what it does.</p></div>`;
 }
 /* a friend joined a game that started on one screen: they take over one of its cats, name and all */
@@ -3298,7 +3316,7 @@ const G = {
     if(!S || S.online || ON.status==='creating') return;
     const cur = S.players[S.cur];
     ui.form = ui.form || {}; ui.form.name = cur.name; ui.form.breed = cur.breed;
-    ON.err = null; ON.status = 'creating'; ON.convert = {cats: S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint||null}))}; render();
+    ON.err = null; ON.status = 'creating'; ON.convert = {you: S.cur, cats: S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint||null}))}; render();
     try{
       const r = await fetch(API+'/new', {method:'POST', headers:{'content-type':'application/json'}, body:'{}'});
       if(!r.ok) throw new Error('status '+r.status);
@@ -3311,7 +3329,7 @@ const G = {
     if(!confirm('Move back to one screen? Friends playing on their own devices will be disconnected, and every cat plays on this phone again.')) return;
     ON.ws.send(JSON.stringify({type:'detach', base:ON.ver, state:S}));
   },
-  takeOver(sid){ if(ON.ws && ON.ws.readyState===1) ON.ws.send(JSON.stringify({type:'takeover', pid:sid})); },
+  release(sid){ if(ON.ws && ON.ws.readyState===1) ON.ws.send(JSON.stringify({type:'release', pid:sid})); },
   claim(i){
     const c = ON.pick && ON.pick.cats[i]; if(!c || !ON.ws || ON.ws.readyState!==1) return;
     ui.form.name = c.name; ui.form.breed = c.breed; ON.err = null; ON.status = 'connecting'; render();
@@ -3370,8 +3388,8 @@ const G = {
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
   /* turns */
-  startTurn(){ if(S.online) ui.ack=ackKey(); else { S.handoff=false; save(); } render(); toMap(); },
-  startRoll(){ if(S.online) ui.ack=ackKey(); else { S.handoff=false; save(); } render(); toMap(); roll(); },
+  startTurn(){ S.handoff=false; save(); render(); toMap(); },
+  startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
@@ -3409,20 +3427,20 @@ const G = {
     log(`${pname(who)} turns down a trade.`);
     o.to = to.filter(i=>i!==who); o.declined = (o.declined||[]).concat(who); o.seen = false;
     if(!o.to.length){
-      if(shared() && isMine(o.from)){ S.handback=o.from; S.handbackNote = o.declined.length>1 ? 'Nobody took the trade.' : `${pname(who)} said no thanks.`; }
+      if(!S.online){ S.handback=o.from; S.handbackNote = o.declined.length>1 ? 'Nobody took the trade.' : `${pname(who)} said no thanks.`; }
       S.offer=null;
     }
     commit();
   },
   noTrade(i,on){ const q=S.players[i]; if(!q || !canAct(i)) return; q.noTrade=!!on; log(on ? `${pname(i)} isn't trading for now.` : `${pname(i)} is open to trades again.`); commit(); },
-  offerSeen(){ if(!S.offer || !shared()) return; S.offer.seen=true; save(); render(); },
+  offerSeen(){ if(!S.offer || S.online) return; S.offer.seen=true; save(); render(); },
   handBack(){ S.handback=null; S.handbackNote=null; save(); render(); },
   tradeAccept(){
     const o=S.offer; if(!o) return; const who = S.online ? offerTo(o).find(i=>ON.mine.includes(i)) : offerTo(o)[0]; if(!offerTo(o).includes(who)) return; const a=S.players[o.from], b=S.players[who];
     if(!RES.every(r=>a.res[r]>=o.give[r] && b.res[r]>=o.get[r])) return;
     RES.forEach(r=>{ a.res[r]+=o.get[r]-o.give[r]; b.res[r]+=o.give[r]-o.get[r]; });
     log(`${pname(o.from)} trades ${describe(o.give)||'nothing'} to ${pname(who)} for ${describe(o.get)||'nothing'}.`);
-    if(shared() && isMine(o.from)){ S.handback=o.from; S.handbackNote=`${pname(who)} took the trade.`; }
+    if(!S.online){ S.handback=o.from; S.handbackNote=`${pname(who)} took the trade.`; }
     S.offer=null; commit();
   }
 };
