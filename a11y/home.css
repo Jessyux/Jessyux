@@ -73,6 +73,18 @@ body[data-view=work] #deep{opacity:.45}
 .cs-go{padding:8px 14px;border-radius:999px;font-weight:700;background:#fff;color:#042B38;transition:background .2s}
 .cs-card:hover .cs-go,.cs-card:focus-visible .cs-go{background:var(--accent2)}
 html[data-jux-contrast="high"] #cs .cs-card .cs-go{background:#fff;color:#000}
+/* hovering a card on a big screen: its screenshot, uncropped, rising out of the card (cs-pop.js) */
+/* no box of its own: the prototype itself sits half in the card's picture and half above it */
+.cs-pop{position:fixed;z-index:40;pointer-events:none;opacity:0;visibility:hidden;transform:scale(.6);transform-origin:var(--ox,50%) 100%;
+  transition:opacity .22s,transform .28s cubic-bezier(.2,.9,.3,1.15),visibility 0s .28s}
+.cs-pop.on{opacity:1;visibility:visible;transform:none;transition:opacity .18s,transform .28s cubic-bezier(.2,.9,.3,1.15),visibility 0s}
+.cs-pop img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 24px 30px rgba(0,8,14,.55))}
+/* while it's out, the card keeps its coloured backdrop but not its own copy of the prototype */
+#cs .cs-card.popped img{object-position:-9999px 0}
+html[data-jux-motion="calm"] .cs-pop{transform:none;transition:opacity .15s,visibility 0s .15s}
+html[data-jux-motion="calm"] .cs-pop.on{transition:opacity .15s,visibility 0s}
+@media(prefers-reduced-motion:reduce){.cs-pop,.cs-pop.on{transform:none}}
+html[data-jux-style="classic"] .cs-pop{display:none}
 /* zoom scales the card width too, so larger text stays inside a phone screen */
 @media(max-width:760px){
   html[data-jux-size="2"] #cs .cs-card{width:calc(84vw/1.25)}
