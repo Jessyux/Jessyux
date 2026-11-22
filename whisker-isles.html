@@ -633,6 +633,14 @@ div.build{cursor:default}
 .center{text-align:center;justify-content:center}
 .actions.center{justify-content:center}
 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--plum);margin-right:5px;vertical-align:-1px}
+.my-turn #rollbar{animation:turnGlow 1.8s ease-in-out infinite}
+@keyframes turnGlow{0%,100%{box-shadow:4px 4px 0 var(--plum),0 0 0 0 rgba(255,200,90,0)}50%{box-shadow:4px 4px 0 var(--plum),0 0 0 7px rgba(255,200,90,.75)}}
+@media (prefers-reduced-motion:reduce){.my-turn #rollbar{animation:none;box-shadow:4px 4px 0 var(--plum),0 0 0 5px rgba(255,200,90,.9)}}
+#wi-toast{position:fixed;left:50%;top:14px;z-index:200;transform:translate(-50%,-140%);display:flex;flex-direction:column;gap:2px;max-width:min(92vw,420px);padding:10px 18px;border:3px solid var(--plum);border-radius:18px;background:var(--butter);color:var(--plum);box-shadow:3px 3px 0 var(--plum);text-align:center;pointer-events:none;opacity:0;transition:transform .35s cubic-bezier(.3,1.3,.5,1),opacity .2s}
+#wi-toast.show{transform:translate(-50%,0);opacity:1}
+#wi-toast b{font-family:var(--display);font-weight:400;font-size:1.05rem}
+#wi-toast span{font-size:.85rem;font-weight:700}
+@media (prefers-reduced-motion:reduce){#wi-toast{transition:opacity .2s;transform:translate(-50%,0)}}
 .code-chip{border:2.5px dashed var(--plum);border-radius:999px;padding:.25em .8em;font-size:.88rem;background:#fff;align-self:center}
 .code-chip b{font-family:var(--display);font-weight:400}
 .turn-card{background:linear-gradient(color-mix(in srgb, var(--pc) 14%, transparent),color-mix(in srgb, var(--pc) 14%, transparent)),#fff}
@@ -1988,13 +1996,63 @@ function connect(code){
     setTimeout(()=>{ if(ON.code && ON.ws===ws) connect(ON.code); }, 800*ON.retry);
   };
 }
+/* ---------- alerts: it's your turn, the game started, a friend joined ----------
+   Always a toast in the page. When the tab is hidden or unfocused it also flashes the tab title, plays a short
+   chime, buzzes a phone and, if the player allowed it, sends a system notification. */
+const ALERT = {base:document.title, timer:null, flash:null, ctx:null};
+function askNotify(){ try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){} }
+function chime(){
+  try{
+    const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+    const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
+    [[784,0],[1047,.16]].forEach(([f,t])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
+      const at=c.currentTime+t; g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(.18,at+.02); g.gain.exponentialRampToValueAtTime(.0001,at+.35); o.start(at); o.stop(at+.4); });
+  }catch(e){}
+}
+function toast(title, body){
+  let el = $('#wi-toast');
+  if(!el){ el = document.createElement('div'); el.id = 'wi-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+  el.innerHTML = `<b>${esc(title)}</b>${body?`<span>${esc(body)}</span>`:''}`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(ALERT.timer); ALERT.timer = setTimeout(()=>el.classList.remove('show'), 5500);
+}
+function stopFlash(){ if(ALERT.flash){ clearInterval(ALERT.flash); ALERT.flash=null; } document.title = ALERT.base; }
+function alertMe(title, body){
+  toast(title, body);
+  const away = document.hidden || !document.hasFocus();
+  if(!away) return;
+  chime();
+  try{ if(navigator.vibrate) navigator.vibrate([180,90,180]); }catch(e){}
+  stopFlash(); let on = false; document.title = '● '+title;
+  ALERT.flash = setInterval(()=>{ on = !on; document.title = on ? ALERT.base : '● '+title; }, 1100);
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      const n = new Notification(title, {body: body||'', tag:'whisker-isles', icon:'/favicon.svg'});
+      n.onclick = () => { window.focus(); n.close(); };
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) stopFlash(); });
+addEventListener('focus', stopFlash);
+/* turn-taking, for the page: a pulse on the roll card while it's your go */
+function syncTurnGlow(){ document.body.classList.toggle('my-turn', !!(S && S.online && S.phase!=='over' && ON.seat>=0 && S.cur===ON.seat)); }
 function onMsg(m){
   ON.offline=false;
   if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
   if(m.type==='error' && (m.kicked || m.deleted)){ S = null; ui.modal = null; if(m.deleted && ON.code) forgetGame(ON.code); }
   if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'',location.pathname); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
+    const wasLobby = ON.status==='lobby', prevPids = ON.lobby ? ON.lobby.seats.map(x=>x.pid) : null;
     ON.lobby=m.lobby; ON.online=m.online||[]; ON.me=m.you||null;
+    /* the host hears about every cat that sits down, and when the cushions are all taken */
+    if(prevPids && !m.lobby.started && m.you && m.lobby.host===m.you){
+      const joined = m.lobby.seats.filter(x=>!prevPids.includes(x.pid) && x.pid!==m.you);
+      if(joined.length){
+        const n = m.lobby.seats.length;
+        alertMe(n>=MAX_CATS ? 'Everyone is here' : `${joined.map(x=>x.name).join(' and ')} joined`, n>=MAX_CATS ? `All ${n} cushions are taken. Start the game when you're ready.` : `${n} cats are waiting${n>=2?'. You can start the game now.':'.'}`);
+      }
+    }
+    if(wasLobby && m.lobby.started) alertMe('The game has started', ON.me && m.lobby.host===ON.me ? 'Everyone is in. Good luck!' : 'The host started the game. Head back to play.');
     ON.seat = m.lobby.seats.findIndex(s=>s.pid===ON.me);
     if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
@@ -2005,8 +2063,15 @@ function onMsg(m){
 }
 function applyRemote(state, ver){
   const prevRoll = S && S.online ? S.rollN : null;
+  const had = !!(S && S.online), prevCur = had ? S.cur : null, prevOfferTo = had && S.offer ? S.offer.to : null, wasDiscarding = had && discardSeat()===ON.seat;
   if(!S) setTimeout(()=>window.scrollTo(0,0));
   S = state; ON.ver = ver; ON.status='playing';
+  if(ON.seat>=0 && S.phase!=='over'){
+    if(had && S.cur===ON.seat && prevCur!==ON.seat) alertMe(`Your turn, ${S.players[ON.seat].name}`, S.phase==='setup' ? 'Time to place your cat bed and yarn path.' : 'Roll the dice.');
+    else if(had && S.offer && S.offer.to===ON.seat && prevOfferTo!==ON.seat) alertMe('Trade offer', `${S.players[S.offer.from].name} wants to trade with you.`);
+    else if(had && !wasDiscarding && discardSeat()===ON.seat) alertMe('The Vacuum is coming', 'Choose cards to drop.');
+  }
+  syncTurnGlow();
   if(ON.code) markGame(ON.code, S.phase==='over' ? 'over' : 'playing');
   buildGeo(S.board.radius);
   if(ui.pendingBuy!=null && me()>=0){
@@ -2024,6 +2089,7 @@ function pushState(){
 }
 function leaveOnline(){
   const ws = ON.ws; ON.ws=null; ON.code=null; ON.status='idle'; ON.lobby=null; ON.seat=-1;
+  document.body.classList.remove('my-turn'); stopFlash();
   if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
   history.replaceState(null,'',location.pathname);
 }
@@ -3111,7 +3177,7 @@ const G = {
   formName(v){ ui.form.name=v; store.set('whisker-isles-name', v); },
   formBreed(i){ ui.form.breed=i; store.set('whisker-isles-breed', String(i)); render(); },
   formCode(v){ ui.form.code=v; },
-  create(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } createOnline(); },
+  create(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } askNotify(); createOnline(); },
   firstRoll(){ firstRoll(); },
   rejoin(code){ ui.form.code = code; G.join(); },
   forget(code){
@@ -3127,7 +3193,7 @@ const G = {
   },
   unlist(code){ if(!confirm(`Remove ${code} from your list? The game carries on for everyone else, and you can rejoin with the code and your name.`)) return; forgetGame(code); render(); },
   forgetSave(){ if(!confirm("Delete your saved in-person game? You can't get it back.")) return; store.del(SAVE_KEY); render(); },
-  join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
+  join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } askNotify(); ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   lobbyColor(c){
     const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.me); if(!s) return;
