@@ -103,7 +103,26 @@ a.btn{color:var(--plum);text-decoration:none}
 .die i{width:9px;height:9px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden}
 .die i.on{visibility:visible}
 .die.seven i.on{background:var(--strawberry)}
-.die.rolling{animation:shake .45s ease-in-out}
+.die.rolling{opacity:0}
+/* 3D dice that tumble over the island; faces sit on a 72px cube, opposite faces add up to 7 */
+.dice3d{position:fixed;inset:0;pointer-events:none;z-index:35}
+.d3-move{position:absolute;left:0;top:0;width:72px;height:72px;transform-origin:0 0;will-change:transform}
+.d3-shadow{position:absolute;left:8%;right:8%;bottom:-16px;height:16px;border-radius:50%;background:radial-gradient(closest-side,rgba(58,35,65,.38),rgba(58,35,65,0));will-change:transform,opacity}
+.d3-hop{position:absolute;inset:0;perspective:520px;will-change:transform}
+.d3-cube{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+.d3-face,.d3-core{position:absolute;inset:0;backface-visibility:hidden}
+.d3-face{background:#fff;border:3px solid var(--plum);border-radius:15px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:9px;box-shadow:inset -5px -6px 0 rgba(58,35,65,.10)}
+.d3-face i{width:12px;height:12px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden}
+.d3-face i.on{visibility:visible}
+.d3-face.f1{transform:translateZ(36px)}
+.d3-face.f6{transform:rotateY(180deg) translateZ(36px)}
+.d3-face.f3{transform:rotateY(90deg) translateZ(36px)}
+.d3-face.f4{transform:rotateY(-90deg) translateZ(36px)}
+.d3-face.f5{transform:rotateX(90deg) translateZ(36px)}
+.d3-face.f2{transform:rotateX(-90deg) translateZ(36px)}
+.d3-core{background:var(--plum);border-radius:12px;inset:4px;backface-visibility:visible}
+.d3-core.cx{transform:rotateX(90deg)}.d3-core.cy{transform:rotateY(90deg)}
+.d3-seven .d3-face i{background:var(--strawberry)}
 @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg) translateY(-4px)}50%{transform:rotate(12deg)}80%{transform:rotate(-6deg)}}
 .sum{font-family:var(--display);font-size:1.8rem;min-width:2ch}
 .dice-row .btn{margin-left:auto}
@@ -1157,13 +1176,67 @@ function roll(){
   if(reduceMotion){ finish(); return; }
   spinDice(finish, d);
 }
+/* the cube turn that brings face n to the front (see .d3-face.f1 to .f6) */
+const FACE_TURN = {1:[0,0], 2:[90,0], 3:[0,-90], 4:[0,90], 5:[-90,0], 6:[0,180]};
+const D3 = 72;
+function cubeHTML(){
+  const pips = n => Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('');
+  return `<div class="d3-cube"><span class="d3-core"></span><span class="d3-core cx"></span><span class="d3-core cy"></span>${[1,2,3,4,5,6].map(n=>`<span class="d3-face f${n}">${pips(n)}</span>`).join('')}</div>`;
+}
+/* The two dice leave the tray, tumble onto the middle of the island, settle on the roll,
+   then fly back into the tray. done() runs once they are home. */
 function spinDice(done, final){
+  const from = [...document.querySelectorAll('#dice .die')].map(e=>e.getBoundingClientRect());
   ui.rolling = true; render();
-  let n=0; const iv = setInterval(()=>{
-    const show = [1+rnd(6),1+rnd(6)];
-    renderDice(show);
-    if(++n>=7){ clearInterval(iv); if(done) done(); else { ui.rolling=false; render(); } }
-  }, 65);
+  const finish = ()=>{ layer.remove(); if(done) done(); else { ui.rolling=false; render(); } };
+  const layer = document.createElement('div'); layer.className = 'dice3d'; layer.setAttribute('aria-hidden','true');
+  if((final[0]+final[1])===7) layer.classList.add('d3-seven');
+  document.body.appendChild(layer);
+  const vw = innerWidth, vh = innerHeight, bd = $('#board'), br = bd ? bd.getBoundingClientRect() : null;
+  /* land on the part of the island that's on screen; if little of it shows, land mid-screen */
+  const top = br ? Math.max(br.top, 0) : 0, bot = br ? Math.min(br.bottom, vh) : 0;
+  const onIsle = br && bot-top >= 200;
+  const cx = onIsle ? Math.min(Math.max(br.left+br.width/2, 90), vw-90) : vw/2;
+  const cy = onIsle ? Math.min(Math.max((top+bot)/2, 100), vh-100) : vh/2;
+  const DUR = 2100;
+  const anims = final.map((n,k)=>{
+    const m = document.createElement('div'); m.className = 'd3-move';
+    m.innerHTML = `<span class="d3-shadow"></span><div class="d3-hop">${cubeHTML()}</div>`;
+    layer.appendChild(m);
+    const f = from[k] || {left:cx-D3/2, top:cy+120, width:D3*.6};
+    const s0 = f.width/D3, sx = f.left, sy = f.top;
+    const lx = cx + (k ? 14 : -D3-14) + (rnd(17)-8), ly = cy - D3/2 + (k ? 10 : -10) + (rnd(13)-6);
+    const midx = (sx+lx)/2, midy = Math.min(sy,ly) - 40;
+    const at = (x,y,sc,z) => `translate(${x}px,${y}px) scale(${sc}) rotate(${z}deg)`;
+    const spinZ = k ? 14 : -18;
+    m.animate([
+      {transform:at(sx,sy,s0,0), offset:0},
+      {transform:at(midx,midy,.9,spinZ*3), offset:.2},
+      {transform:at(lx,ly,1,spinZ), offset:.42, easing:'ease-out'},
+      {transform:at(lx,ly,1,spinZ), offset:.74, easing:'ease-in-out'},
+      {transform:at((lx+sx)/2,Math.min(sy,ly)-30,.8,spinZ*-2), offset:.87},
+      {transform:at(sx,sy,s0,0), offset:1}
+    ], {duration:DUR, easing:'linear', fill:'forwards'});
+    // hops: thrown high, two smaller bounces, still while showing the roll, a small hop on the way home
+    const hop = m.querySelector('.d3-hop'), sh = m.querySelector('.d3-shadow');
+    const Y = [[0,0],[.12,-95],[.30,0],[.35,-28],[.40,0],[.43,-7],[.46,0],[.74,0],[.84,-44],[1,0]];
+    hop.animate(Y.map(([o,y])=>({transform:`translateY(${y}px)`, offset:o, easing: y? 'ease-in':'ease-out'})), {duration:DUR, fill:'forwards'});
+    sh.animate(Y.map(([o,y])=>({transform:`scale(${1+y/160})`, opacity:1+y/130, offset:o})), {duration:DUR, fill:'forwards'});
+    // the tumble: many turns that slow down and land on the rolled face, then one spin on the way home
+    const [fx,fy] = FACE_TURN[n], tilt = 'rotateX(-18deg) rotateY(22deg) ';
+    const rot = (a,b) => tilt + `rotateX(${a}deg) rotateY(${b}deg)`;
+    const ax = fx - 1080 - rnd(4)*90, by = fy + 720 + rnd(4)*90;
+    return m.querySelector('.d3-cube').animate([
+      {transform:rot(ax,by), offset:0},
+      {transform:rot(fx-120,fy+70), offset:.30, easing:'ease-out'},
+      {transform:rot(fx-14,fy+8), offset:.40},
+      {transform:rot(fx+5,fy-3), offset:.44},
+      {transform:rot(fx,fy), offset:.47},
+      {transform:rot(fx,fy), offset:.76, easing:'ease-in-out'},
+      {transform:rot(fx,fy+360), offset:1}
+    ], {duration:DUR, easing:'cubic-bezier(.2,.7,.3,1)', fill:'forwards'});
+  });
+  Promise.all(anims.map(a=>a.finished)).then(finish, finish);
 }
 /* After the dice land: light up the tiles with that number, then fly each
    card from its tile to the cat who collects it. */
