@@ -2447,9 +2447,7 @@ function rulesHTML(){
   <section class="rule-block"><h3>Resources</h3>
   <p class="small">Each tile makes one resource card when its number is rolled. The Nap spot makes nothing.</p>
   <div class="rule-paws">
-    ${rulePaw(cat, 'res', [['litter',2],['nib',3],['fish',1]].map(([r,n])=>`<span class="rc">${resCard(r,null)}<span class="rc-n">×${n}</span></span>`), 'Your cat\'s left paw holds one card for each resource you have, with a badge for how many')}
-    ${rulePaw(cat, 'res', [], 'An open paw when you have no resources', true)}
-  </div>
+    ${rulePaw(cat, 'res', [['litter',2],['nib',3],['fish',1]].map(([r,n])=>`<span class="rc">${resCard(r,null)}<span class="rc-n">×${n}</span></span>`), 'Your cat\'s left paw holds one card for each resource you have, with a badge for how many')}  </div>
   <p class="small">Your cat's left paw holds your resources in its own colours: one card for each resource you have, with a badge for how many. When you have none, the paw is open and empty. Tap <b>Resources</b> at the bottom of the board to lift the paw for a closer look and to see how many cards you hold in total. Tap it again to lower it.</p>
   <div class="res-cards">${RES.map(r=>`<div role="img" aria-label="${RINFO[r].name}: ${USE[r]}">${resCard(r,null,'md','Used for '+USE[r].toLowerCase())}</div>`).join('')}</div></section>
 
