@@ -46,6 +46,12 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 .btn:disabled{opacity:.42;box-shadow:none}
 a.btn{color:var(--plum);text-decoration:none}
 .back-row{max-width:1100px;margin:0 auto 6px}
+.make-own{margin-top:10px}
+.make-own[aria-pressed="true"]{background:var(--butter)}
+.cat-maker{margin-top:6px;padding:4px 14px 12px;border:2.5px dashed var(--plum-2);border-radius:var(--r-md);background:#FFFBF0}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pills button{border:2.5px solid var(--plum);border-radius:999px;background:#fff;padding:.3em .85em;font-weight:900;font-size:.85rem}
+.pills button[aria-checked="true"]{background:var(--butter);box-shadow:2px 2px 0 var(--plum)}
 .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,44px));gap:8px}
 .swatches button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--plum);background:var(--sw);padding:0}
 .swatches button[aria-checked="true"]{box-shadow:0 0 0 3px var(--butter),0 0 0 6px var(--plum)}
@@ -556,35 +562,43 @@ const store = {
 /* =====================================================================
    SVG drawings (fallbacks for missing illustrations, and board pieces)
    ===================================================================== */
-function catSVG(bi, mood){
-  const b = BREEDS[bi], P='#3A2341';
-  const happy = mood==='win';
+/* a cat is drawn from traits: coat, markings colour, pattern, hair, ears and eyes */
+const BREED_TRAITS = {ginger:{pattern:'tabby'}, tuxedo:{pattern:'tuxedo'}, calico:{pattern:'calico'}, siamese:{pattern:'point'},
+  grey:{pattern:'tabby'}, black:{pattern:'solid'}, persian:{pattern:'solid', hair:'long'}, tortie:{pattern:'patches'},
+  fold:{pattern:'solid', ears:'fold'}, bengal:{pattern:'spots'}};
+function breedTraits(bi){ const b = BREEDS[bi]; return Object.assign({base:b.base, mark:b.mark, iris:b.iris, hair:'short', ears:'up'}, BREED_TRAITS[b.id]); }
+function isDark(hex){ const n = parseInt(hex.slice(1),16), r=n>>16&255, g=n>>8&255, bl=n&255; return (0.299*r+0.587*g+0.114*bl)/255 < 0.4; }
+function catSVG(bi, mood){ return catDraw(breedTraits(bi), mood); }
+function catDraw(t, mood){
+  const P='#3A2341', happy = mood==='win', base=t.base, mark=t.mark;
   let marks = '';
-  if(b.id==='ginger') marks = `<path d="M40 27q10 6 20 0M37 35q13 7 26 0M44 20q6 3 12 0" stroke="${b.mark}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M12 60q8-2 12 4M88 60q-8-2-12 4" stroke="${b.mark}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
-  if(b.id==='tuxedo') marks = `<path d="M50 40c-14 0-24 14-24 30 0 14 11 21 24 21s24-7 24-21c0-16-10-30-24-30z" fill="${b.muzzle}"/>`;
-  if(b.id==='calico') marks = `<path d="M10 52c4-20 20-30 34-28-2 12-14 22-34 28z" fill="${b.mark}"/><path d="M90 50c-3-16-14-26-28-26 4 10 12 20 28 26z" fill="#4A3B47"/><path d="M70 86c8-2 16-8 18-16-8 0-16 6-18 16z" fill="${b.mark}"/>`;
-  if(b.id==='siamese') marks = `<ellipse cx="50" cy="70" rx="22" ry="17" fill="${b.mark}" opacity=".55"/>`;
-  if(b.id==='grey') marks = `<path d="M42 28q8 4 16 0M40 36q10 5 20 0" stroke="${b.mark}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-  if(b.id==='tortie') marks = `<path d="M14 50c6-14 18-22 30-22-4 10-14 18-30 22z M86 66c-6 10-14 16-24 18 2-8 10-16 24-18z" fill="${b.mark}"/>`;
-  if(b.id==='bengal') marks = [[30,34],[44,30],[58,32],[70,38],[22,50],[78,50]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="4" ry="3" fill="${b.mark}"/>`).join('');
-  const dark = ['tuxedo','black','tortie'].includes(b.id);
-  const earIn = b.id==='siamese' ? b.mark : '#FFB3C7';
-  const earOut = b.id==='siamese' ? b.mark : b.base;
-  const ears = b.id==='fold'
-    ? `<path d="M14 40q4-16 22-14-6 8-22 14z M86 40q-4-16-22-14 6 8 22 14z" fill="${b.base}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/>`
-    : `<path d="M15 48 23 12 47 30Z" fill="${earOut}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/><path d="M85 48 77 12 53 30Z" fill="${earOut}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/><path d="M22 40 25 21 38 31Z" fill="${earIn}"/><path d="M78 40 75 21 62 31Z" fill="${earIn}"/>`;
+  if(t.pattern==='tabby') marks = `<path d="M40 27q10 6 20 0M37 35q13 7 26 0M44 20q6 3 12 0" stroke="${mark}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M12 60q8-2 12 4M88 60q-8-2-12 4" stroke="${mark}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  if(t.pattern==='tuxedo') marks = `<path d="M50 40c-14 0-24 14-24 30 0 14 11 21 24 21s24-7 24-21c0-16-10-30-24-30z" fill="#FFFFFF"/>`;
+  if(t.pattern==='calico') marks = `<path d="M10 52c4-20 20-30 34-28-2 12-14 22-34 28z" fill="${mark}"/><path d="M90 50c-3-16-14-26-28-26 4 10 12 20 28 26z" fill="#4A3B47"/><path d="M70 86c8-2 16-8 18-16-8 0-16 6-18 16z" fill="${mark}"/>`;
+  if(t.pattern==='point') marks = `<ellipse cx="50" cy="70" rx="22" ry="17" fill="${mark}" opacity=".55"/>`;
+  if(t.pattern==='patches') marks = `<path d="M14 50c6-14 18-22 30-22-4 10-14 18-30 22z M86 66c-6 10-14 16-24 18 2-8 10-16 24-18z" fill="${mark}"/>`;
+  if(t.pattern==='spots') marks = [[30,34],[44,30],[58,32],[70,38],[22,50],[78,50]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="4" ry="3" fill="${mark}"/>`).join('');
+  const dark = isDark(base);
+  const earIn = t.pattern==='point' ? mark : '#FFB3C7';
+  const earOut = t.pattern==='point' ? mark : base;
+  const ears = t.ears==='fold'
+    ? `<path d="M14 40q4-16 22-14-6 8-22 14z M86 40q-4-16-22-14 6 8 22 14z" fill="${base}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/>`
+    : `<path d="M15 48 23 12 47 30Z" fill="${earOut}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/><path d="M85 48 77 12 53 30Z" fill="${earOut}" stroke="${P}" stroke-width="3.5" stroke-linejoin="round"/><path d="M22 40 25 21 38 31Z" fill="${earIn}"/><path d="M78 40 75 21 62 31Z" fill="${earIn}"/>${t.hair==='long'?'<path d="M26 34l-2-9M30 33l1-8M74 34l2-9M70 33l-1-8" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/>':''}`;
+  /* long hair: a ring of fluff tufts tucked behind the face */
+  const fluff = t.hair==='long' ? [[12,56],[8,68],[13,80],[24,89],[37,94],[50,96],[63,94],[76,89],[87,80],[92,68],[88,56]]
+    .map(([x,y])=>`<circle cx="${x}" cy="${y}" r="8.5" fill="${base}" stroke="${P}" stroke-width="3.2"/>`).join('') : '';
   const lid = dark ? '#FFFFFF' : P;
   const eye = x => happy
     ? `<path d="M${x-9} 62q9-11 18 0" stroke="${lid}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`
-    : `<ellipse cx="${x}" cy="61" rx="9" ry="11" fill="${P}"/><ellipse cx="${x}" cy="63" rx="6.5" ry="8" fill="${b.iris}"/><ellipse cx="${x}" cy="64" rx="3.5" ry="5" fill="${P}"/><circle cx="${x-3}" cy="56.5" r="3.4" fill="#fff"/><circle cx="${x+3}" cy="67" r="1.6" fill="#fff"/>`;
+    : `<ellipse cx="${x}" cy="61" rx="9" ry="11" fill="${P}"/><ellipse cx="${x}" cy="63" rx="6.5" ry="8" fill="${t.iris}"/><ellipse cx="${x}" cy="64" rx="3.5" ry="5" fill="${P}"/><circle cx="${x-3}" cy="56.5" r="3.4" fill="#fff"/><circle cx="${x+3}" cy="67" r="1.6" fill="#fff"/>`;
   const mouth = happy
     ? `<path d="M43 73q7 10 14 0z" fill="#FF7A95" stroke="${P}" stroke-width="2.5" stroke-linejoin="round"/>`
     : `<path d="M44 73q3 4 6 0q3 4 6 0" stroke="${dark?'#fff':P}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-  const cid = 'hc'+bi+(mood||'')+Math.random().toString(36).slice(2,7);
+  const cid = 'hc'+Math.random().toString(36).slice(2,9);
   return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs><clipPath id="${cid}"><ellipse cx="50" cy="60" rx="40" ry="33"/></clipPath></defs>
-  ${ears}
-  <ellipse cx="50" cy="60" rx="40" ry="33" fill="${b.base}"/>
+  ${ears}${fluff}
+  <ellipse cx="50" cy="60" rx="40" ry="33" fill="${base}"/>
   <g clip-path="url(#${cid})">${marks}</g>
   <ellipse cx="50" cy="60" rx="40" ry="33" fill="none" stroke="${P}" stroke-width="3.5"/>
   ${eye(33)}${eye(67)}
@@ -594,13 +608,15 @@ function catSVG(bi, mood){
   <path d="M8 66l12 2M8 74l12-1M92 66l-12 2M92 74l-12-1" stroke="${dark?'#fff':P}" stroke-width="2" stroke-linecap="round" opacity=".7"/>
 </svg>`;
 }
+/* a player's own cat if they made one, otherwise their premade breed */
+function playerArt(x, mood){ return x && x.cat ? catDraw(x.cat, mood) : catArt(x.breed, mood); }
 function catArt(bi, mood){
   const key = 'cat-'+BREEDS[bi].id+(mood==='win'?'-win':'');
   return ART.has(key) ? `<img src="${artSrc(key)}" alt="">` : catSVG(bi,mood);
 }
 function portrait(x, mood){
   const bi = typeof x==='object' ? x.breed : x, c = typeof x==='object' ? pcol(x) : BREEDS[bi].color;
-  return `<span class="portrait" style="--pc:${c}">${catArt(bi,mood)}</span>`;
+  return `<span class="portrait" style="--pc:${c}">${typeof x==='object' ? playerArt(x,mood) : catArt(bi,mood)}</span>`;
 }
 
 /* resource glyphs drawn in a -20..20 box */
@@ -754,7 +770,7 @@ function newGame(seats, opts){
   S = {
     online: !!opts.online, code: opts.code || null,
     board, deck,
-    players: seats.map(s=>({name:s.name, breed:s.breed, color:s.color, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
+    players: seats.map(s=>({name:s.name, breed:s.breed, color:s.color, cat:s.cat||null, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
     bld:{}, roads:{}, vac: board.tiles.findIndex(t=>t.type==='nap'),
     cur:0, turn:1, phase:'setup',
     setup:{i:0, step:'bed', lastBed:null, order:[...Array(n).keys(), ...[...Array(n).keys()].reverse()]},
@@ -1592,7 +1608,10 @@ function renderOverlay(){
   if(full===lastOverlay) return;
   const sameKind = lastOverlay && full && lastOverlay.slice(0,120)===full.slice(0,120);
   lastOverlay = full;
+  const keepScroll = sameKind && o.querySelector('.modal') ? o.querySelector('.modal').scrollTop : 0;
   o.innerHTML = full;
+  if(keepScroll){ const m=o.querySelector('.modal'); if(m) m.scrollTop=keepScroll; }
+  if(ui.refocus){ const f=o.querySelector(ui.refocus); ui.refocus=null; if(f) f.focus({preventScroll:true}); }
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
   if(S && S.phase==='over' && !ui.hideWin) playClimb();
@@ -1881,7 +1900,7 @@ function startScreen(){
           <span class="isle-chip">${n>MAX_CLASSIC?'Big Island for 5 to 10 cats':'Classic island for 2 to 4 cats'}</span>
         </div>
         <div class="seats">${seats.map((s,i)=>`<div class="seat" style="--pc:${pcol(s)}">
-          <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${catArt(s.breed)}</button>
+          <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${playerArt(s)}</button>
           <input id="seat-name-${i}" value="${esc(s.name)}" maxlength="14" placeholder="Name" required list="wi-names" autocomplete="off" aria-label="Name for cat ${i+1}" aria-describedby="seat-note-${i}"${ui.badSeat===i?' aria-invalid="true"':''} oninput="G.seatName(${i},this.value)">
           <small class="seat-note" id="seat-note-${i}">${seatNote(s.name)}</small>
           ${n>2?`<button class="x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}
@@ -1906,12 +1925,32 @@ function startScreen(){
 }
 /* a returning player sees their total as they type */
 function seatNote(name){ const r = name && name.trim() && boardRow(name); return r ? `On the board with ${r.points} point${r.points===1?'':'s'}` : ''; }
+const COATS = [['#FFFFFF','White'],['#FFF6EC','Cream'],['#F3C46B','Golden'],['#FFB067','Ginger'],['#8C5A3C','Brown'],['#A9B4C6','Grey'],['#D8CCE8','Lilac'],['#2E2838','Black']];
+const MARKS = [['#E9853A','Orange'],['#9B6A2F','Caramel'],['#7A5A4A','Chocolate'],['#3D3550','Charcoal'],['#8592A8','Blue grey'],['#BFAED6','Lavender'],['#F6E8D5','Cream'],['#FFFFFF','White']];
+const EYES = [['#7CCB5B','Green'],['#6FB7FF','Blue'],['#F2A93B','Amber'],['#F2D23B','Yellow'],['#E89A3C','Copper'],['#B9A2E6','Lilac']];
+const PATTERNS = [['solid','Plain'],['tabby','Tabby stripes'],['spots','Spots'],['patches','Patches'],['calico','Calico'],['tuxedo','Tuxedo'],['point','Colour point']];
+function catMaker(i, c){
+  const sw = (k, list, label) => `<div class="field">${label}</div><div class="swatches" role="radiogroup" aria-label="${label}">${list.map(([v,n])=>
+    `<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${c[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="G.catSet(${i},'${k}','${v}')"></button>`).join('')}</div>`;
+  const pills = (k, list, label) => `<div class="field">${label}</div><div class="pills" role="radiogroup" aria-label="${label}">${list.map(([v,n])=>
+    `<button role="radio" id="cm-${k}-${v}" aria-checked="${c[k]===v}" onclick="G.catSet(${i},'${k}','${v}')">${n}</button>`).join('')}</div>`;
+  return `<div class="cat-maker">
+    ${sw('base', COATS, 'Coat')}
+    ${pills('pattern', PATTERNS, 'Pattern')}
+    ${c.pattern==='solid' || c.pattern==='tuxedo' ? '' : sw('mark', MARKS, 'Markings')}
+    ${pills('hair', [['short','Short'],['long','Long and fluffy']], 'Hair')}
+    ${pills('ears', [['up','Pointy'],['fold','Folded']], 'Ears')}
+    ${sw('iris', EYES, 'Eyes')}
+  </div>`;
+}
 function catSheetHTML(i){
   const s = ui.seats[i]; if(!s) return '';
   const owner = c => ui.seats.find((x,j)=>j!==i&&x.color===c);
   return `<div class="modal cat-sheet"><div class="turn" style="margin-bottom:10px">${portrait(s)}<div><h2>Customise ${esc(s.name.trim()||BREEDS[s.breed].label)}</h2><div class="sub">Cats can match. Colours can't, so everyone can spot their pieces.</div></div></div>
-    <div class="field">Cat</div>${breedPicker(s.breed, [], 'G.seatPick.bind(null,'+i+')')}
-    <div class="field" style="margin-top:14px">Colour</div>
+    <div class="field">Pick a cat</div>${breedPicker(s.cat?-1:s.breed, [], 'G.seatPick.bind(null,'+i+')')}
+    <button class="btn small make-own" id="cs-own" aria-pressed="${!!s.cat}" onclick="G.seatCustom(${i})">${s.cat?'Making your own cat':'Make your own cat'}</button>
+    ${s.cat ? catMaker(i, s.cat) : ''}
+    <div class="field" style="margin-top:14px">Colour on the board</div>
     <div class="swatches" role="radiogroup" aria-label="Pick a colour">${COLORS.map((c,k)=>{ const o=owner(k);
       return `<button role="radio" aria-checked="${s.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.seatColor(${i},${k})"></button>`; }).join('')}</div>
     <div class="actions center" style="margin-top:18px"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
@@ -1961,7 +2000,7 @@ const G = {
       render(); const f=$('#seat-name-'+ui.badSeat); if(f) f.focus(); return;
     }
     ui.startErr = null; ui.badSeat = null;
-    const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color}));
+    const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color, cat:s.cat ? Object.assign({}, s.cat) : null}));
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
   },
@@ -1975,8 +2014,11 @@ const G = {
   seatName(i,v){ ui.seats[i].name=v; const n=$('#seat-note-'+i); if(n) n.textContent=seatNote(v); if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); } },
   lbAll(){ ui.lbAll=!ui.lbAll; render(); },
   /* customise sheet: any cat for anyone, and a colour nobody else has */
-  seatPick(i,b){ const s=ui.seats[i]; s.breed=b; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; render(); },
-  seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; render(); },
+  seatPick(i,b){ const s=ui.seats[i]; s.breed=b; s.cat=null; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; ui.refocus='.breeds [aria-checked="true"]'; render(); },
+  /* starts from the premade cat they had, so it's a tweak rather than a blank */
+  seatCustom(i){ const s=ui.seats[i]; s.cat = s.cat ? null : breedTraits(s.breed); ui.refocus='#cs-own'; render(); },
+  catSet(i,k,v){ const c=ui.seats[i].cat; if(!c) return; c[k]=v; ui.refocus='#cm-'+k+'-'+v.replace('#',''); render(); },
+  seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; ui.refocus='.swatches[aria-label="Pick a colour"] [aria-checked="true"]'; render(); },
   seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:'', breed:b}); ui.seats=fixColors(ui.seats); render(); },
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
   /* online setup */
