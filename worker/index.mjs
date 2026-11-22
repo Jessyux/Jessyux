@@ -2,6 +2,8 @@
    (assets.run_worker_first); the rest of the site stays static. */
 import { validatePost, MAX_BYTES } from './validate.mjs';
 import { validateResult, listBoard, recordGame } from './leaderboard.mjs';
+import { whiskerIsles } from './whisker-room.mjs';
+export { WhiskerRoom } from './whisker-room.mjs';
 
 const GAMES_PER_HOUR = 20;
 
@@ -111,6 +113,9 @@ export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (pathname.startsWith('/api/whisker-isles/')) {
+      try { return await whiskerIsles(request, env, pathname); } catch (e) { console.error(e); return fail(503, 'Online games can\'t be reached right now.'); }
+    }
     if (pathname === '/api/leaderboard') {
       try { return await leaderboard(request, env); } catch (e) { console.error(e); return fail(503, 'The leaderboard can\'t be reached right now.'); }
     }

@@ -633,6 +633,9 @@ body{overflow-x:clip}
 .lb td:first-child{text-align:left;color:var(--plum-2);font-weight:900;width:3.5em}
 .lb tbody tr:first-child td:first-child,.lb tbody tr:first-child th{color:var(--plum)}
 .lb tbody tr:first-child{background:#FFF4D2}
+.lb-sort{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0 10px;font-weight:800;font-size:.85rem;color:var(--plum-2)}
+.lb-sort .btn.on{background:var(--plum);color:#fff}
+.continue-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
 .lb-name{display:inline-flex;align-items:center;gap:.55em;vertical-align:middle}
 .lb-cat{width:32px;height:32px;border-radius:50%;border:2px solid var(--plum);overflow:hidden;flex:none;display:grid;place-items:center;background:color-mix(in srgb, var(--pc,#eee) 28%, #fff)}
 .lb-cat img,.lb-cat svg{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
@@ -682,7 +685,7 @@ body{overflow-x:clip}
 <div id="overlay"></div>
 <div class="sr" aria-live="polite" id="live"></div>
 
-<script>window.WI_OFFLINE=true;
+<script>
 "use strict";
 /* =====================================================================
    Whisker Isles: a hex settlement game for 2 to 10 cats.
@@ -1200,7 +1203,16 @@ function loadBoard(){ try{ const b = JSON.parse(store.get(BOARD_KEY)); return b 
 const LB_API = '/api/leaderboard';
 const LB = { rows:null, state:'loading', note:null };
 function localRows(){ return Object.values(loadBoard()).sort((a,b)=>b.points-a.points || b.wins-a.wins || a.games-b.games || a.name.localeCompare(b.name)); }
-function boardRows(){ return LB.rows || (LB.state==='off' ? localRows() : []); }
+function boardRows(){
+  const rows = (LB.rows || (LB.state==='off' ? localRows() : [])).slice();
+  if(ui.lbSort==='wins') rows.sort((a,b)=>b.wins-a.wins || b.points-a.points || a.games-b.games || a.name.localeCompare(b.name));
+  return rows;
+}
+/* the two ways to rank the board */
+function lbSortHTML(){
+  const b = (k, t) => `<button class="btn small${(ui.lbSort||'points')===k?' on':''}" aria-pressed="${(ui.lbSort||'points')===k}" onclick="G.lbSort('${k}')">${t}</button>`;
+  return `<div class="lb-sort" role="group" aria-label="Sort the leaderboard">Sort by ${b('points','Points')}${b('wins','1st places')}</div>`;
+}
 function boardRow(name){ const k = nameKey(name); return boardRows().find(r=>nameKey(r.name)===k) || null; }
 function fetchBoard(){
   fetch(LB_API, {headers:{accept:'application/json'}})
@@ -1256,7 +1268,7 @@ function rowCat(r){
   return `<span class="lb-cat" style="--pc:${BREEDS[bi].color}" aria-hidden="true">${art}</span>`;
 }
 function boardTable(rows, hi){
-  return `<table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th><th scope="col">Wins</th><th scope="col">Games</th></tr></thead>
+  return `<table class="lb"><thead><tr><th scope="col">Rank</th><th scope="col">Name</th><th scope="col">Points</th><th scope="col">1st places</th><th scope="col">Games</th></tr></thead>
     <tbody>${rows.map((r,k)=>`<tr${hi && hi.includes(nameKey(r.name))?' class="hi"':''}><td>${k+1}</td><th scope="row"><span class="lb-name">${rowCat(r)}<span class="lb-nm">${esc(r.name)}</span></span></th><td><b>${r.points}</b></td><td>${r.wins}</td><td>${r.games}</td></tr>`).join('')}</tbody></table>`;
 }
 const LB_EMPTY = '<p class="muted">No finished games yet. A win scores 3 points, 2nd place 2 and 3rd place 1.</p>';
@@ -2345,9 +2357,9 @@ function modalHTML(){
   if(m.kind==='rules') return rulesHTML();
   if(m.kind==='cat') return catSheetHTML(m.i);
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
-    return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?boardTable(rows, hi):LB_EMPTY}</div>`; }
+    return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='newgame') return S && S.online
-    ? `<div class="modal"><h2>Leave this game?</h2><p>You can come back with code <b>${esc(S.code)}</b> while the game is still running.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
+    ? `<div class="modal"><h2>Leave this game?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
   if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
   if(m.kind==='treat'){
@@ -2420,7 +2432,8 @@ function rulesHTML(){
   ${steps([
     [`<span class="pill">Create</span>`, `One person taps <b>Create a game</b> and gets a cat code like <b>sleepy-tuna-42</b>.`],
     [`<span class="pill">Share</span>`, `Share the code or invite link. Friends open the game, type their name, pick a cat and tap <b>Join</b>.`],
-    [`<span class="pill">Start</span>`, `The host taps <b>Start</b> once everyone is in. Lost connection? Open the link again to rejoin.`]
+    [`<span class="pill">Start</span>`, `The host taps <b>Start</b> once everyone is in.`],
+    [`<span class="pill">Continue</span>`, `The game is saved under its code, so you can stop and carry on another day. Open the invite link or type the code and tap <b>Join</b>. On a different phone or laptop, use the same name as before to take your seat back.`]
   ])}
   <p class="small">Playing in one room? Choose <b>Play on one device</b> and pass the screen. Hands stay hidden until each cat taps in.</p></section>
 
@@ -2498,7 +2511,7 @@ function breedPicker(sel, taken, fn){
   return `<div class="breeds" role="radiogroup" aria-label="Pick your cat">${BREEDS.map((b,i)=>`<button role="radio" aria-checked="${sel===i}" aria-label="${b.label}" title="${b.label}" ${taken.includes(i)?'disabled':''} onclick="${fn}(${i})" style="--pc:${b.color}">${catArt(i)}</button>`).join('')}</div>`;
 }
 function startScreen(){
-  if(!ui.seats) ui.seats = [0,1,2].map(i=>({name:'', breed:i, color:i}));
+  if(!ui.seats) ui.seats = [0,1].map(i=>({name:'', breed:i, color:i}));
   const rows = boardRows(), lbShown = ui.lbAll ? rows : rows.slice(0,5);
   if(!ui.form){
     const q = new URLSearchParams(location.search).get('game');
@@ -2507,12 +2520,14 @@ function startScreen(){
   const saved = loadSave();
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
+  const lastCode = CODE_RE.test(store.get('whisker-isles-last-code')||'') ? store.get('whisker-isles-last-code') : '';
   const online = window.WI_OFFLINE ? '' : `<section class="card mode">
         <h2>Play online with friends</h2>
         <p class="muted">Everyone plays on their own phone or laptop.</p>
         <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
         <div class="field">Your cat</div>
         ${breedPicker(ui.form.breed, [], 'G.formBreed')}
+        ${lastCode ? `<p class="continue-row">Your last online game is <b>${esc(lastCode)}</b> <button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(lastCode)}')">Continue</button></p>` : ''}
         <div class="online-actions">
           <button class="btn primary" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>
           <span class="or">or</span>
@@ -2550,6 +2565,7 @@ function startScreen(){
       ${online}
       <section class="card lb-card" aria-labelledby="lb-h">
         <div class="crew-head"><h2 id="lb-h">Leaderboard</h2><span class="muted">Win 3, 2nd 2, 3rd 1</span></div>
+        ${rows.length ? lbSortHTML() : ''}
         ${LB.state==='loading' ? '<p class="muted">Loading the leaderboard…</p>' : ''}${LB.state==='off' ? '<p class="muted small">The shared leaderboard can\'t be reached, so this shows games played on this device.</p>' : ''}
         ${LB.state==='loading' ? '' : rows.length ? boardTable(lbShown) + (rows.length>5 ? `<p class="center"><button class="btn small" onclick="G.lbAll()">${ui.lbAll?'Show top 5':'Show all '+rows.length}</button></p>` : '') : LB_EMPTY}
       </section>
@@ -2657,10 +2673,12 @@ const G = {
   seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:'', breed:b}); ui.seats=fixColors(ui.seats); render(); },
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
   /* online setup */
+  lbSort(k){ ui.lbSort = k; render(); if(ui.modal) renderOverlay(); },
   formName(v){ ui.form.name=v; store.set('whisker-isles-name', v); },
   formBreed(i){ ui.form.breed=i; store.set('whisker-isles-breed', String(i)); render(); },
   formCode(v){ ui.form.code=v; },
   create(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } createOnline(); },
+  rejoin(code){ ui.form.code = code; G.join(); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   hostStart(){
