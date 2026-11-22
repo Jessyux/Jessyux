@@ -152,6 +152,9 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .paw-hand.up{--peek:0px;--hcw:80px;--sp:1.5;z-index:2}
 .paw-hand .paw{position:absolute;left:50%;bottom:0;width:var(--pw);height:auto;margin-left:calc(var(--pw) * -.369);pointer-events:auto;cursor:pointer}
 .paw-hand .paw.r{transform:scaleX(-1);margin-left:calc(var(--pw) * -.631)}
+/* a holding paw sits so the card's outer third is under the curled thumb (thumb spans .53 to .89 of the picture) */
+.paw-hand .pb .paw,.paw-hand .pt .paw{margin-left:calc(var(--pw) * -.6)}
+.paw-hand .pb .paw.r,.paw-hand .pt .paw.r{margin-left:calc(var(--pw) * -.4)}
 .paw-hand .paw.back{z-index:1}
 .paw-hand .paw.thumb{z-index:3;pointer-events:none}
 .paw-hand .fan{position:absolute;left:50%;bottom:calc(var(--pw) * .762);width:0;height:0;z-index:2}
