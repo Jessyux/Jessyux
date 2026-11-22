@@ -1166,6 +1166,8 @@ function go(v){
   layout();
 }
 cartoon.addEventListener('click',()=>{if(view==='intro'){const r=cartoon.getBoundingClientRect();ripple(r.left+r.width/2,r.top+r.height/2,1);go('about');}});
+/* /#about (the avatar in Whisker Isles) opens About me straight away */
+if(location.hash==='#about'){history.replaceState(null,'',location.pathname+location.search);go('about');}
 
 /* ---------- floats ---------- */
 const host=$('floats');
