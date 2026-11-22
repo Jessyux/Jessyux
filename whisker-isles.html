@@ -2113,7 +2113,7 @@ function renderRollbar(){
     </div>
     <div class="rb-play">
       <div class="rb-roll"><div id="dice" class="dice-row" aria-label="Dice"></div>
-        ${play && mt ? `<button class="btn primary" onclick="G.roll()" ${S.rolled||S.sub||ui.rolling?'disabled':''}>Roll dice</button>` : ''}
+        ${play && mt && S.online ? `<button class="btn primary" onclick="G.roll()" ${S.rolled||S.sub||ui.rolling?'disabled':''}>Roll dice</button>` : ''}
         ${ordering && mt ? `<button class="btn primary" onclick="G.firstRoll()" ${ui.rolling?'disabled':''}>Roll to go first</button>` : ''}</div>
       ${ordering ? firstRollsHTML() : ''}
       <p class="rb-last" aria-live="polite">${last}</p>
@@ -2602,12 +2602,15 @@ function confetti(){
     else { removeEventListener('resize', size); cv.remove(); }
   })(t0);
 }
+/* in person the turn starts from this popup; in play its button is Roll dice, so the roll happens as the screen is taken */
 function handoffHTML(){
-  const pl = P();
+  const pl = P(), rollNow = S.phase==='play' && !S.rolled;
   return `<div class="modal handoff">${portrait(pl)}
     <h2>${pname(S.cur)}'s turn</h2>
-    <p>${S.phase==='setup'?'Place a cat bed and a yarn path.':'Pass the screen to '+pname(S.cur)+'. Their paws stay hidden until they tap.'}</p>
-    <div class="actions center"><button class="btn primary" autofocus onclick="G.startTurn()">I'm ${pname(S.cur)}, let's go</button></div></div>`;
+    <p>${S.phase==='setup'?'Place a cat bed and a yarn path.':rollNow?'Pass the screen to '+pname(S.cur)+'. Their paws stay hidden until they roll.':'Pass the screen to '+pname(S.cur)+'. Their paws stay hidden until they tap.'}</p>
+    <div class="actions center">${rollNow
+      ? `<button class="btn primary big" autofocus onclick="G.startRoll()" aria-label="I'm ${pname(S.cur)}, roll the dice">Roll dice</button>`
+      : `<button class="btn primary" autofocus onclick="G.startTurn()">I'm ${pname(S.cur)}, let's go</button>`}</div></div>`;
 }
 function stepperRows(sel, max, fn, showHeld){
   return `<div class="steppers">${RES.map(r=>`<div class="stepper" style="--tile:${RINFO[r].fill}">${resIcon(r)}<span><b>${RINFO[r].name}</b>${showHeld?` <small>(${max[r]} held)</small>`:''}</span>
@@ -3083,7 +3086,7 @@ const G = {
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
   },
-  resume(){ S = loadSave(); buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
+  resume(){ S = loadSave(); if(S && !S.online && S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
   toStart(){
     fetchBoard();
     if(S && S.online) leaveOnline(); else store.del(SAVE_KEY);
@@ -3164,6 +3167,7 @@ const G = {
   },
   /* turns */
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
+  startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
