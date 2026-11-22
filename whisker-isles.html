@@ -366,6 +366,48 @@ div.build{cursor:default}
 .online-actions .or{color:var(--plum-2);font-weight:700}
 .join{display:flex;gap:8px;flex:1;min-width:220px}
 .join input{margin:0;flex:1;min-width:0}
+/* ---------- start screen: the island floats in a full-width sea ---------- */
+body{overflow-x:clip}
+.start{max-width:none;padding:0 0 40px}
+.sea{background:linear-gradient(#C6C4F6,#B9B6F0 55%,#AAA6E8);padding:12px 16px 78px;
+  -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x;
+          mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x}
+.start-top{display:flex;justify-content:space-between;gap:8px;max-width:1080px;margin:0 auto;position:relative;z-index:1}
+.sea .hero-frame{width:min(660px,100%);margin:-34px auto 0}
+.sea .hero-art{border:0;border-radius:0;box-shadow:none;width:100%;
+  -webkit-mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 72%,transparent 100%);
+          mask-image:radial-gradient(ellipse 50% 50% at 50% 50%,#000 72%,transparent 100%)}
+.sea .hero-art.fallback{background:none}
+.sea .hero > p{margin:-10px auto 0;font-size:1.05rem;max-width:46ch;position:relative}
+@media (prefers-reduced-motion:no-preference){ .sea .hero-frame{animation:isle 6s ease-in-out infinite} }
+@keyframes isle{50%{transform:translateY(-7px)}}
+.raft{max-width:860px;margin:-58px auto 0;padding:0 16px;position:relative}
+.raft.two{max-width:1120px;display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+.raft .hint.alert{grid-column:1/-1;margin:0 0 12px}
+.crew{padding:20px 22px 22px}
+.crew-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px 16px;flex-wrap:wrap}
+.crew-head h2{font-size:1.55rem}
+.crew-head p{margin:.2em 0 0}
+.isle-chip{background:var(--butter);border:2.5px solid var(--plum);border-radius:999px;padding:.25em .8em;font-weight:900;font-size:.9rem;white-space:nowrap}
+.crew .seats{grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:12px;margin-top:16px}
+.crew .seat{border-bottom:8px solid var(--pc);padding:12px 10px 12px}
+.crew .seat .portrait{width:80px;height:80px}
+.crew .seat.add{border-bottom-width:2.5px;min-height:150px;color:var(--plum)}
+.crew .seat.add small{display:block;font-weight:700;color:var(--plum-2);font-size:.8rem;line-height:1.25}
+.crew-go{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.btn.big{font-size:1.15rem;padding:.6em 1.6em}
+.online-note{max-width:44ch;margin:16px auto 0;padding:0 16px;text-align:center;color:var(--plum-2);font-size:.9rem}
+@media (max-width:760px){
+  .raft.two{grid-template-columns:1fr}
+  .sea{padding-bottom:70px}
+  .raft{margin-top:-46px}
+  .sea .hero-frame{margin-top:6px}
+  .crew{padding:16px}
+  .crew .seats{grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
+  .crew .seat .portrait{width:64px;height:64px}
+  .crew-go .btn{flex:1}
+}
+
 .seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;margin-top:6px}
 .seat{background:#fff;border:2.5px solid var(--plum);border-radius:var(--r-md);padding:10px 8px;text-align:center;position:relative}
 .seat .portrait{width:64px;height:64px;margin:0 auto 6px;cursor:pointer;padding:0}
@@ -1686,16 +1728,7 @@ function startScreen(){
   const saved = loadSave();
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
-  return `<main class="start">
-    <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
-    ${heroHTML()}
-    ${ON.err?`<p class="hint alert" role="alert" style="max-width:680px;margin:14px auto 0">${esc(ON.err)}</p>`:''}
-    <div class="modes">
-      ${window.WI_OFFLINE ? `<section class="card mode">
-        <h2>Play online with friends</h2>
-        <p class="muted">Online games with cat codes turn on once Whisker Isles is live on jessyux.com. This preview plays on one device.</p>
-        ${breedPicker(-1, [], 'void')}
-      </section>` : `<section class="card mode">
+  const online = window.WI_OFFLINE ? '' : `<section class="card mode">
         <h2>Play online with friends</h2>
         <p class="muted">Everyone plays on their own phone or laptop.</p>
         <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
@@ -1709,23 +1742,33 @@ function startScreen(){
             <button class="btn" ${busy?'disabled':''}>${ON.status==='connecting'?'Joining…':'Join'}</button>
           </form>
         </div>
-      </section>`}
-      <section class="card mode">
-        <h2>Play on one device</h2>
-        <p class="muted">Pass the screen around. Tap a cat to pick its look and colour. ${n>MAX_CLASSIC?'<b>Big Island</b> for 5 to 10 cats.':'Classic island for 2 to 4 cats. Add a 5th for Big Island.'}</p>
-        <div class="seats">${seats.map((s,i)=>`<div class="seat">
+      </section>`;
+  return `<main class="start">
+    <div class="sea">
+      <nav class="start-top" aria-label="Game"><a class="btn small" href="/">Back to portfolio</a><button class="btn small" onclick="G.open('rules')">How to play</button></nav>
+      ${heroHTML()}
+    </div>
+    <div class="raft${online?' two':''}">
+      ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
+      <section class="card crew" aria-labelledby="crew-h">
+        <div class="crew-head">
+          <div><h2 id="crew-h">Who's playing?</h2><p class="muted">Pass one screen around. Tap a cat to change its look and colour.</p></div>
+          <span class="isle-chip">${n>MAX_CLASSIC?'Big Island for 5 to 10 cats':'Classic island for 2 to 4 cats'}</span>
+        </div>
+        <div class="seats">${seats.map((s,i)=>`<div class="seat" style="--pc:${pcol(s)}">
           <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${catArt(s.breed)}</button>
           <input value="${esc(s.name)}" maxlength="14" aria-label="Name for cat ${i+1}" oninput="G.seatName(${i},this.value)">
           ${n>2?`<button class="x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}
         </div>`).join('')}
-        ${n<MAX_CATS?`<button class="seat add" onclick="G.seatAdd()"><span>+</span>Add a cat</button>`:''}</div>
-        <div class="online-actions">
+        ${n<MAX_CATS?`<button class="seat add" onclick="G.seatAdd()"><span>+</span>Add a cat${n===MAX_CLASSIC?'<small>A 5th cat makes it Big Island</small>':''}</button>`:''}</div>
+        <div class="crew-go">
           ${saved && saved.phase!=='over' ? `<button class="btn" onclick="G.resume()">Continue saved game</button>` : ''}
-          <button class="btn primary" onclick="G.start()">Start with ${n} cats</button>
+          <button class="btn primary big" onclick="G.start()">Start with ${n} cats</button>
         </div>
       </section>
+      ${online}
     </div>
-    <p class="center" style="margin-top:18px"><button class="btn small" onclick="G.open('rules')">How to play</button></p>
+    ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on jessyux.com.</p>' : ''}
   </main>`;
 }
 function catSheetHTML(i){
