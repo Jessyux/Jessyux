@@ -226,7 +226,13 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .pcard.rcard.pc-md{--cw:150px}
 .rcard.pc-md .pc-name{font-size:14px}
 .rcard.pc-md .pc-art{width:46%}
-.res-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));justify-items:center;gap:16px;margin-top:10px}
+/* the five resource cards sit in one row like the treats: they shrink to fit, and scroll sideways on a narrow screen */
+.res-cards{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;margin-top:10px;container-type:inline-size}
+.res-cards>div{flex:0 0 auto;display:flex}
+.res-cards .pcard.rcard.pc-md{--cw:max(120px, calc((100cqw - 44px) / 5));align-self:stretch}
+.res-cards .rcard.pc-md .pc-name{font-size:13px}
+.res-cards .rcard.pc-md .pc-art{margin:auto 0}
+.res-cards .rcard.pc-md .pc-text{margin-top:0}
 .rule-hand{display:flex;justify-content:center;margin:12px 0 6px}
 .rule-paws{display:flex;justify-content:center;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
 .rule-paw{position:relative;z-index:0;isolation:isolate;width:138px;height:215px;clip-path:inset(-60px -40px 0 -40px);border-bottom:3px solid var(--plum)}
@@ -452,8 +458,11 @@ svg :focus{outline:none}
 .build-grid,.treat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 /* the treat cards sit in one row: they shrink to fit, and on a narrow screen the row scrolls sideways */
 .treat-grid{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;container-type:inline-size}
-.treat-grid>div{flex:0 0 auto}
-.treat-grid .pcard{--cw:max(135px, calc((100cqw - 44px) / 5))}
+.treat-grid>div{flex:0 0 auto;display:flex}
+/* every rule card the same height, with room between the picture and the rule */
+.treat-grid .pcard{--cw:max(135px, calc((100cqw - 44px) / 5));min-height:0;height:auto;align-self:stretch}
+.treat-grid .pc-name{font-size:12px;min-height:calc(2.1em + .7em);display:flex;align-items:center;justify-content:center}
+.treat-grid .pc-art{margin:.6em 0 1em}
 .bcard,.tcard{border:2.5px solid var(--plum);border-radius:var(--r-md);padding:10px 8px;display:grid;justify-items:center;text-align:center;gap:4px;background:#fff;align-content:start}
 .tcard{background:#FFF7DA}
 .bcard > svg,.bcard > .ic{height:44px;width:auto}
@@ -655,6 +664,16 @@ body{overflow-x:clip}
 .lb-sort{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:4px 0 10px;font-weight:800;font-size:.85rem;color:var(--plum-2)}
 .lb-sort .btn.on{background:var(--plum);color:#fff}
 .continue-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
+.my-games{margin:10px 0 12px}
+.my-games h3{font-size:1rem;margin:0 0 6px}
+.my-games ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.my-game{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border:2px solid var(--plum);border-radius:var(--r-md);background:#fff}
+.my-game b{font-family:var(--display);font-weight:400}
+.mg-tag{font-size:.78rem;font-weight:900;padding:1px 8px;border-radius:999px;border:2px solid var(--plum);background:#FFF4D2}
+.mg-tag.pending{background:#F3EEF5;border-style:dashed;color:var(--plum-2)}
+.mg-tag.over{background:#E2F8EF}
+.mg-btns{margin-left:auto;display:flex;gap:6px}
+.saved-row{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
 .lb-name{display:inline-flex;align-items:center;gap:.55em;vertical-align:middle}
 .lb-cat{width:32px;height:32px;border-radius:50%;border:2px solid var(--plum);overflow:hidden;flex:none;display:grid;place-items:center;background:color-mix(in srgb, var(--pc,#eee) 28%, #fff)}
 .lb-cat img,.lb-cat svg{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
@@ -1812,6 +1831,29 @@ function pidFor(code){
   if(!p){ p = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now().toString(36)); store.set(k,p); }
   return p;
 }
+/* the online games this device has been in. A new lobby is pending: it only
+   counts as a game once the host starts it. Newest first, kept to 8. */
+const GAMES_KEY = 'whisker-isles-games', GAME_RANK = {pending:0, playing:1, over:2};
+function myGames(){
+  let g = []; try{ g = JSON.parse(store.get(GAMES_KEY)) || []; }catch(e){}
+  g = Array.isArray(g) ? g.filter(x=>x && CODE_RE.test(x.code) && x.state in GAME_RANK) : [];
+  /* older versions kept one code. We can't tell if it ever started, so it comes over as pending */
+  const old = store.get('whisker-isles-last-code');
+  if(old){ store.del('whisker-isles-last-code'); if(CODE_RE.test(old) && !g.some(x=>x.code===old)){ g.unshift({code:old, state:'pending', at:Date.now()}); store.set(GAMES_KEY, JSON.stringify(g)); } }
+  return g;
+}
+function markGame(code, state){
+  const g = myGames(), i = g.findIndex(x=>x.code===code);
+  if(i===0 && g[0].state===state) return;
+  const prev = i>=0 ? g.splice(i,1)[0] : null;
+  if(prev && GAME_RANK[prev.state] > GAME_RANK[state]) state = prev.state;
+  g.unshift({code, state, at:Date.now()});
+  store.set(GAMES_KEY, JSON.stringify(g.slice(0,8)));
+}
+function forgetGame(code){
+  store.set(GAMES_KEY, JSON.stringify(myGames().filter(x=>x.code!==code)));
+  store.del('whisker-isles-pid-'+code);
+}
 async function createOnline(){
   ON.err=null; ON.status='creating'; render();
   try{
@@ -1827,7 +1869,7 @@ function connect(code){
   if(ON.ws){ try{ ON.ws.onclose=null; ON.ws.close(); }catch(e){} }
   ON.code=code; ON.pid=pidFor(code); ON.err=null;
   if(ON.status!=='playing') ON.status='connecting';
-  store.set('whisker-isles-last-code', code);
+  markGame(code, 'pending');
   history.replaceState(null,'','?game='+code);
   render();
   const proto = location.protocol==='https:'?'wss':'ws';
@@ -1863,6 +1905,7 @@ function applyRemote(state, ver){
   const prevRoll = S && S.online ? S.rollN : null;
   if(!S) setTimeout(()=>window.scrollTo(0,0));
   S = state; ON.ver = ver; ON.status='playing';
+  if(ON.code) markGame(ON.code, S.phase==='over' ? 'over' : 'playing');
   buildGeo(S.board.radius);
   if(ui.pendingBuy!=null && me()>=0){
     const c = S.players[me()].cards[ui.pendingBuy];
@@ -2679,6 +2722,16 @@ function heroHTML(){
 function breedPicker(sel, taken, fn){
   return `<div class="breeds" role="radiogroup" aria-label="Pick your cat">${BREEDS.map((b,i)=>`<button role="radio" aria-checked="${sel===i}" aria-label="${b.label}" title="${b.label}" ${taken.includes(i)?'disabled':''} onclick="${fn}(${i})" style="--pc:${b.color}">${catArt(i)}</button>`).join('')}</div>`;
 }
+/* online games on this device: started ones first, then lobbies still waiting, then finished ones */
+function myGamesList(busy){
+  const order = {playing:0, pending:1, over:2};
+  const g = myGames().sort((a,b)=>order[a.state]-order[b.state]);
+  if(!g.length) return '';
+  const tag = {playing:'In play', pending:'Lobby, not started', over:'Finished'};
+  const go = {playing:'Continue', pending:'Open lobby', over:'See result'};
+  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button><button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)}">Delete</button></span></li>`).join('');
+  return `<div class="my-games"><h3>Your online games</h3><ul>${rows}</ul></div>`;
+}
 function startScreen(){
   if(!ui.seats) ui.seats = [0,1].map(i=>({name:'', breed:i, color:i}));
   const rows = boardRows(), lbShown = ui.lbAll ? rows : rows.slice(0,5);
@@ -2689,7 +2742,7 @@ function startScreen(){
   const saved = loadSave();
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
-  const lastCode = CODE_RE.test(store.get('whisker-isles-last-code')||'') ? store.get('whisker-isles-last-code') : '';
+  const games = myGamesList(busy);
   if(window.WI_OFFLINE) ui.where = 'here';
   else if(!ui.where && (new URLSearchParams(location.search).get('game') || ON.err)) ui.where = 'online';
   const where = ui.where;
@@ -2701,8 +2754,8 @@ function startScreen(){
           <button class="where-opt" onclick="G.where('here')"><span class="where-ic together" aria-hidden="true"><img src="${artSrc('cat-ginger')}" alt=""><img src="${artSrc('cat-calico')}" alt=""></span><b>In person</b><span>Everyone shares one screen and passes it round.</span></button>
           <button class="where-opt" onclick="G.where('online')"><span class="where-ic apart" aria-hidden="true"><img src="${artSrc('cat-tuxedo')}" alt=""><i></i><img src="${artSrc('cat-siamese')}" alt=""></span><b>Online</b><span>Everyone plays on their own phone or laptop with a game code.</span></button>
         </div>
-        ${saved && saved.phase!=='over' ? `<p class="center"><button class="btn" onclick="G.resume()">Continue saved game</button></p>` : ''}
-        ${lastCode ? `<p class="center small">Your last online game is <b>${esc(lastCode)}</b> <button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(lastCode)}')">Continue</button></p>` : ''}
+        ${saved && saved.phase!=='over' ? `<p class="center saved-row"><button class="btn" onclick="G.resume()">Continue saved game</button> <button class="btn small" onclick="G.forgetSave()">Delete it</button></p>` : ''}
+        ${games}
       </section>`;
   const online = window.WI_OFFLINE ? '' : `<section class="card mode">
         <h2>Play online with friends</h2>
@@ -2710,7 +2763,7 @@ function startScreen(){
         <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
         <div class="field">Your cat</div>
         ${breedPicker(ui.form.breed, [], 'G.formBreed')}
-        ${lastCode ? `<p class="continue-row">Your last online game is <b>${esc(lastCode)}</b> <button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(lastCode)}')">Continue</button></p>` : ''}
+        ${games}
         <div class="online-actions">
           <button class="btn primary" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>
           <span class="or">or</span>
@@ -2916,6 +2969,8 @@ const G = {
   create(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } createOnline(); },
   firstRoll(){ firstRoll(); },
   rejoin(code){ ui.form.code = code; G.join(); },
+  forget(code){ if(!confirm(`Delete ${code} from your games? This only removes it from this device. Anyone still playing can carry on.`)) return; forgetGame(code); render(); },
+  forgetSave(){ if(!confirm("Delete your saved in-person game? You can't get it back.")) return; store.del(SAVE_KEY); render(); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   lobbyColor(c){
