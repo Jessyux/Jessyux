@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Messages in the sand | Jessy Chappell</title>
+<meta name="description" content="Write Jessy a message in the sand, by typing or drawing.">
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@800&family=Hanken+Grotesk:wght@400;600&family=Shadows+Into+Light&display=swap">
+<link rel="stylesheet" href="/a11y/a11y.css">
+<link rel="stylesheet" href="/a11y/sand.css">
+<script src="/a11y/settings.js"></script>
+<script>juxA11y.apply(document.documentElement)</script>
+</head>
+<body class="sand-beach">
+<!-- pressed-into-sand lettering, used by sand.css -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0">
+  <filter id="sand-carve" x="-4%" y="-14%" width="108%" height="128%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="4" result="n"/>
+    <feMorphology in="SourceAlpha" operator="dilate" radius="0.4"/>
+    <feDisplacementMap in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation=".45" result="a"/>
+    <feFlood flood-color="#7A5C33"/><feComposite in2="a" operator="in" result="floor"/>
+    <feOffset in="a" dx="1" dy="1.3" result="off"/>
+    <feComposite in="a" in2="off" operator="out" result="edge"/>
+    <feFlood flood-color="#4A3418"/><feComposite in2="edge" operator="in"/><feGaussianBlur stdDeviation=".8" result="inner"/>
+    <feComposite in="off" in2="a" operator="out" result="lip"/>
+    <feFlood flood-color="#FFF6E2" flood-opacity=".8"/><feComposite in2="lip" operator="in"/><feGaussianBlur stdDeviation=".9" result="rim"/>
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="11"/>
+    <feColorMatrix values="0 0 0 0 .56  0 0 0 0 .43  0 0 0 0 .25  0 0 0 5 -3.5" result="specks"/>
+    <feMorphology in="a" operator="dilate" radius="1.4"/><feGaussianBlur stdDeviation="3" result="halo"/>
+    <feComposite in="specks" in2="halo" operator="in" result="grains"/>
+    <feMerge><feMergeNode in="grains"/><feMergeNode in="rim"/><feMergeNode in="floor"/><feMergeNode in="inner"/></feMerge>
+  </filter>
+  <filter id="sand-carve-sm" x="-4%" y="-14%" width="108%" height="128%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="4" result="n"/>
+    <feMorphology in="SourceAlpha" operator="dilate" radius="0.1"/>
+    <feDisplacementMap in2="n" scale="0.9" xChannelSelector="R" yChannelSelector="G"/>
+    <feGaussianBlur stdDeviation=".2" result="a"/>
+    <feFlood flood-color="#7A5C33"/><feComposite in2="a" operator="in" result="floor"/>
+    <feOffset in="a" dx=".5" dy=".7" result="off"/>
+    <feComposite in="a" in2="off" operator="out" result="edge"/>
+    <feFlood flood-color="#4A3418"/><feComposite in2="edge" operator="in"/><feGaussianBlur stdDeviation=".8" result="inner"/>
+    <feComposite in="off" in2="a" operator="out" result="lip"/>
+    <feFlood flood-color="#FFF6E2" flood-opacity=".8"/><feComposite in2="lip" operator="in"/><feGaussianBlur stdDeviation=".9" result="rim"/>
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="11"/>
+    <feColorMatrix values="0 0 0 0 .56  0 0 0 0 .43  0 0 0 0 .25  0 0 0 5 -3.5" result="specks"/>
+    <feMorphology in="a" operator="dilate" radius="0.8"/><feGaussianBlur stdDeviation="2" result="halo"/>
+    <feComposite in="specks" in2="halo" operator="in" result="grains"/>
+    <feMerge><feMergeNode in="grains"/><feMergeNode in="rim"/><feMergeNode in="floor"/><feMergeNode in="inner"/></feMerge>
+  </filter>
+</svg>
+<main class="sand-page">
+  <a class="sand-back" href="/">Back to the portfolio</a>
+  <h1 class="sand-title">Write me a message in the sand</h1>
+  <p class="sand-sub">Say hello, leave a thought, or draw something. <a href="#write">Write yours</a></p>
+
+  <section class="sand-wall-sec" aria-labelledby="wall-title">
+    <h2 id="wall-title">Messages so far</h2>
+    <p class="sand-status" id="wall-status" role="status"></p>
+    <ul class="wall" id="wall"></ul>
+  </section>
+
+  <form id="sand-form" novalidate>
+    <h2 id="write" tabindex="-1">Leave yours</h2>
+    <fieldset class="sand-kinds">
+      <legend>How would you like to write?</legend>
+      <label><input type="radio" name="kind" value="text" checked><span>Type</span></label>
+      <label><input type="radio" name="kind" value="draw"><span>Draw</span></label>
+    </fieldset>
+
+    <div id="type-box">
+      <label class="sand-field" for="sand-text">Your message</label>
+      <div class="sand-write"><textarea id="sand-text" class="hand" maxlength="140" rows="3" aria-describedby="sand-count"></textarea></div>
+      <p class="sand-count" id="sand-count">0 of 140</p>
+    </div>
+
+    <div id="draw-box" hidden>
+      <div class="sand-write"><canvas id="pad" role="img" aria-label="Drawing area. Draw with a mouse, finger or stylus. If that doesn't suit, choose Type instead."></canvas></div>
+      <div class="sand-tools">
+        <button type="button" class="sand-btn" id="undo">Undo</button>
+        <button type="button" class="sand-btn" id="clear">Clear</button>
+        <p id="draw-note" role="status"></p>
+      </div>
+    </div>
+
+    <label class="sand-field" for="sand-name">First name (optional)
+      <input type="text" id="sand-name" maxlength="30" autocomplete="given-name">
+    </label>
+    <div class="sand-trap" aria-hidden="true"><label>Website <input type="text" id="sand-website" tabindex="-1" autocomplete="off"></label></div>
+
+    <p class="sand-public">Your message is public as soon as you post it. Please don't include personal details.</p>
+    <button type="submit" class="sand-btn go" id="post" disabled>Post</button>
+    <p class="sand-status" id="post-status" role="status"></p>
+  </form>
+</main>
+<div class="sand-shore" aria-hidden="true"></div>
+<script src="/a11y/contrast.js"></script>
+<script src="/a11y/panel.js"></script>
+<script>juxPanel.mount({view:'sand',showFloatingButton:true})</script>
+<script src="/a11y/sand.js"></script>
+</body>
+</html>

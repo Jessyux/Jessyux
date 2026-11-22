@@ -1,0 +1,112 @@
+/* ==========================================================================
+   sand.css — the sand screen and the removal page
+   ========================================================================== */
+html{--s-bg:#F3D9B4;--s-ink:#2E2110;--s-soft:#4F3D22;--s-hand:#5A4326;--s-plate:rgba(255,246,228,.55);--s-line:rgba(90,67,38,.4);--s-btn:#075E4E;--s-btnink:#fff;--s-focus:#075E4E;--s-press:0 1px 0 rgba(255,255,255,.75),0 -1px 1px rgba(60,35,10,.55)}
+html[data-jux-contrast="high"]{--s-bg:#FFF3DF;--s-ink:#000;--s-soft:#1A1A1A;--s-hand:#000;--s-plate:#FFF;--s-line:#000;--s-btn:#000;--s-btnink:#FFF;--s-focus:#000;--s-press:none}
+html[data-jux-style="classic"]{--s-press:none}
+html[data-jux-style="classic"][data-jux-theme="light"]{--s-bg:#FFF;--s-ink:#1E1A24;--s-soft:#4F4855;--s-hand:#5A4326;--s-plate:#F6EFE8;--s-line:rgba(30,26,36,.24);--s-btn:#1E1A24;--s-btnink:#FFF;--s-focus:#8A3F1E}
+html[data-jux-style="classic"][data-jux-theme="dark"]{--s-bg:#1E1A24;--s-ink:#F6EFE8;--s-soft:#C9BFC4;--s-hand:#F2C9A8;--s-plate:#2A2531;--s-line:rgba(246,239,232,.24);--s-btn:#F6EFE8;--s-btnink:#1E1A24;--s-focus:#F2C9A8}
+html[data-jux-style="classic"][data-jux-theme="light"][data-jux-contrast="high"]{--s-ink:#000;--s-soft:#2A2531;--s-hand:#000;--s-plate:#FFF;--s-line:#000;--s-btn:#000}
+html[data-jux-style="classic"][data-jux-theme="dark"][data-jux-contrast="high"]{--s-bg:#000;--s-ink:#FFF;--s-soft:#EDE7E2;--s-hand:#FFF;--s-plate:#14111A;--s-line:#FFF;--s-btn:#FFF;--s-btnink:#000}
+
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--s-ink);background:var(--s-bg);font:400 1.0625rem/1.55 "Hanken Grotesk",system-ui,sans-serif}
+/* a soft sand tone with fine grain. The water sits at the foot of the page in .sand-shore */
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .14 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E"),linear-gradient(#f0d8b8,#fae1c1 45%,#f3d9b4);background-attachment:fixed}
+/* palm tree shadows reaching in from off both edges, sized to the screen. Decoration only, so high contrast and Classic drop them. Multiply darkens the sand underneath, the way a real shadow does */
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::before,
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::after{content:"";position:fixed;z-index:-1;top:-4vh;width:clamp(190px,36vw,760px);height:108vh;background:url(/a11y/palm-shadow.svg) left top/100% auto no-repeat;opacity:.36;mix-blend-mode:multiply;pointer-events:none}
+html[data-jux-style="personality"] body::before{left:calc(clamp(190px,36vw,760px)*-.1)}
+html[data-jux-style="personality"] body::after{right:calc(clamp(190px,36vw,760px)*-.1);top:12vh;transform:scaleX(-1)}
+/* on a phone the text fills the width, so each palm is larger against the screen and sits further off the edge */
+@media(max-width:760px){
+  html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::before,
+  html[data-jux-style="personality"]:not([data-jux-contrast="high"]) body::after{width:62vw}
+  html[data-jux-style="personality"] body::before{left:-22vw}
+  html[data-jux-style="personality"] body::after{right:-22vw}
+}
+html[data-jux-style="classic"] body{font-family:"Outfit",system-ui,sans-serif}
+/* sizes grow with the screen, and the rem in each keeps the Text size setting working */
+.sand-page{width:min(100%,calc(30rem + 42vw));margin:0 auto;padding:clamp(16px,3vw,44px) clamp(16px,4vw,64px) 88px}
+.sand-back{display:inline-block;color:inherit;font-weight:600;padding:6px 0}
+:focus-visible{outline:3px solid var(--s-focus);outline-offset:2px}
+.hand{font-family:"Shadows Into Light","Comic Sans MS",cursive;color:var(--s-hand);text-shadow:var(--s-press)}
+h1.hand{margin:12px 0 4px;font-size:clamp(1.8rem,1rem + 1.5vw,2.6rem);font-weight:400;line-height:1.15}
+.sand-sub{margin:0 0 22px;color:var(--s-soft)}
+.sand-sub a{color:inherit;font-weight:600}
+h2{margin:44px 0 14px;font:800 1.5rem/1.2 "Gabarito",system-ui,sans-serif;color:inherit}
+html[data-jux-style="classic"] h2{font-family:inherit;font-weight:700}
+h2.hand{font-size:1.3rem}
+
+.sand-kinds{border:0;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.sand-kinds legend{padding:0;margin-bottom:6px;font-weight:600}
+.sand-kinds label{display:inline-block;cursor:pointer}
+.sand-kinds input{position:absolute;opacity:0;width:1px;height:1px}
+.sand-kinds span{display:block;padding:8px 18px;border-radius:999px;border:1.5px solid var(--s-line);font-weight:600}
+.sand-kinds input:checked+span{background:var(--s-btn);color:var(--s-btnink);border-color:var(--s-btn)}
+.sand-kinds input:focus-visible+span{outline:3px solid var(--s-focus);outline-offset:2px}
+
+.sand-field{display:block;margin-top:14px;font-weight:600}
+textarea.hand{display:block;width:100%;min-height:clamp(9rem,22vh,16rem);padding:clamp(12px,1.6vw,22px);font-size:clamp(1.8rem,1rem + 1.9vw,3rem);line-height:1.25;background:var(--s-plate);border:1.5px solid var(--s-line);border-radius:14px;resize:vertical}
+.sand-count{font-size:.9rem;font-weight:400;color:var(--s-soft);margin:4px 0 0;text-align:right}
+#pad{display:block;width:100%;aspect-ratio:2/1;background:var(--s-plate);border:1.5px solid var(--s-line);border-radius:14px;touch-action:none;cursor:crosshair}
+.sand-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.sand-tools p{margin:0;font-size:.92rem;color:var(--s-soft)}
+input[type="text"],input[type="password"]{display:block;width:min(100%,20rem);margin-top:4px;padding:10px 12px;font:inherit;font-weight:400;color:inherit;background:var(--s-plate);border:1.5px solid var(--s-line);border-radius:10px}
+.sand-trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sand-public{margin:16px 0 10px;color:var(--s-soft);font-size:.96rem}
+.sand-btn{font:inherit;font-weight:600;line-height:1.25;padding:10px 18px;border-radius:999px;background:transparent;color:inherit;border:1.5px solid var(--s-line);cursor:pointer}
+.sand-btn.go{background:var(--s-btn);color:var(--s-btnink);border-color:var(--s-btn)}
+.sand-btn:disabled{opacity:.55;cursor:not-allowed}
+.sand-status{min-height:1.6em;margin:10px 0 0;font-weight:600}
+
+.wall{list-style:none;margin:0;padding:0;columns:auto 18rem;column-gap:clamp(10px,1.2vw,18px)}
+.msg{break-inside:avoid;margin:0 0 12px;padding:14px 16px;background:var(--s-plate);border:1px solid var(--s-line);border-radius:14px}
+.msg p{margin:0;overflow-wrap:anywhere}
+.msg .hand{font-size:clamp(1.7rem,1rem + 1vw,2.4rem);line-height:1.2}
+.msg .by{margin-top:6px;font-size:.92rem;color:var(--s-soft)}
+.msg svg{display:block;width:100%;height:auto}
+.msg path{fill:none;stroke:var(--s-hand);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.msg path.writing{stroke-dasharray:1;stroke-dashoffset:1;animation:sand-write 1.8s ease-out forwards}
+@keyframes sand-write{to{stroke-dashoffset:0}}
+
+.sand-write{margin-top:4px}
+.sand-wall-sec h2{margin-top:clamp(20px,3vw,36px)}
+#write{scroll-margin-top:16px}
+/* the messages are the page, so the form stays small and quiet. Text inputs keep 1rem, because iPhones zoom in on anything smaller */
+#sand-form{width:min(100%,38rem);font-size:.95rem;color:var(--s-soft)}
+#sand-form .sand-kinds legend,#sand-form .sand-field{font-weight:400}
+#sand-form .sand-kinds span{padding:5px 14px;font-weight:400}
+#sand-form input[type="text"]{padding:8px 10px;font-size:1rem}
+#sand-form textarea.hand{min-height:clamp(5.5rem,14vh,9rem);padding:10px 12px;font-size:clamp(1.3rem,1rem + .7vw,1.7rem)}
+#sand-form .sand-count,#sand-form .sand-tools p{font-size:.85rem}
+#sand-form .sand-public{font-size:.88rem}
+#sand-form .sand-btn{padding:7px 16px}
+/* written straight into the sand, like the Hi, I'm Jessy title. The filters are in sand.html. Classic and high contrast keep the plain cards */
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach h1.hand{filter:url(#sand-carve-sm);text-shadow:none}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach h2.hand{filter:url(#sand-carve-sm);text-shadow:none;font-weight:400;font-size:clamp(1.5rem,1rem + .8vw,2rem);line-height:1.15}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall{columns:auto 20rem;column-gap:clamp(20px,3vw,48px)}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg{margin:0 0 clamp(22px,3vw,40px);padding:0;background:none;border:0;border-radius:0}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg:nth-child(3n+1){transform:rotate(-1.4deg)}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg:nth-child(3n+2){transform:rotate(.9deg)}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg .hand{filter:url(#sand-carve);text-shadow:none;font-size:clamp(2rem,1rem + 1.7vw,3.2rem);line-height:1.2}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg svg{filter:url(#sand-carve)}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg path{stroke-width:12}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #wall .msg .by{margin-top:2px;font-family:"Shadows Into Light","Comic Sans MS",cursive;font-size:1.3rem;color:var(--s-soft)}
+/* the outline is a line drawn in the sand and stays out of the filter, so focus stays crisp */
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach .sand-write{border:1.5px dashed var(--s-hand);border-radius:14px}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach .sand-write:focus-within{outline:3px solid var(--s-focus);outline-offset:2px}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach textarea.hand{background:none;border:0;outline:none;filter:url(#sand-carve-sm);text-shadow:none}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-beach #pad{background:none;border:0;filter:url(#sand-carve)}
+/* the same shore as the PM pages, fading out of the sand at the foot of the page. Decoration only, so high contrast and Classic drop it */
+.sand-beach{display:flex;flex-direction:column}
+.sand-beach .sand-page{flex:1 0 auto}
+.sand-shore{display:none}
+html[data-jux-style="personality"]:not([data-jux-contrast="high"]) .sand-shore{display:block;flex:none;height:max(150px,24.8vw);margin-top:-40px;background:url(/img/shore-beach.webp) center bottom/cover no-repeat;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 26%);mask-image:linear-gradient(to bottom,transparent,#000 26%);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.msg path.writing{animation:none;stroke-dasharray:none;stroke-dashoffset:0}}
+html[data-jux-motion="calm"] .msg path.writing{stroke-dasharray:none;stroke-dashoffset:0}
+
+/* removal page */
+.adm-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.adm-row>div:first-child{flex:1 1 14rem;min-width:0}
+.adm-actions{display:flex;gap:8px}
