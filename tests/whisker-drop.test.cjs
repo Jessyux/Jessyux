@@ -12,7 +12,7 @@ function grab(name) {
 function load() {
   const logs = [];
   const make = new Function('logs', `let S; const log = m => logs.push(m); const pname = i => S.players[i].name; const updateLongest = () => {};
-    ${grab('dropCat')}\n${grab('skipTurn')}\nreturn { set(s){ S = s; }, get(){ return S; }, dropCat, skipTurn };`);
+    ${html.match(/function offerTo\(o\)\{.*\}/)[0]}\n${grab('dropCat')}\n${grab('skipTurn')}\nreturn { set(s){ S = s; }, get(){ return S; }, dropCat, skipTurn };`);
   return Object.assign(make(logs), { logs });
 }
 const P = n => ({ name: n, res: {}, cards: [], zoomies: 0, pieces: {} });
@@ -49,6 +49,11 @@ test('dropCat on the cat whose turn it is passes the turn to the next cat', () =
 test('dropCat clears a trade and a discard that involve the cat', () => {
   const g = load(); g.set(state({ offer: { from: 2, to: 1, give: {}, get: {} }, discardQ: [1, 2] })); g.dropCat(1);
   assert.equal(g.get().offer, null); assert.deepEqual(g.get().discardQ, [1]);
+});
+
+test('dropCat keeps a trade offered to several cats for the ones still in the game', () => {
+  const g = load(); g.set(state({ cur: 0, offer: { from: 0, to: [1, 2], give: {}, get: {} } })); g.dropCat(1);
+  assert.deepEqual(g.get().offer.to, [1]);
 });
 
 test('dropCat during setup removes their placements from the order', () => {
