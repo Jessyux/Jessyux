@@ -724,11 +724,16 @@ body{overflow-x:clip}
 .nook b{font-size:.95rem;background:rgba(255,252,244,.94);border:2px solid var(--plum);border-radius:999px;padding:0 10px}
 .nook small{color:var(--plum);font-weight:800;font-size:.78rem;background:rgba(255,252,244,.88);border-radius:999px;padding:0 8px;margin-top:2px}
 .nook.away .portrait{filter:saturate(.6);opacity:.75}
-.zzz{position:absolute;right:-14px;top:-6px;font-weight:900;font-size:.8rem;color:var(--plum-2);letter-spacing:.1em}
+.host-badge{position:absolute;left:-8px;top:-8px;width:30px;height:30px;border-radius:50%;background:#FFF3C4;border:2.5px solid var(--plum);display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum);color:var(--plum);z-index:2}
+.host-acts.on-av{position:absolute;inset:0;margin:0;display:block;pointer-events:none}
+.host-acts.on-av .host-ic{position:absolute;top:-8px;pointer-events:auto;z-index:2}
+.host-acts.on-av .host-ic:first-child{left:-8px}
+.host-acts.on-av .host-ic.boot{right:-8px}
+.zzz{position:absolute;left:50%;transform:translateX(-50%);top:-22px;font-weight:900;font-size:.8rem;color:var(--plum-2);letter-spacing:.1em}
 .nook.empty .ghost{display:block;width:72px;height:72px;border-radius:50%;border:3px dashed var(--plum-2);background:rgba(255,255,255,.55)}
 .nook.empty b{color:var(--plum-2)}
 .lobby-go{justify-content:space-between}
-.nook-edit{position:relative;z-index:1;margin-bottom:-22px;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
+.nook-edit{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
 .nook-edit .pencil{position:absolute;right:-4px;bottom:2px;width:28px;height:28px;border-radius:50%;background:var(--butter);border:2.5px solid var(--plum);display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum)}
 .nook-edit .tip{position:absolute;left:50%;top:-30px;transform:translateX(-50%);background:var(--plum);color:#fff;font-size:.75rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
 .nook-edit:hover .tip,.nook-edit:focus-visible .tip{opacity:1}
@@ -757,7 +762,7 @@ button.code-chip{font:inherit;cursor:pointer}
   .zzz{animation:doze 2.4s ease-in-out infinite}
 }
 @keyframes knead{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes doze{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+@keyframes doze{0%,100%{opacity:.4;transform:translate(-50%,0)}50%{opacity:1;transform:translate(-50%,-4px)}}
 
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -2789,11 +2794,12 @@ function catSheetHTML(i){
 }
 const PENCIL = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4L19 9l-4-4L4 16z" fill="#fff" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="2.4"/></svg>';
 /* host buttons under another cat: hand over the host role, or remove them */
-function hostActs(s){
+function hostActs(s, onAvatar){
   const n = esc(s.name);
-  return `<span class="host-acts"><button class="host-ic" onclick="G.makeHost('${esc(s.pid)}')" aria-label="Make ${n} the host">${CROWN}<span class="tip" aria-hidden="true">Make host</span></button><button class="host-ic boot" onclick="G.kick('${esc(s.pid)}')" aria-label="Boot ${n} out of the game">${BOOT}<span class="tip" aria-hidden="true">Boot out of game</span></button></span>`;
+  return `<span class="host-acts${onAvatar?' on-av':''}"><button class="host-ic" onclick="G.makeHost('${esc(s.pid)}')" aria-label="Make ${n} the host">${CROWN}<span class="tip" aria-hidden="true">Make host</span></button><button class="host-ic boot" onclick="G.kick('${esc(s.pid)}')" aria-label="Boot ${n} out of the game">${BOOT}<span class="tip" aria-hidden="true">Boot out of game</span></button></span>`;
 }
 const CROWN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#FFD66B" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+const HOST_BADGE = `<span class="host-badge" title="Host" role="img" aria-label="Host">${CROWN}</span>`;
 const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 3h6v8l6 3c1.5.8 2 2 2 3.5V20H4V3z" fill="#F7A6A0" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 16h17" stroke="currentColor" stroke-width="2"/></svg>';
 /* your colour for beds and yarn on the board; colours other cats have are greyed out */
 function lobbyColorHTML(){
@@ -2832,10 +2838,10 @@ function lobbyScreen(){
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
   const away = s => !ON.online.includes(s.pid);
   const cats = LS.map((s,i)=>`<li class="nook${s.pid===ON.pid?' me':''}${away(s)?' away':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
-      ${s.pid===ON.pid ? `<button class="nook-cat nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>`
-        : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}</span>`}
+      ${s.pid===ON.pid ? `<span class="nook-cat"><button class="nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
+        : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
-      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small>${isHost && s.pid!==ON.pid ? hostActs(s) : ''}</li>`).join('');
+      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.pid?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small></li>`).join('');
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
   const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
