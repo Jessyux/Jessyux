@@ -80,6 +80,14 @@ export default {
       return json({ error: 'Could not make a game code. Try again.' }, 503);
     }
 
+    // short link: jessyux.com/wi opens the game, jessyux.com/wi/<code> joins that game
+    const wi = url.pathname.match(/^\/wi(?:\/([a-z0-9-]{3,40}))?\/?$/i);
+    if (wi) {
+      const to = new URL('/games/whisker-isles/', url);
+      if (wi[1]) to.searchParams.set('game', wi[1].toLowerCase());
+      return Response.redirect(to.toString(), 302);
+    }
+
     const m = url.pathname.match(/^\/api\/whisker-isles\/ws\/([a-z0-9-]{3,40})$/);
     if (m) {
       if (!CODE_RE.test(m[1])) return json({ error: 'Bad game code' }, 400);

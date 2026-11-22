@@ -1244,7 +1244,7 @@ function startScreen(){
         ${breedPicker(-1, [], 'void')}
       </section>` : `<section class="card mode">
         <h2>Play online with friends</h2>
-        <p class="muted">Everyone plays on their own phone or laptop.</p>
+        <p class="muted">Everyone plays on their own computer or phone. Create a game, then friends go to <b>jessyux.com/wi</b> and enter your cat code.</p>
         <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
         <div class="field">Your cat</div>
         ${breedPicker(ui.form.breed, [], 'G.formBreed')}
@@ -1277,12 +1277,12 @@ function startScreen(){
 }
 function lobbyScreen(){
   const L = ON.lobby, isHost = L.host===ON.pid, n = L.seats.length;
-  const link = location.origin + location.pathname + '?game=' + L.code;
+  const link = location.origin + '/wi/' + L.code;
   const taken = L.seats.filter(s=>s.pid!==ON.pid).map(s=>s.breed);
   const mySeat = L.seats.find(s=>s.pid===ON.pid);
   return `<main class="start lobby">
     <section class="card code-card">
-      <p class="muted">Share this code so friends can join</p>
+      <p class="muted">Friends go to <b>jessyux.com/wi</b> on their own computer or phone and enter this code</p>
       <div class="big-code">${esc(L.code)}</div>
       <div class="row center">
         <button class="btn small" onclick="G.copy('${esc(L.code)}', this)">Copy code</button>
