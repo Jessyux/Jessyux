@@ -1895,7 +1895,7 @@ function render(){
     <div class="board-wrap"><svg id="board" role="application" aria-label="Game board"></svg></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
-  $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Friends join with this code. Tap to copy it." onclick="G.copy('${esc(S.code)}', this, 'Code copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
+  $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
     ${S.online && ON.lobby && ON.lobby.host===ON.pid ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
     <a class="btn small" href="/">Back to portfolio</a>
     <button class="btn small" onclick="G.open('rules')">How to play</button>
@@ -2843,12 +2843,11 @@ function lobbyScreen(){
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-head">
         <h2>The cat corner</h2>
-        <p>${n<2 ? 'Cushions are fluffed. Share the code so a friend can curl up with you.' : `${n} cats are curled up and waiting${isHost?'. Start when everyone is in.':' for the host to start.'}`}</p>
+        <p>${n<2 ? 'Cushions are fluffed. Tap the code to copy an invite link for a friend.' : `${n} cats are curled up and waiting${isHost?'. Start when everyone is in.':' for the host to start.'}`}</p>
       </div>
-      <button class="code-pill" onclick="G.copy('${esc(L.code)}', this, 'Copied to clipboard')" aria-label="Copy the game code ${esc(L.code)} to the clipboard">
+      <button class="code-pill" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for game ${esc(L.code)} to the clipboard">
         <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
-      <p class="center"><button class="btn small" onclick="G.copy('${esc(link)}', this, 'Link copied')">Copy invite link</button></p>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
       <ul class="nooks" aria-label="Cats in the lobby">${cats}${empty}</ul>
       ${mySeat ? '<p class="cozy-tip">Tap the pencil on your cat to change your name, cat or colours.</p>' : ''}
