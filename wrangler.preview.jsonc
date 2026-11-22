@@ -2,8 +2,8 @@
   // Preview Worker for review on a phone: the same site and code as wrangler.jsonc, but its own
   // Worker with no custom domains, so it never touches jessyux.com. Served at
   // https://jessyux-preview.portoflio-2026.workers.dev
-  // Like the live site, deploy it only from the whisker-isles branch (which takes in this branch and adds
-  // Whisker Isles):  node build-home.mjs && node redesign-2026/build.mjs
+  // Deploy it from this branch, after the game's preview Worker (whisker-isles-preview) has taken the
+  // preview rooms over:  node build-home.mjs && node redesign-2026/build.mjs
   //                  npx --yes wrangler@4 deploy -c wrangler.preview.jsonc
   "name": "jessyux-preview",
   "compatibility_date": "2026-10-19",

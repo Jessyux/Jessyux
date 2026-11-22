@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whisker Isles</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://whisker.jessyux.com/">
+<!-- Whisker Isles lives on its own address. This page sends players there, keeps an invite link's
+     ?game=CODE, and carries the game's saved data (names, cats, a game in progress) in the URL fragment,
+     which never reaches a server, because the new address can't read what this one saved. -->
+<script>
+(function () {
+  var to = 'https://whisker.jessyux.com/' + location.search, carry = {}, any = false;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('whisker-isles') === 0) { carry[k] = localStorage.getItem(k); any = true; }
+    }
+  } catch (e) { any = false; }
+  if (any) to += '#carry=' + encodeURIComponent(JSON.stringify(carry));
+  location.replace(to);
+})();
+</script>
+<noscript><meta http-equiv="refresh" content="0;url=https://whisker.jessyux.com/"></noscript>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#FFF3E3;color:#3A2341;font:500 18px/1.5 system-ui,sans-serif;padding:16px;box-sizing:border-box;text-align:center}
+a{color:#3A2341;font-weight:700}
+a:focus-visible{outline:3px solid #FF8A3D;outline-offset:3px}
+</style>
+</head>
+<body>
+<p>Whisker Isles has its own address. <a href="https://whisker.jessyux.com/">Go to whisker.jessyux.com</a></p>
+</body>
+</html>

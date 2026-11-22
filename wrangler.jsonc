@@ -1,7 +1,11 @@
 {
-  // Don't deploy from this branch. jessyux.com is deployed only from the whisker-isles branch, which takes in
-  // accessibility-playground and adds Whisker Isles (its online rooms and leaderboard bindings live there).
-  // A deploy from here would try to drop the game's rooms, and Cloudflare refuses that.
+  // The portfolio Worker, deployed from this branch:  node build-home.mjs && node redesign-2026/build.mjs
+  //                                                   npx --yes wrangler@4 deploy
+  // Whisker Isles is its own Worker (whisker-isles, at whisker.jessyux.com), deployed only from the whisker-isles
+  // branch. It took the online rooms (WhiskerRoom) over from this Worker with a transfer migration, so this
+  // Worker has no game code or bindings. jessyux.com/whisker-isles is only a handoff page to the game's address.
+  // The first deploy from here must come after the game Worker's first deploy, or Cloudflare refuses it
+  // because this Worker would still own the rooms.
   "name": "jessyux",
   "compatibility_date": "2026-10-19",
   "main": "worker/index.mjs",
