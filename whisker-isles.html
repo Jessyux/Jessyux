@@ -613,9 +613,11 @@ div.build{cursor:default}
 .breeds button img,.breeds button svg{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
 .breeds button[aria-checked="true"]{box-shadow:0 0 0 3px var(--butter),0 0 0 6px var(--plum)}
 .breeds button:disabled{opacity:.3;filter:grayscale(1)}
-.online-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+/* Create, or, the code box and Join stay on one line, even on a phone: the code box takes what's left */
+.online-actions{display:flex;gap:8px;align-items:center;margin-top:16px}
+.online-actions .btn{white-space:nowrap;flex:none}
 .online-actions .or{color:var(--plum-2);font-weight:700}
-.join{display:flex;gap:8px;flex:1;min-width:220px}
+.join{display:flex;gap:8px;flex:1;min-width:0}
 .join input{margin:0;flex:1;min-width:0}
 /* ---------- start screen: the island floats in a full-width sea ---------- */
 body{overflow-x:clip}
@@ -2805,7 +2807,7 @@ function startScreen(){
           <button class="btn primary" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>
           <span class="or">or</span>
           <form class="join" onsubmit="event.preventDefault();G.join()">
-            <input id="on-code" value="${esc(ui.form.code)}" placeholder="sleepy-tuna-42" aria-label="Game code" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)">
+            <input id="on-code" value="${esc(ui.form.code)}" placeholder="Code" aria-label="Game code" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)">
             <button class="btn" ${busy?'disabled':''}>${ON.status==='connecting'?'Joining…':'Join'}</button>
           </form>
         </div>
