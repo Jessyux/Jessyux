@@ -9,14 +9,20 @@
 //   kick {pid, base?, state?}  host only: remove a cat by public id (in a game, with the state that has them taken out)
 //   start {state}              host only: start the game with this first state
 //   state {base, state}        the state after your move; accepted when base matches the room's version
+//   convert {cats, state}      host, right after hello in a new room: bring a game played on one screen online. Every cat
+//                              starts on the host's device; a friend who joins takes the cat whose name they give.
+//   takeover {pid}             host only: take a cat back from a friend (pid is the seat's public id); it can be claimed again
+//   detach {base, state}       host only: move the game back to one screen; everyone else is disconnected and the room closes
 // Server to client:
 //   lobby {lobby, online, you, state?, ver?}   who is in, who is connected, your seat, and the game once started.
 //     Seats, host and online use each seat's public id; a device's own pid is never sent to anyone else.
 // HTTP: POST /api/whisker-isles/delete/<code> {pid}  the host deletes the game for everyone
+//   pick {cats}                you joined a started game without a name: these are the cats you can take, send hello with one
+//   detached {state}           the host moved the game back to one screen (sent to the host; others get error {detached})
 //   error {message, kicked?}   the connection ends
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
-import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby } from './whisker-seat.mjs';
+import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, hostedSeats, claimHosted, takeOver } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -123,6 +129,17 @@ export class WhiskerRoom extends DurableObject {
       if ((room.banned || []).includes(pid)) return this.fail(ws, 'The host removed you from this game.');
       let seat = room.seats.find(s => s.pid === pid);
       // a player on a new laptop or phone takes their seat back by typing the same name
+      // a game moved online from one screen: a friend takes over one of the cats the host is holding
+      if (!seat && room.started && hostedSeats(room).length) {
+        if (!name) {
+          const free = hostedSeats(room).map(({ name, breed, color, tint }) => ({ name, breed, color, tint }));
+          return this.send(ws, { type: 'pick', code: room.code, cats: free });
+        }
+        const claim = claimHosted(room, pid, name);
+        if (claim.ok) seat = claim.seat;
+        else if (!room.seats.some(s => key(s.name) === key(name))) return this.fail(ws, `There is no cat called ${name} in this game.`);
+        else if (claim.error.startsWith('The host has to')) return this.fail(ws, claim.error);
+      }
       if (!seat && name) {
         const same = room.seats.find(s => key(s.name) === key(name));
         if (same && !this.online().includes(same.pid)) { if (room.host === same.pid) room.host = pid; same.pid = pid; seat = same; }
@@ -180,6 +197,31 @@ export class WhiskerRoom extends DurableObject {
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'removed'); } catch (e) { /* closed */ }
       }
       this.broadcast(room, room.started); return;
+    }
+    if (m.type === 'convert') {
+      if (room.host !== me || room.started || room.seats.length !== 1) return;
+      const r = convertSeats(room, me, m.cats);
+      if (!r.ok) return this.send(ws, { type: 'oops', message: r.error });
+      if (!validState(m.state, r.seats.length)) return this.send(ws, { type: 'oops', message: 'That game could not be moved online.' });
+      room.seats = r.seats; ensureSids(room.seats);
+      room.started = true; room.state = m.state; room.ver = 1;
+      await this.put(room); this.broadcast(room, true); return;
+    }
+    if (m.type === 'takeover') {
+      if (!room.started) return;
+      const r = takeOver(room, me, m.pid); if (!r.ok) return;
+      await this.put(room); this.broadcast(room, true); return;
+    }
+    if (m.type === 'detach') {
+      if (!room.started || room.host !== me) return;
+      if (m.base !== room.ver || !validState(m.state, room.seats.length)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
+      for (const w of this.ctx.getWebSockets()) {
+        const pid = (w.deserializeAttachment() || {}).pid;
+        if (w === ws) this.send(w, { type: 'detached', state: m.state });
+        else this.send(w, { type: 'error', detached: true, message: 'The host moved the game back to one screen.' });
+        w.serializeAttachment({ pid: null }); try { w.close(1000, 'detached'); } catch (e) { /* closed */ }
+      }
+      await this.ctx.storage.deleteAll(); this._room = null; return;
     }
     if (m.type === 'start') {
       if (room.started || room.host !== me || room.seats.length < 2 || !validState(m.state, room.seats.length)) return;
