@@ -157,6 +157,9 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .paw-hand .pb .paw.r,.paw-hand .pt .paw.r{margin-left:calc(var(--pw) * -.4)}
 .paw-hand .paw.back{z-index:1}
 .paw-hand .paw.thumb{z-index:3;pointer-events:none}
+/* the palm and pad are drawn behind the cards; only the curled thumb above the palm stays in front */
+.paw-hand .paw.under{z-index:1;pointer-events:none}
+.paw-hand .pt .paw{clip-path:inset(0 0 calc(var(--pw) * .75) 0)}
 .paw-hand .fan{position:absolute;left:50%;bottom:calc(var(--pw) * .762);width:0;height:0;z-index:2}
 .paw-hand .fc{position:absolute;left:0;bottom:-6px;transform:translateX(-50%) rotate(calc(var(--a) * var(--sp)));transform-origin:50% 200%;z-index:var(--z);transition:transform .3s ease;pointer-events:auto;cursor:pointer}
 .paw-hand .fc .pcard{display:block}
@@ -2084,7 +2087,7 @@ function renderDock(){
     tab.innerHTML = `${label}${u[k]?`<span class="tab-n" aria-hidden="true">${total[k]}</span>`:''}<span class="chev" aria-hidden="true"></span>`;
     f.innerHTML = fan; f.setAttribute('aria-label', aria);
     if(k==='treat' && ui.modal && ui.modal.kind==='treat'){ const out = f.querySelector(`.card-btn[data-ci="${ui.modal.i}"]`); if(out) out.classList.add('out'); }
-    if(h.dataset.pc!==coat){ h.dataset.pc = coat; h.querySelector('.pb').innerHTML = pawImg(mp,'back'+side,'paw-back'); h.querySelector('.pt').innerHTML = pawImg(mp,'thumb'+side,'paw-thumb'); h.querySelector('.po').innerHTML = pawImg(mp,'back'+side,'paw-open'); }
+    if(h.dataset.pc!==coat){ h.dataset.pc = coat; h.querySelector('.pb').innerHTML = pawImg(mp,'back'+side,'paw-back') + pawImg(mp,'under'+side,'paw-thumb');h.querySelector('.pt').innerHTML = pawImg(mp,'thumb'+side,'paw-thumb'); h.querySelector('.po').innerHTML = pawImg(mp,'back'+side,'paw-open'); }
   });
   el.querySelector('.dock-secret').textContent = trophies ? '+'+trophies+' secret' : '';
   placeDock();
