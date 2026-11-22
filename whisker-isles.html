@@ -76,6 +76,34 @@ a.btn{color:var(--plum);text-decoration:none}
 .wordmark svg{width:38px;height:38px}
 .wordmark .logo-img{height:58px;width:auto;display:block;filter:drop-shadow(2px 2px 0 rgba(58,35,65,.18))}
 .topbar .tools{display:flex;gap:8px;flex-wrap:wrap}
+/* the slim bar: avatar + name on the left, one pill of icon buttons on the right */
+.wi-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.wi-me{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-family:var(--display);font-size:1.02rem;border-radius:999px;padding-right:4px}
+.wi-me img{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--plum);box-shadow:2px 2px 0 var(--plum);object-fit:cover;background:#fff;display:block;transition:transform .2s cubic-bezier(.3,1.4,.5,1)}
+.wi-me:hover img{transform:rotate(-6deg) scale(1.06)}
+.wi-me:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+.wi-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.wi-acts{display:flex;align-items:center;gap:2px;background:var(--milk);border:2.5px solid var(--plum);border-radius:999px;box-shadow:2px 2px 0 var(--plum);padding:3px}
+.wi-act{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--plum);font:inherit;font-weight:800;font-size:.86rem;line-height:1;padding:7px 12px;border-radius:999px;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .15s}
+.wi-act svg{width:18px;height:18px;flex:none}
+.wi-act:hover{background:var(--butter)}
+.wi-act:focus-visible{outline:3px solid var(--plum);outline-offset:1px}
+.wi-act .short{display:none}
+.map-logo{position:absolute;z-index:3;height:66px;width:auto;margin:0 16px 0 0;transform:translateY(-46%) rotate(3deg);pointer-events:none;filter:drop-shadow(2px 3px 0 rgba(58,35,65,.25))}
+@media (max-width:920px){ .map-logo{height:44px;margin-right:8px;transform:translateY(-62%) rotate(3deg)} }
+@media (max-width:560px){
+  .wi-act{padding:7px 9px;gap:5px;font-size:.8rem}
+  .wi-act .long{display:none}
+  .wi-act .short{display:inline}
+}
+@media (max-width:400px){ .wi-me span{display:none} }
+/* in the game the bar lines up with the layout: the button pill is as wide as the cards in the side panel */
+.app .topbar.wi-nav{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px}
+.app .topbar .wi-me{justify-self:start}
+.app .topbar .wi-right{padding-right:12px}
+.app .topbar .wi-acts{flex:1;min-width:0}
+.app .topbar .wi-act{flex:1;justify-content:center}
+@media (max-width:920px){ .app .topbar.wi-nav{grid-template-columns:auto minmax(0,1fr);gap:10px} .app .topbar .wi-right{padding-right:4px} }
 .board-wrap{position:relative;min-width:0}
 #board{width:100%;height:auto;display:block;max-height:max(340px, calc(100vh - var(--dockv,0px) - 104px))}
 .board-wrap{display:flex;flex-direction:column;gap:12px}
@@ -1962,19 +1990,15 @@ function render(){
     renderOverlay(); return;
   }
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
-    <header class="topbar">
-      <div class="wordmark">${ART.has('logo') ? `<img class="logo-img" src="${artSrc('logo')}" alt="Whisker Isles">` : `${miniMark()}<span>Whisker Isles</span>`}</div>
-      <div class="tools" id="tools"></div>
-    </header>
-    <div class="board-wrap"><svg id="board" role="application" aria-label="Game board"></svg></div>
+    <header class="topbar wi-nav">${meLink()}<h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
+    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
     ${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
-    <a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a>
-    <button class="btn small" onclick="G.open('rules')">How to play</button>
-    <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
+    <div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
   renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
+  placeLogo();
   watchAwards();
 }
 /* when a bonus card changes hands, pop it up big, then fly it to that cat's row */
@@ -2070,6 +2094,19 @@ function boardMode(){
   return ui.mode;
 }
 
+/* ---------- the slim bar on every screen: Jessy on the left (opens About me), the game's buttons on the right ---------- */
+const NAV_ICON = {
+  home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/>',
+  rules:'<path d="M4 5.5C6.5 4.3 9.3 4.3 12 6c2.7-1.7 5.5-1.7 8-.5V19c-2.5-1.2-5.3-1.2-8 .5-2.7-1.7-5.5-1.7-8-.5Z"/><path d="M12 6v13.5"/>',
+  newgame:'<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  leave:'<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/>',
+  board:'<path d="M8 4h8v4a4 4 0 0 1-8 0Z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 12v4M8.5 20h7l-1-4h-5Z"/>'
+};
+const navIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[k]}</svg>`;
+/* the full label on wider screens, a one-word label on phones; the full one is always the accessible name */
+function navAct(icon, label, short, on){ return `<button class="wi-act" onclick="${on}" aria-label="${label}">${navIcon(icon)}<span class="long">${label}</span><span class="short" aria-hidden="true">${short}</span></button>`; }
+function homeAct(){ return `<a class="wi-act" href="/" aria-label="Home">${navIcon('home')}<span class="long">Home</span><span class="short" aria-hidden="true">Home</span></a>`; }
+function meLink(){ return `<a class="wi-me" href="/#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
 function renderBoard(){
   const svg = $('#board');
   if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
@@ -2342,6 +2379,13 @@ function renderDock(){
 }
 /* on a wide screen the paws rise from the bottom edge of the map: match the dock to the map's drawn frame,
    which is letterboxed inside the svg */
+/* the logo sits on the top right of the map's drawn frame, half over its edge (the svg is letterboxed, so measure the frame) */
+function placeLogo(){
+  const lg = $('#map-logo'), svg = $('#board'); if(!lg || !svg || !svg.viewBox || !svg.viewBox.baseVal || !svg.viewBox.baseVal.width) return;
+  const wrap = lg.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
+  const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2;
+  lg.style.top = (ft - wrap.top) + 'px'; lg.style.right = (wrap.right - (fl + fw)) + 'px';
+}
 function placeDock(){
   const el = $('#dock'), svg = $('#board'); if(!el) return;
   const wide = innerWidth > 920 && svg && !el.classList.contains('gone') && svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width;
@@ -2354,6 +2398,7 @@ function placeDock(){
   el.style.setProperty('--rad', (38*k)+'px');
 }
 addEventListener('resize', placeDock);
+addEventListener('resize', placeLogo);
 addEventListener('scroll', placeDock, {passive:true});
 /* compare with what the paws held last time and react: new cards pop in and the paw squeezes,
    spent or stolen cards are tugged away, a new cat's paws slide up when the turn changes */
@@ -2821,7 +2866,7 @@ function startScreen(){
       </section>`;
   return `<main class="start">
     <div class="sea">
-      <nav class="start-top" aria-label="Game"><a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a><button class="btn small" onclick="G.open('rules')">How to play</button></nav>
+      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -2943,7 +2988,7 @@ function lobbyScreen(){
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
   const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
-    <nav class="back-row lobby-top" aria-label="Game"><a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a><span><button class="btn small" onclick="G.open('rules')">How to play</button><button class="btn small" onclick="fetchBoard();G.open('board')">Leaderboard</button></span></nav>
+    <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-head">
         <h2>The cat corner</h2>

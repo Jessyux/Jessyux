@@ -42,6 +42,8 @@ if (existsSync(vinyl)) readdirSync(vinyl).forEach(f => refs.add('img/vinyl/' + f
 
 // the Home floatie (a11y/home-float.css) that every page and the game use to go back home
 refs.add('img/floaties/home.webp');
+// Jessy's round photo in the game's top bar (whisker-isles.html), which opens About me
+refs.add('img/jessy-avatar.webp');
 
 let n = 0;
 [...refs].sort().forEach(rel => { if (copy(rel)) n++; });
