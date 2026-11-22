@@ -758,6 +758,15 @@ function makeBoard(radius){
   return { radius, tiles: types.map((t,i)=>({type:t,num:nums[i]})), docks: DOCK_EDGES.map((e,i)=>({e,type:docks[i]})) };
 }
 
+/* a fresh island is allowed only before anything is built on this one */
+function canReshuffle(){ return S && S.phase==='setup' && !Object.keys(S.bld).length && !Object.keys(S.roads).length && myTurn() && !(S.handoff && !S.online) && !ui.modal; }
+function reshuffle(){
+  if(!canReshuffle()) return;
+  S.board = makeBoard(S.board.radius);
+  S.vac = S.board.tiles.findIndex(t=>t.type==='nap');
+  log(`${pname(S.cur)} reshuffles the island.`);
+  ui.shuffled = true; commit();
+}
 function newGame(seats, opts){
   opts = opts || {};
   seats = fixColors(seats);
@@ -1321,7 +1330,8 @@ function renderRollbar(){
       <div class="turn">${portrait(cp)}<div><div class="who">${youLabel}</div>
         <div class="sub">${S.phase==='setup'?'Setting up':'Round '+Math.ceil(S.turn/S.players.length)} · ${pts} point${pts===1?'':'s'}</div></div></div>
       <div class="hint${hObj.alert?' alert':''}">${hObj.t}</div>
-      ${(ui.mode && !S.sub && mt) || canUndo() || (S.phase==='setup' && S.setup.step==='done' && mt) ? `<div class="rb-acts">
+      ${(ui.mode && !S.sub && mt) || canUndo() || canReshuffle() || (S.phase==='setup' && S.setup.step==='done' && mt) ? `<div class="rb-acts">
+        ${canReshuffle() ? `<button class="btn small" onclick="G.reshuffle()">Reshuffle the island</button>` : ''}
         ${ui.mode && !S.sub && mt ? `<button class="btn small" onclick="G.mode(null)">Cancel building</button>` : ''}
         ${canUndo() ? `<button class="btn small" onclick="G.undo()">Take back last piece</button>` : ''}
         ${S.phase==='setup' && S.setup.step==='done' && mt ? `<button class="btn small primary" onclick="G.setupNext()">${S.setup.i+1>=S.setup.order.length?'Start the game':'Next cat'}</button>` : ''}
@@ -1356,6 +1366,7 @@ function boardMode(){
 
 function renderBoard(){
   const svg = $('#board');
+  if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
   const R = S.board.radius;
   const pad = 78;
   const xs = V.map(v=>v.x), ys = V.map(v=>v.y);
@@ -1472,7 +1483,7 @@ function hintText(){
   if(S.phase==='setup'){
     const round = S.setup.i < S.players.length ? 'first' : 'second';
     return S.setup.step==='bed'
-      ? `Tap a glowing spot to place your ${round} cat bed.${round==='second'?' It collects one card from each tile it touches.':''}`
+      ? `Tap a glowing spot to place your ${round} cat bed.${round==='second'?' It collects one card from each tile it touches.':''}${canReshuffle()?' Not keen on this island? Reshuffle it before the first bed goes down.':''}`
       : S.setup.step==='path' ? `Now roll out a yarn path from that bed. Changed your mind? Tap the bed to take it back.`
       : `Happy with that spot? Tap Next cat. To move a piece, tap it to take it back.`;
   }
@@ -1801,6 +1812,7 @@ function rulesHTML(){
 
   <section class="rule-block"><h3>Setting up</h3>
   ${steps([
+    [`<span class="pill">Shuffle</span>`, `Not keen on the island? The first cat can tap <b>Reshuffle the island</b> for new tiles, numbers and harbours. It works until the first cat bed goes down.`],
     [bedPic, `Each cat places a free <b>cat bed</b> on a corner where tiles meet.`],
     [pathPic, `Then a free <b>yarn path</b> along an edge touching that bed.`],
     [`${bedPic}${pathPic}`, `Go round again in reverse order. Your second bed collects one card from each tile it touches.`]
@@ -2037,7 +2049,7 @@ const G = {
   copy(text, btn){ navigator.clipboard && navigator.clipboard.writeText(text).then(()=>{ btn.textContent='Copied'; setTimeout(()=>render(),1200); }); },
   /* turns */
   startTurn(){ S.handoff=false; save(); render(); },
-  roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext,
+  roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
     if(kind==='bank') ui.modal={kind, give:null, get:null};
