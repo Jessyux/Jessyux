@@ -226,6 +226,10 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .rcard.pc-md .pc-art{width:46%}
 .res-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));justify-items:center;gap:16px;margin-top:10px}
 .rule-hand{display:flex;justify-content:center;margin:12px 0 6px}
+.rule-paws{display:flex;justify-content:center;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+.rule-paw{position:relative;z-index:0;isolation:isolate;width:138px;height:215px;clip-path:inset(-60px -40px 0 -40px);border-bottom:3px solid var(--plum)}
+.rule-paw .paw-hand{left:0;width:100%;--hcw:56px;--sp:1.3;--peek:0px;transform:none}
+.rule-paw .paw-hand .paw,.rule-paw .paw-hand .fc{pointer-events:none;cursor:default}
 .rule-hand .held{--hh:120px}
 .rule-hand .pcard.rcard{--cw:60px}
 .rule-hand .held .pcard{--cw:72px}
@@ -2396,11 +2400,19 @@ function tileThumb(t){
     : `<svg class="tile-thumb" viewBox="-52 -60 104 120" aria-hidden="true"><polygon points="${hexPoints(0,0,57)}" fill="${info.fill}" stroke="#3A2341" stroke-width="3"/><g transform="scale(1.5)">${resGlyph(t)}</g></svg>`;
 }
 function pieceSVG(fn, vb, w, h){ return `<svg viewBox="${vb}" width="${w}" height="${h}" aria-hidden="true">${fn(BREEDS[0].color)}</svg>`; }
+/* one paw as the game draws it, lifted, for the rules: resources in the left paw (mirrored), treats in the right */
+function rulePaw(x, kind, cards, label, open){
+  const side = kind==='res' ? ' r' : '';
+  return `<div class="rule-paw" role="img" aria-label="${esc(label)}"><div class="paw-hand ${kind}-hand up${open?' empty':''}" aria-hidden="true">`
+    + `<span class="pb">${pawImg(x,'back'+side,'paw-back')}</span><span class="po">${pawImg(x,'back'+side,'paw-open')}</span>`
+    + `<div class="fan">${pawFan(cards, kind==='res'?11:13)}</div><span class="pt">${pawImg(x,'thumb'+side,'paw-thumb')}</span></div></div>`;
+}
 function rulesHTML(){
   const USE = {litter:'Paths and beds', yarn:'Paths and beds', nip:'Beds and treats', nib:'Beds, towers and treats', fish:'Towers and treats'};
   const steps = (items) => `<ol class="steps">${items.map(([pic,t])=>`<li>${pic?`<span class="step-pic">${pic}</span>`:''}<span>${t}</span></li>`).join('')}</ol>`;
   const bedPic = pieceSVG(bedShape,'-19 -14 38 29',46,35), pathPic = pathIcon(BREEDS[0].color).replace('width="30" height="30"','width="40" height="40"');
   const towerPic = pieceSVG(towerShape,'-21 -28 42 46',40,44);
+  const cat = S && S.players[me()] || {breed:4};
   return `<div class="modal rules">
   <div class="rules-head"><h2>How to play</h2><button class="btn small" onclick="G.close()">Close</button></div>
   <p class="lead">Be the first cat to reach <b>${WIN_AT} points</b>. Build beds and towers, link them with yarn, and keep away from the Vacuum. 2 to 4 cats play the classic island, 5 to 10 play Big Island.</p>
@@ -2427,8 +2439,11 @@ function rulesHTML(){
 
   <section class="rule-block"><h3>Resources</h3>
   <p class="small">Each tile makes one resource card when its number is rolled. The Nap spot makes nothing.</p>
-  <div class="rule-hand" role="img" aria-label="Your cat holds your resource cards, one card for each resource with how many you have">${held(S && S.players[me()] || {breed:4}, RES.map((r,i)=>`<span>${resCard(r,[2,1,3,0,1][i])}</span>`), {ov:3, fan:3, drop:2, pw:58, hh:110})}</div>
-  <p class="small">Your cat holds your cards in its own colours.</p>
+  <div class="rule-paws">
+    ${rulePaw(cat, 'res', [['litter',2],['nib',3],['fish',1]].map(([r,n])=>`<span class="rc">${resCard(r,null)}<span class="rc-n">×${n}</span></span>`), 'Your cat\'s left paw holds one card for each resource you have, with a badge for how many')}
+    ${rulePaw(cat, 'res', [], 'An open paw when you have no resources', true)}
+  </div>
+  <p class="small">Your cat's left paw holds your resources in its own colours: one card for each resource you have, with a badge for how many. When you have none, the paw is open and empty. Tap <b>Resources</b> at the bottom of the board to lift the paw for a closer look and to see how many cards you hold in total. Tap it again to lower it.</p>
   <div class="res-cards">${RES.map(r=>`<div role="img" aria-label="${RINFO[r].name}: ${USE[r]}">${resCard(r,null,'md','Used for '+USE[r].toLowerCase())}</div>`).join('')}</div></section>
 
   <section class="rule-block"><h3>Your turn</h3>
@@ -2465,7 +2480,8 @@ function rulesHTML(){
   </div></section>
 
   <section class="rule-block"><h3>Treat cards</h3>
-  <div class="rule-hand" role="img" aria-label="Your cat holds your treat cards">${held(S && S.players[me()] || {breed:4}, ["zoomies","spree","gift"].map(t=>`<span>${treatCard(t,"sm")}</span>`), {ov:6, fan:4, drop:3, pw:70, hh:140})}</div>
+  <div class="rule-paws">${rulePaw(cat, 'treat', ['zoomies','spree','gift'].map(t=>`<span class="card-btn">${treatCard(t,'sm')}</span>`), 'Your cat\'s right paw holds your treat cards')}</div>
+  <p class="small">Treats sit in the right paw. Tap <b>Treats</b> to lift it, then tap a card to slide it out of the paw and read it. Tap <b>Play</b> under the card to use it, or close it to put it back.</p>
   <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div role="img" aria-label="${esc(TREATS[k].name)}: ${esc(TREATS[k].text)}">${treatCard(k,'md')}</div>`).join('')}</div>
   <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
 
