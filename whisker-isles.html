@@ -97,15 +97,19 @@ a.btn{color:var(--plum);text-decoration:none}
   .wi-act .short{display:inline}
 }
 @media (max-width:400px){ .wi-me span{display:none} }
+@media (max-width:360px){ .wi-act{padding:7px 5px;gap:3px;font-size:.72rem;min-width:0} .wi-act svg{width:15px;height:15px} }
 /* in the game the bar lines up with the layout: the button pill is as wide as the cards in the side panel */
 .app .topbar.wi-nav{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px}
 .app .topbar .wi-me{justify-self:start}
-.app .topbar .wi-right{padding-right:12px}
+.app .topbar .wi-right{padding-right:8px}
+.wi-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.wi-acts.many .long{display:none}
+.wi-acts.many .short{display:inline}
 .app .topbar .wi-acts{flex:1;min-width:0}
 .app .topbar .wi-act{flex:1;justify-content:center}
-@media (max-width:920px){ .app .topbar.wi-nav{grid-template-columns:auto minmax(0,1fr);gap:10px} .app .topbar .wi-right{padding-right:4px} }
+@media (max-width:920px){ .app .topbar.wi-nav{grid-template-columns:auto minmax(0,1fr);gap:10px} .app .topbar.wi-nav.stacked{grid-template-columns:minmax(0,1fr)} .app .topbar .wi-right{padding-right:0} .app .topbar{padding-bottom:10px} }
 .board-wrap{position:relative;min-width:0}
-#board{width:100%;height:auto;display:block;max-height:max(340px, calc(100vh - var(--dockv,0px) - 104px))}
+#board{width:100%;height:auto;display:block}
 .board-wrap{display:flex;flex-direction:column;gap:12px}
 .panel{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:12px;max-height:calc(100vh - 24px - var(--dockv,0px));overflow:auto;padding:0 8px 8px 0;align-self:start}
 .panel>*{flex-shrink:0}
@@ -123,8 +127,7 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 .card h3{font-size:1.02rem;margin-bottom:8px}
 @media (max-width: 920px){
   .app{grid-template-columns:1fr;padding:12px 16px 28px}
-  #board{max-height:calc(100svh - var(--dockv,0px) - 330px);min-height:260px}
-  .panel{position:static;max-height:none;overflow:visible}
+  .panel{position:static;max-height:none;overflow:visible;padding:0}
 }
 /* phones: the map spans the full column, as wide as the cards below it, instead of being capped by the screen height */
 @media (max-width: 600px){
@@ -2184,13 +2187,14 @@ function render(){
     renderOverlay(); return;
   }
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
-    <header class="topbar wi-nav">${meLink()}<h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
+    <header class="topbar wi-nav"><div class="wi-left">${meLink()}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
-  $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
-    ${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
-    <div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(S.phase!=='over'?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
+  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}`;
+  const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
+  $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
+  $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
   renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
   placeLogo();
   watchAwards();
