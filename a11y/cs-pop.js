@@ -17,6 +17,8 @@
     pop.setAttribute('aria-hidden','true');
     img=document.createElement('img');
     img.alt='';
+    /* if the picture ever fails to load, show nothing rather than a broken-image box */
+    img.addEventListener('error',hide);
     pop.appendChild(img);
     document.body.appendChild(pop);
   }
@@ -31,17 +33,15 @@
     if(!pop)make();
     var r=shot.getBoundingClientRect(),pad=16;
     /* the whole screenshot, sized from the screen height (about 45% of it), and never higher than
-       just under the floatie menu's labels, so those icons stay clear */
-    var roof=pad;
-    document.querySelectorAll('.float,.float .tag').forEach(function(f){
-      var b=f.getBoundingClientRect();
-      if(b.height&&b.bottom<r.top&&b.bottom+8>roof)roof=b.bottom+8;
-    });
+       the top of the card area, which sits just under the floatie menu's labels, so those icons stay clear.
+       (the card area's edge is fixed; the floaties themselves glide into place, so measuring them can mislead) */
+    var roof=Math.max(pad,cs.getBoundingClientRect().top+8);
     var maxH=Math.max(r.height,Math.min(r.bottom-roof,innerHeight*.45)),maxW=Math.min(innerWidth-pad*2,r.width*1.3);
     var k=Math.min(maxW/shot.naturalWidth,maxH/shot.naturalHeight,1);
     var w=shot.naturalWidth*k,h=shot.naturalHeight*k;
     var x=Math.min(Math.max(r.left+r.width/2-w/2,pad),innerWidth-pad-w);
-    img.src=shot.currentSrc||shot.src;
+    var src=shot.currentSrc||shot.src;
+    if(img.getAttribute('src')!==src)img.src=src;
     pop.style.cssText='left:'+x+'px;top:'+(r.bottom-h)+'px;width:'+w+'px;height:'+h+'px;--ox:'+(r.left+r.width/2-x)+'px';
     pop.classList.add('on');
     if(shown&&shown!==card)shown.classList.remove('popped');
@@ -60,7 +60,15 @@
     if(card&&!card.contains(e.relatedTarget))hide();
   });
   /* backstop: the pointer is anywhere but the shown card */
-  document.addEventListener('mousemove',function(e){if(shown&&!shown.contains(e.target))hide()},{passive:true});
+  /* the cards slide in and bob, so while one is shown the pop-out follows it as the pointer moves */
+  var ticking=false;
+  document.addEventListener('mousemove',function(e){
+    if(!shown)return;
+    if(!shown.contains(e.target)){hide();return;}
+    if(ticking)return;
+    ticking=true;
+    requestAnimationFrame(function(){ticking=false;if(shown)place(shown);});
+  },{passive:true});
   /* anything that moves the cards puts the pop-out away */
   cs.addEventListener('scroll',hide,{passive:true});
   addEventListener('resize',hide);
