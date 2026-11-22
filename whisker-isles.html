@@ -448,7 +448,10 @@ svg :focus{outline:none}
 .res-item small,.bcard small,.tcard small,.dock small{color:var(--plum-2);font-size:.76rem;line-height:1.3}
 .tile-thumb{width:64px;height:74px;object-fit:contain;display:block}
 .build-grid,.treat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.treat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));justify-items:center;gap:16px}
+/* the treat cards sit in one row: they shrink to fit, and on a narrow screen the row scrolls sideways */
+.treat-grid{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;container-type:inline-size}
+.treat-grid>div{flex:0 0 auto}
+.treat-grid .pcard{--cw:max(112px, calc((100cqw - 44px) / 5))}
 .bcard,.tcard{border:2.5px solid var(--plum);border-radius:var(--r-md);padding:10px 8px;display:grid;justify-items:center;text-align:center;gap:4px;background:#fff;align-content:start}
 .tcard{background:#FFF7DA}
 .bcard > svg,.bcard > .ic{height:44px;width:auto}
@@ -524,8 +527,6 @@ div.build{cursor:default}
 @media (max-width:640px){
   .res-grid{grid-template-columns:repeat(3,1fr)}
   .build-grid{grid-template-columns:repeat(2,1fr)}
-  .treat-grid{grid-template-columns:repeat(2,1fr)}
-  .treat-grid .pcard{--cw:146px}
   .steps li{grid-template-columns:26px 1fr}
   .step-pic{display:none}
   .split{grid-template-columns:70px 1fr}
@@ -1040,7 +1041,6 @@ function treatWhy(c){
   if(!myTurn()) return 'Wait for your turn to play it.';
   if(S.playedTreat) return 'You\'ve already played a treat this turn.';
   if(S.sub) return 'Finish what you\'re doing first.';
-  if(c.t!=='zoomies' && !S.rolled) return 'Roll the dice first. Only Zoomies can be played before you roll.';
   return '';
 }
 function treatIcon(t, px){
@@ -1624,7 +1624,6 @@ function endVacuum(){ S.sub=null; S.subData=null; ui.mode=null; commit(); }
 function playTreat(idx){
   const pl = P(), c = pl.cards[idx];
   if(!myTurn() || !c || !TREATS[c.t] || c.t==='trophy' || c.turn>=S.turn || S.playedTreat || S.sub) return;
-  if(c.t!=='zoomies' && !S.rolled) return;
   pl.cards.splice(idx,1); S.playedTreat = true;
   log(`${pname(S.cur)} plays ${TREATS[c.t].name}.`);
   if(c.t==='zoomies'){ pl.zoomies++; updateArmy(S.cur); S.sub='vacuum'; S.subData={from:'treat'}; }
@@ -2458,7 +2457,8 @@ function rulesHTML(){
   <div class="rule-paws">${rulePaw(cat, 'treat', ['zoomies','spree','gift'].map(t=>`<span class="card-btn">${treatCard(t,'sm')}</span>`), 'Your cat\'s right paw holds your treat cards')}</div>
   <p class="small">Treats sit in the right paw. Tap <b>Treats</b> to lift it, then tap a card to slide it out of the paw and read it. Tap <b>Play</b> under the card to use it, or close it to put it back.</p>
   <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div role="img" aria-label="${esc(TREATS[k].name)}: ${esc(TREATS[k].text)}">${treatCard(k,'md')}</div>`).join('')}</div>
-  <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
+  <p class="small">Play one treat per turn, starting the turn after you buy it.</p>
+  <p class="small"><b>Timing:</b> You can play that single card at any time during your turn before or after rolling the dice, and before or after trading and building.</p></section>
 
   <section class="rule-block"><h3>Build cards</h3>
   <div class="build-grid">
