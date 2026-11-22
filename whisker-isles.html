@@ -73,13 +73,13 @@ a.btn{color:var(--plum);text-decoration:none}
 #board{width:100%;height:auto;display:block;max-height:max(340px, calc(100vh - 372px))}
 .board-wrap{display:flex;flex-direction:column;gap:12px}
 .panel{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:0 8px 8px 0;align-self:start}
-/* soft lavender pill scrollbars, so the side panel and log scroll without a grey OS bar */
-.panel,.log{scrollbar-width:thin;scrollbar-color:#D9C8F2 transparent}
-.panel::-webkit-scrollbar,.log::-webkit-scrollbar{width:8px}
-.panel::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent;margin:10px}
-.panel::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb{background:#D9C8F2;border-radius:999px;border:2px solid transparent;background-clip:padding-box}
-.panel::-webkit-scrollbar-thumb:hover,.log::-webkit-scrollbar-thumb:hover{background:#B9A2E6;background-clip:padding-box}
-.panel:hover,.log:hover{scrollbar-color:#B9A2E6 transparent}
+/* soft lavender pill scrollbars everywhere (page, panels, rules and other pop-ups), so nothing scrolls with a grey OS bar */
+html,*{scrollbar-width:thin;scrollbar-color:#E2D5F2 transparent}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:transparent;margin:14px}
+::-webkit-scrollbar-thumb{background:#E2D5F2;border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#C3AEE8;background-clip:padding-box}
+.panel:hover,.log:hover,.modal:hover{scrollbar-color:#C3AEE8 transparent}
 .card{background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 16px}
 .card h3{font-size:1.02rem;margin-bottom:8px}
 @media (max-width: 920px){
@@ -172,7 +172,12 @@ a.btn{color:var(--plum);text-decoration:none}
 .pcard.pc-sm .pc-name{font-size:10.5px;padding:.4em .2em}
 .pcard.pc-sm .pc-art{width:74%}
 .pcard.pc-sm .pc-foot{font-size:9.5px}
-.pc-md{--cw:160px}.pc-lg{--cw:230px}
+.pc-md{--cw:160px}
+/* cards that show their rule grow to fit it instead of cutting it off */
+.pcard.pc-md,.pcard.pc-lg{aspect-ratio:auto;min-height:calc(var(--cw)*1.4);display:flex;flex-direction:column}
+.pc-md .pc-in,.pc-lg .pc-in{flex:1;height:auto}
+.pc-md .pc-text,.pc-lg .pc-text{margin-top:auto}
+.pc-md .pc-foot,.pc-lg .pc-foot{padding-right:calc(var(--cw)*.17);padding-left:calc(var(--cw)*.17)}.pc-lg{--cw:230px}
 .pc-md .pc-name,.pc-lg .pc-name{padding-left:calc(var(--cw)*.19);padding-right:calc(var(--cw)*.19)}
 .pc-lg .pc-text{font-size:14px}.pc-md .pc-text{font-size:10.5px;line-height:1.25;padding:.4em .45em;margin:0 .4em .3em}
 .pc-md .pc-art{width:44%;margin:.45em 0 auto}.pc-lg .pc-art{width:54%;margin:.6em 0 auto}
