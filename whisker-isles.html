@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Whisker Isles</title>
+<link rel="stylesheet" href="/a11y/home-float.css">
 <meta name="description" content="A cosy cat board game for 2 to 10 players. Build cat beds, roll out yarn paths and keep away from the Vacuum.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M18 44 26 8 48 28Z M82 44 74 8 52 28Z' fill='%23FF8A3D' stroke='%233A2341' stroke-width='5' stroke-linejoin='round'/%3E%3Cellipse cx='50' cy='60' rx='40' ry='33' fill='%23FFB067' stroke='%233A2341' stroke-width='5'/%3E%3Ccircle cx='35' cy='60' r='7' fill='%233A2341'/%3E%3Ccircle cx='65' cy='60' r='7' fill='%233A2341'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,7 +48,11 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 a.btn{color:var(--plum);text-decoration:none}
 .back-row{max-width:1100px;margin:0 auto 6px}
 .lobby-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.lobby-top span{display:flex;gap:8px}
+/* the shared Home floatie: a smaller one in the game's top bar */
+.tools .jx-home img{width:30px;height:30px}
+.tools .jx-home span{font-size:11px;padding:2px 9px}
+.start-top,.tools{align-items:center}
+.lobby-top > span{display:flex;gap:8px}
 .make-own{margin-top:10px}
 .make-own[aria-expanded="true"]{background:var(--butter)}
 .swatches button.orig{aspect-ratio:auto;border-radius:999px;background:#fff;font-weight:900;font-size:.72rem;padding:0 .7em;grid-column:span 2}
@@ -1945,7 +1950,7 @@ function render(){
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
     ${S.online && ON.lobby && ON.lobby.host===ON.pid ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
-    <a class="btn small" href="/">Back to portfolio</a>
+    <a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a>
     <button class="btn small" onclick="G.open('rules')">How to play</button>
     <button class="btn small" onclick="G.open('newgame')">${S.online?'Leave game':'New game'}</button>`;
   renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
@@ -2776,7 +2781,7 @@ function startScreen(){
       </section>`;
   return `<main class="start">
     <div class="sea">
-      <nav class="start-top" aria-label="Game"><a class="btn small" href="/">Back to portfolio</a><button class="btn small" onclick="G.open('rules')">How to play</button></nav>
+      <nav class="start-top" aria-label="Game"><a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a><button class="btn small" onclick="G.open('rules')">How to play</button></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -2898,7 +2903,7 @@ function lobbyScreen(){
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
   const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
-    <nav class="back-row lobby-top" aria-label="Game"><a class="btn small" href="/">Back to portfolio</a><span><button class="btn small" onclick="G.open('rules')">How to play</button><button class="btn small" onclick="fetchBoard();G.open('board')">Leaderboard</button></span></nav>
+    <nav class="back-row lobby-top" aria-label="Game"><a class="jx-home" href="/"><img src="/img/floaties/home.webp" alt=""><span>Home</span></a><span><button class="btn small" onclick="G.open('rules')">How to play</button><button class="btn small" onclick="fetchBoard();G.open('board')">Leaderboard</button></span></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-head">
         <h2>The cat corner</h2>
