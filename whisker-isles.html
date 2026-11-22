@@ -488,6 +488,12 @@ svg :focus{outline:none}
 .partner button{display:flex;align-items:center;gap:6px;border:2.5px solid var(--plum);border-radius:999px;background:#fff;padding:3px 12px 3px 3px;font-weight:900}
 .partner button .portrait{width:30px;height:30px;border-width:2px}
 .partner button[aria-pressed="true"]{background:var(--butter)}
+.partner button:disabled{opacity:.55;cursor:not-allowed}
+.partner button small{font-weight:800;color:var(--plum-2)}
+.partner.center{justify-content:center;margin-bottom:8px}
+.no-trade{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:.8rem;font-weight:800;color:var(--plum-2);cursor:pointer}
+.no-trade input{width:16px;height:16px;accent-color:var(--plum)}
+.no-trade-tag{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:900;padding:1px 8px;border-radius:999px;border:2px dashed #D9C4DE;color:var(--plum-2)}
 .modal.rules{width:min(780px,100%);padding-top:0}
 .rules-head{position:sticky;top:0;background:var(--milk);display:flex;justify-content:space-between;align-items:center;padding:18px 0 10px;z-index:1;border-bottom:2.5px dotted #E6D3E9}
 .rules .lead{font-size:1.02rem;margin:12px 0 4px}
@@ -1646,6 +1652,16 @@ function buyTreat(){
   }
   commit();
 }
+/* a cat can say No trades: then nobody can offer them a trade until they switch it off.
+   Online you set your own any time; in person the cat whose turn it is sets theirs */
+function noTradeCtl(q,i){
+  if(S.phase==='over') return '';
+  const mine = S.online ? i===ON.seat : i===S.cur && !S.handoff;
+  if(!mine) return q.noTrade ? '<div class="no-trade-tag">No trades</div>' : '';
+  return `<label class="no-trade"><input type="checkbox" ${q.noTrade?'checked':''} onchange="G.noTrade(${i},this.checked)"> No trades with me</label>`;
+}
+/* the cats a trade offer still waits on. In person they answer one at a time, first in the list first */
+function offerTo(o){ return !o ? [] : Array.isArray(o.to) ? o.to : [o.to]; }
 function describe(g){ return RES.filter(r=>g[r]).map(r=>`${g[r]} ${RINFO[r].name}`).join(', '); }
 function flash(g){ ui.flash = {}; RES.forEach(r=>{ if(g[r]) ui.flash[r]=true; }); setTimeout(()=>{ ui.flash={}; },700); }
 
@@ -1873,8 +1889,8 @@ function dropCat(k){
   S.players.splice(k, 1);
   const n = S.players.length;
   S.longest = re(S.longest); S.army = re(S.army); if(S.winner>=0) S.winner = re(S.winner);
-  if(S.offer && (S.offer.from===k || S.offer.to===k)) S.offer = null;
-  else if(S.offer){ S.offer.from = re(S.offer.from); S.offer.to = re(S.offer.to); }
+  if(S.offer && S.offer.from===k) S.offer = null;
+  else if(S.offer){ S.offer.from = re(S.offer.from); S.offer.to = offerTo(S.offer).map(re).filter(i=>i>=0); if(!S.offer.to.length) S.offer = null; }
   S.discardQ = (S.discardQ||[]).filter(i=>i!==k).map(re);
   const st = S.setup;
   if(S.phase==='setup' && st.step==='roll'){
@@ -2249,7 +2265,7 @@ function hintText(){
       if(discardSeat()>=0) return {alert:true, t:`The Vacuum! Choose cards to drop.`};
       return {alert:true, t:`Waiting for ${S.discardQ.map(pname).join(', ')} to drop cards.`};
     }
-    if(S.offer && S.offer.to===ON.seat) return `${pname(S.offer.from)} sent you a trade offer.`;
+    if(S.offer && offerTo(S.offer).includes(ON.seat)) return `${pname(S.offer.from)} sent you a trade offer.`;
     if(S.phase==='setup' && S.setup.step==='roll') return `${cur} is rolling to see who goes first.`;
     if(S.phase==='setup') return S.setup.step==='done' ? `${cur} is checking their spot.` : `${cur} is placing a ${S.setup.step==='bed'?'cat bed':'yarn path'}.`;
     if(S.sub==='vacuum') return {alert:true, t:`${cur} is moving the Vacuum.`};
@@ -2268,7 +2284,7 @@ function hintText(){
   if(S.sub==='vacuum') return {alert:true, t:`Tap a tile to send the Vacuum there. That tile stops producing.`};
   if(S.sub==='steal') return {alert:true, t:`Choose a cat to swipe a card from.`};
   if(S.sub==='spree') return `Yarn spree: place ${S.subData.left} more free path${S.subData.left>1?'s':''}.`;
-  if(S.offer) return `Waiting for ${pname(S.offer.to)} to answer your trade.`;
+  if(S.offer) return `Waiting for ${offerTo(S.offer).map(pname).join(' or ')} to answer your trade.`;
   if(ui.mode==='bed') return `Tap a glowing corner to build a cat bed. It needs to touch your yarn.`;
   if(ui.mode==='path') return `Tap a glowing edge to roll out yarn.`;
   if(ui.mode==='tower') return `Tap one of your cat beds to upgrade it.`;
@@ -2311,7 +2327,7 @@ function renderPanel(){
     <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}" data-i="${i}">
       ${portrait(q)}
       <div><div class="nm"><span class="dot" style="background:${pcol(q)}"></span>${esc(q.name)}${S.online&&i===ON.seat?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
-      <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div></div>
+      <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div>${noTradeCtl(q,i)}</div>
       <div class="badges">${S.longest===i?`<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',36)}</span>`:''}${S.army===i?`<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',36)}</span>`:''}</div>
       <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
   </section>`;
@@ -2535,7 +2551,7 @@ function renderOverlay(){
     else if(discardSeat()>=0) html = discardHTML();
     else if(S.sub==='steal' && myTurn()) html = stealHTML();
     else if(S.handback!=null && !S.online) html = handbackHTML();
-    else if(S.offer && (!S.online || ON.seat===S.offer.to)) html = offerHTML();
+    else if(S.offer && (!S.online || offerTo(S.offer).includes(ON.seat))) html = offerHTML();
     else if(S.offer && S.online && ON.seat===S.offer.from) html = offerWaitHTML();
     else if(ui.modal) html = modalHTML();
   } else if(ui.modal) html = modalHTML();
@@ -2611,18 +2627,21 @@ function stealHTML(){
     <div class="partner">${S.subData.victims.map(v=>`<button onclick="G.steal(${v})">${portrait(S.players[v])}${pname(v)} (${total(S.players[v].res)})</button>`).join('')}</div></div>`;
 }
 function offerHTML(){
-  const o = S.offer, q = S.players[o.to];
-  /* in person: pass the screen first. Nothing about the other cat's cards shows until they say it's them,
+  const o = S.offer, who = S.online ? ON.seat : offerTo(o)[0], q = S.players[who];
+  const passed = (o.declined||[]).length;
+  /* in person: pass the screen first. Nothing about this cat's cards shows until they say it's them,
      so they can still say no without giving away what they hold */
   if(!S.online && !o.seen) return `<div class="modal handoff">${portrait(q)}
-    <h2>Pass the screen to ${pname(o.to)}</h2>
-    <p>${pname(o.from)} wants to trade with you. Your cards stay hidden until you tap.</p>
-    <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button><button class="btn primary" autofocus onclick="G.offerSeen()">I'm ${pname(o.to)}, show me</button></div></div>`;
+    <h2>Pass the screen to ${pname(who)}</h2>
+    <p>${passed ? `${pname(o.from)}'s offer goes to ${pname(who)} next.` : `${pname(o.from)} wants to trade with you.`} Your cards stay hidden until you tap.</p>
+    <div class="actions center">${passed?'':`<button class="btn" onclick="G.tradeCancel()">Cancel offer</button>`}<button class="btn primary" autofocus onclick="G.offerSeen()">I'm ${pname(who)}, show me</button></div></div>`;
   const ok = RES.every(r=>q.res[r]>=o.get[r]);
   const held = RES.filter(r=>q.res[r]>0);
-  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${S.online?'A trade offer':pname(o.to)+', a trade offer'}</h2></div></div>
+  const others = offerTo(o).filter(i=>i!==who);
+  return `<div class="modal"><div class="turn" style="margin-bottom:8px">${portrait(q)}<div><h2>${S.online?'A trade offer':pname(who)+', a trade offer'}</h2></div></div>
     <p><b>${pname(o.from)} gives you:</b> ${describe(o.give)||'nothing'}</p>
     <p><b>You give ${pname(o.from)}:</b> ${describe(o.get)||'nothing'}</p>
+    ${others.length?`<p class="small muted">${S.online?`Also offered to ${others.map(pname).join(' and ')}. The first cat to accept gets it.`:`If you say no, it goes to ${others.map(pname).join(' then ')}.`}</p>`:''}
     ${S.online?'':`<div class="offer-hand"><div class="sec-label">Your cards</div>${held.length?`<ul>${held.map(r=>`<li style="--tile:${RINFO[r].fill}">${resIcon(r)}<span>${RINFO[r].name}</span><b>×${q.res[r]}</b></li>`).join('')}</ul>`:'<p class="empty">No cards yet</p>'}</div>`}
     ${ok?'':`<p class="hint alert">You don't have enough to accept this.</p>`}
     <div class="actions"><button class="btn" onclick="G.tradeDecline()">No thanks</button><button class="btn primary" ${ok?'':'disabled'} onclick="G.tradeAccept()">Accept trade</button></div></div>`;
@@ -2636,9 +2655,9 @@ function handbackHTML(){
     <div class="actions center"><button class="btn primary" autofocus onclick="G.handBack()">I'm ${pname(k)}, carry on</button></div></div>`;
 }
 function offerWaitHTML(){
-  const o = S.offer;
-  return `<div class="modal handoff">${portrait(S.players[o.to])}<h2>Offer sent</h2>
-    <p>You give ${describe(o.give)||'nothing'} and get ${describe(o.get)||'nothing'}. Waiting for ${pname(o.to)} to answer.</p>
+  const o = S.offer, to = offerTo(o);
+  return `<div class="modal handoff"><div class="partner center">${to.map(i=>portrait(S.players[i])).join('')}</div><h2>Offer sent</h2>
+    <p>You give ${describe(o.give)||'nothing'} and get ${describe(o.get)||'nothing'}. Waiting for ${to.map(pname).join(' or ')} to answer.</p>
     <div class="actions center"><button class="btn" onclick="G.tradeCancel()">Cancel offer</button></div></div>`;
 }
 function winBoard(){
@@ -2730,10 +2749,11 @@ function modalHTML(){
     const big = {litter:9,yarn:9,nip:9,nib:9,fish:9};
     return `<div class="modal wide"><h2>Trade with a cat</h2>
       <div class="sec-label">With</div>
-      <div class="partner">${others.map(i=>`<button aria-pressed="${m.partner===i}" onclick="G.tradePartner(${i})">${portrait(S.players[i])}${pname(i)} (${total(S.players[i].res)})</button>`).join('')}</div>
+      <div class="partner">${others.map(i=>{ const no = S.players[i].noTrade; return `<button aria-pressed="${m.partners.includes(i)}" ${no?'disabled':''} onclick="G.tradePartner(${i})">${portrait(S.players[i])}${pname(i)} (${total(S.players[i].res)})${no?' <small>Not trading</small>':''}</button>`; }).join('')}</div>
+      ${others.length>1?'<p class="small muted">Pick one cat or several. The first to accept gets the trade.</p>':''}
       <div class="cols"><div><div class="sec-label">You give</div>${stepperRows(m.give, pl.res, 'G.tradeGive', true)}</div>
       <div><div class="sec-label">You want</div>${stepperRows(m.get, big, 'G.tradeGet', false)}</div></div>
-      <div class="actions"><button class="btn" onclick="G.close()">Close</button><button class="btn primary" ${m.partner!=null&&(total(m.give)||total(m.get))?'':'disabled'} onclick="G.tradeOffer()">${m.partner!=null?'Offer to '+pname(m.partner):'Pick a cat'}</button></div></div>`;
+      <div class="actions"><button class="btn" onclick="G.close()">Close</button><button class="btn primary" ${m.partners.length&&(total(m.give)||total(m.get))?'':'disabled'} onclick="G.tradeOffer()">${m.partners.length?'Offer to '+m.partners.map(pname).join(' and '):'Pick a cat'}</button></div></div>`;
   }
   return '';
 }
@@ -2821,7 +2841,7 @@ function rulesHTML(){
     <div class="dock"><span class="dock-badge">3:1</span><small>Bed on a 3:1 dock: any 3 for 1</small></div>
     <div class="dock"><span class="dock-badge">${resIcon('fish',26)}<em>2:1</em></span><small>Bed on a 2:1 dock: 2 of that resource for 1</small></div>
   </div>
-  <p class="small">On your turn you can also offer any mix of cards to another cat.</p></section>
+  <p class="small">On your turn you can also offer any mix of cards to one cat or several; the first to accept gets the trade. Tick <b>No trades with me</b> under your name in Cats and nobody can offer you a trade until you untick it.</p></section>
 
   <section class="rule-block"><h3>Bonus points</h3>
   <div class="trade-row">
@@ -3148,7 +3168,7 @@ const G = {
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
     if(kind==='bank') ui.modal={kind, give:null, get:null};
-    else if(kind==='trade') ui.modal={kind, partner:null, give:emptyRes(), get:emptyRes()};
+    else if(kind==='trade'){ const open = S.players.map((_,i)=>i).filter(i=>i!==S.cur && !S.players[i].noTrade); ui.modal={kind, partners: S.players.length===2 ? open : [], give:emptyRes(), get:emptyRes()}; }
     else if(kind==='cat') ui.modal={kind, i:arguments[1]};
     else ui.modal={kind};
     render();
@@ -3170,20 +3190,31 @@ const G = {
   bankGive(r){ ui.modal.give=r; if(ui.modal.get===r) ui.modal.get=null; renderOverlay(); },
   bankGet(r){ ui.modal.get=r; renderOverlay(); },
   bankGo(){ const m=ui.modal, rt=rate(S.cur,m.give), pl=P(); if(pl.res[m.give]<rt) return; pl.res[m.give]-=rt; pl.res[m.get]++; log(`${pname(S.cur)} trades ${rt} ${RINFO[m.give].name} at the shop for 1 ${RINFO[m.get].name}.`); m.give=null; m.get=null; commit(); },
-  tradePartner(i){ ui.modal.partner=i; renderOverlay(); },
+  tradePartner(i){ if(S.players[i].noTrade) return; const p=ui.modal.partners, k=p.indexOf(i), n=S.players.length, at=x=>(x-S.cur+n)%n; if(k>=0) p.splice(k,1); else p.push(i); p.sort((x,y)=>at(x)-at(y)); renderOverlay(); },
   tradeGive(r,d){ const m=ui.modal, n=m.give[r]+d; if(n<0||n>P().res[r]) return; m.give[r]=n; if(n>0) m.get[r]=0; renderOverlay(); },
   tradeGet(r,d){ const m=ui.modal, n=m.get[r]+d; if(n<0||n>9) return; m.get[r]=n; if(n>0) m.give[r]=0; renderOverlay(); },
-  tradeOffer(){ const m=ui.modal; S.offer={from:S.cur, to:m.partner, give:{...m.give}, get:{...m.get}}; ui.modal=null; commit(); },
+  tradeOffer(){ const m=ui.modal, to=m.partners.filter(i=>!S.players[i].noTrade); if(!to.length) return; S.offer={from:S.cur, to, declined:[], give:{...m.give}, get:{...m.get}}; ui.modal=null; commit(); },
   tradeCancel(){ if(!S.offer) return; log(`${pname(S.offer.from)} withdraws a trade offer.`); S.offer=null; commit(); },
-  tradeDecline(){ if(!S.offer) return; const o=S.offer; log(`${pname(o.to)} turns down a trade.`); if(!S.online && o.seen){ S.handback=o.from; S.handbackNote=`${pname(o.to)} said no thanks.`; } S.offer=null; commit(); },
+  tradeDecline(){
+    const o=S.offer; if(!o) return; const to=offerTo(o), who = S.online ? ON.seat : to[0];
+    if(!to.includes(who)) return;
+    log(`${pname(who)} turns down a trade.`);
+    o.to = to.filter(i=>i!==who); o.declined = (o.declined||[]).concat(who); o.seen = false;
+    if(!o.to.length){
+      if(!S.online){ S.handback=o.from; S.handbackNote = o.declined.length>1 ? 'Nobody took the trade.' : `${pname(who)} said no thanks.`; }
+      S.offer=null;
+    }
+    commit();
+  },
+  noTrade(i,on){ const q=S.players[i]; if(!q || (S.online ? i!==ON.seat : i!==S.cur)) return; q.noTrade=!!on; log(on ? `${pname(i)} isn't trading for now.` : `${pname(i)} is open to trades again.`); commit(); },
   offerSeen(){ if(!S.offer || S.online) return; S.offer.seen=true; save(); render(); },
   handBack(){ S.handback=null; S.handbackNote=null; save(); render(); },
   tradeAccept(){
-    const o=S.offer; if(!o) return; const a=S.players[o.from], b=S.players[o.to];
+    const o=S.offer; if(!o) return; const who = S.online ? ON.seat : offerTo(o)[0]; if(!offerTo(o).includes(who)) return; const a=S.players[o.from], b=S.players[who];
     if(!RES.every(r=>a.res[r]>=o.give[r] && b.res[r]>=o.get[r])) return;
     RES.forEach(r=>{ a.res[r]+=o.get[r]-o.give[r]; b.res[r]+=o.give[r]-o.get[r]; });
-    log(`${pname(o.from)} trades ${describe(o.give)||'nothing'} to ${pname(o.to)} for ${describe(o.get)||'nothing'}.`);
-    if(!S.online){ S.handback=o.from; S.handbackNote=`${pname(o.to)} took the trade.`; }
+    log(`${pname(o.from)} trades ${describe(o.give)||'nothing'} to ${pname(who)} for ${describe(o.get)||'nothing'}.`);
+    if(!S.online){ S.handback=o.from; S.handbackNote=`${pname(who)} took the trade.`; }
     S.offer=null; commit();
   }
 };
