@@ -1,5 +1,6 @@
 # built output: regenerate with  node build-home.mjs && node redesign-2026/build.mjs
 dist/
+dist-game/
 node_modules/
 .wrangler/
 .dev.vars

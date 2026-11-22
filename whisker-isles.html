@@ -932,6 +932,25 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
   del(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
+/* jessyux.com/whisker-isles hands players over to whisker.jessyux.com with their saved games in the
+   link: #carry=<JSON of every whisker-isles* key>. Keys this browser already has here win, and
+   anything else in the carry is ignored. Returns how many keys it set. */
+function importCarry(hash, st){
+  if(typeof hash!=='string' || hash.indexOf('#carry=')!==0) return 0;
+  let data; try{ data = JSON.parse(decodeURIComponent(hash.slice(7))); }catch(e){ return 0; }
+  if(!data || typeof data!=='object' || Array.isArray(data)) return 0;
+  let n = 0;
+  for(const k of Object.keys(data)){
+    if(k.indexOf('whisker-isles')!==0 || typeof data[k]!=='string' || st.get(k)!=null) continue;
+    st.set(k, data[k]); n++;
+  }
+  return n;
+}
+if(location.hash.indexOf('#carry=')===0){
+  importCarry(location.hash, store);
+  /* drop the carried data from the address bar, keep ?game= */
+  history.replaceState(null, '', location.pathname + location.search);
+}
 
 /* =====================================================================
    SVG drawings (fallbacks for missing illustrations, and board pieces)
@@ -1992,7 +2011,7 @@ function render(){
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav">${meLink()}<h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
-    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="/">JessyUX</a></p></aside>
+    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}
     ${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}
@@ -2105,8 +2124,8 @@ const NAV_ICON = {
 const navIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[k]}</svg>`;
 /* the full label on wider screens, a one-word label on phones; the full one is always the accessible name */
 function navAct(icon, label, short, on){ return `<button class="wi-act" onclick="${on}" aria-label="${label}">${navIcon(icon)}<span class="long">${label}</span><span class="short" aria-hidden="true">${short}</span></button>`; }
-function homeAct(){ return `<a class="wi-act" href="/" aria-label="Home">${navIcon('home')}<span class="long">Home</span><span class="short" aria-hidden="true">Home</span></a>`; }
-function meLink(){ return `<a class="wi-me" href="/?from=game#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
+function homeAct(){ return `<a class="wi-act" href="https://jessyux.com/" aria-label="Home">${navIcon('home')}<span class="long">Home</span><span class="short" aria-hidden="true">Home</span></a>`; }
+function meLink(){ return `<a class="wi-me" href="https://jessyux.com/?from=game#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
 function renderBoard(){
   const svg = $('#board');
   if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
@@ -2900,8 +2919,8 @@ function startScreen(){
       </section>
     </div>
     <datalist id="wi-names">${rows.slice().sort((a,b)=>b.last-a.last).map(r=>`<option value="${esc(r.name)}"></option>`).join('')}</datalist>
-    <p class="credit">Designed by <a href="/">JessyUX</a></p>
-    ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on jessyux.com.</p>' : ''}
+    <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
+    ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on whisker.jessyux.com.</p>' : ''}
   </main>`;
 }
 /* a returning player sees their total as they type */
@@ -3007,7 +3026,7 @@ function lobbyScreen(){
       ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Waiting for a friend to join'}</button>`
         : `<span class="muted">Waiting for the host to start…</span>`}
     </div>
-    <p class="credit">Designed by <a href="/">JessyUX</a></p>
+    <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
   </main>`;
 }
 

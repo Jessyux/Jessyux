@@ -1,36 +1,39 @@
 {
-  "name": "jessyux",
+  // The Whisker Isles Worker at whisker.jessyux.com. Deployed only from the whisker-isles branch:
+  //   node build-game.mjs && npx --yes wrangler@4 deploy
+  // The portfolio (jessyux.com) is a separate Worker deployed from accessibility-playground, so a
+  // deploy from either branch never touches the other.
+  "name": "whisker-isles",
   "compatibility_date": "2026-10-19",
-  "main": "worker/index.mjs",
-  "workers_dev": true,
+  "main": "worker/game.mjs",
+  "workers_dev": false,
   "routes": [
-    { "pattern": "www.jessyux.com", "zone_name": "jessyux.com", "custom_domain": true },
-    { "pattern": "jessyux.com", "zone_name": "jessyux.com", "custom_domain": true }
+    { "pattern": "whisker.jessyux.com", "zone_name": "jessyux.com", "custom_domain": true }
   ],
   "assets": {
-    "directory": "./dist",
+    "directory": "./dist-game",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
-  // The Whisker Isles leaderboard is real and shared (tables in worker/whisker-schema.sql).
-  // The sand message wall (tables in worker/schema.sql); SAND_SALT is a secret on this Worker.
+  // the shared leaderboard (tables in worker/whisker-schema.sql). WHISKER_SALT is a secret on this Worker.
   "d1_databases": [
-    { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" },
-    { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "a48c2afe-8253-4b02-8ee0-5b32f25176f6" }
+    { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" }
   ],
-  // Whisker Isles online games: one room per cat code, kept in the room's own storage (worker/whisker-room.mjs).
+  // online games: one room per cat code, kept in the room's own storage (worker/whisker-room.mjs)
   "durable_objects": {
     "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ]
   },
-  "migrations": [ { "tag": "v1", "new_sqlite_classes": ["WhiskerRoom"] } ],
-  // Local testing (wrangler dev --env local) uses a placeholder sand database instead of the real one.
+  // The rooms move here from the jessyux Worker with their saved games. The transfer creates the
+  // class, so there is no new_sqlite_classes step. Tags are permanent: add new migrations after v1.
+  "migrations": [
+    { "tag": "v1", "transferred_classes": [ { "from": "WhiskerRoom", "from_script": "jessyux", "to": "WhiskerRoom" } ] }
+  ],
+  // local testing: npx --yes wrangler@4 dev --env local
   "env": {
     "local": {
-      "durable_objects": {
-        "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ]
-      },
+      "durable_objects": { "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ] },
+      "migrations": [ { "tag": "v1", "new_sqlite_classes": ["WhiskerRoom"] } ],
       "d1_databases": [
-        { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "00000000-0000-0000-0000-000000000000" },
         { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" }
       ]
     }
