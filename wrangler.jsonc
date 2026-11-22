@@ -13,17 +13,17 @@
     "run_worker_first": ["/api/*"]
   },
   // The Whisker Isles leaderboard is real and shared (tables in worker/whisker-schema.sql).
+  // The sand message wall (tables in worker/schema.sql); SAND_SALT is a secret on this Worker.
   "d1_databases": [
-    { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" }
+    { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" },
+    { "binding": "SAND_DB", "database_name": "jessyux-sand", "database_id": "a48c2afe-8253-4b02-8ee0-5b32f25176f6" }
   ],
   // Whisker Isles online games: one room per cat code, kept in the room's own storage (worker/whisker-room.mjs).
   "durable_objects": {
     "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ]
   },
   "migrations": [ { "tag": "v1", "new_sqlite_classes": ["WhiskerRoom"] } ],
-  // The sand wall's database is only bound for local testing, so this file still deploys the site
-  // before the real database exists: the sand screen then says messages can't be saved.
-  // At deploy, with Jessy's go-ahead, add the same block at the top level with the real ID.
+  // Local testing (wrangler dev --env local) uses a placeholder sand database instead of the real one.
   "env": {
     "local": {
       "durable_objects": {
