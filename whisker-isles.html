@@ -154,6 +154,57 @@ a.btn{color:var(--plum);text-decoration:none}
 
 /* ---------- treats ---------- */
 .treats{display:flex;gap:8px;flex-wrap:wrap}
+/* ---------- treat playing cards ---------- */
+.pcard{--cw:84px;position:relative;display:inline-block;width:var(--cw);aspect-ratio:5/7;flex:none;border:2.5px solid var(--plum);border-radius:calc(var(--cw)*.11);background:#fff;padding:calc(var(--cw)*.055);box-shadow:var(--sticker);text-align:center;color:var(--plum);vertical-align:top}
+.pc-in{position:relative;display:flex;flex-direction:column;align-items:center;height:100%;border-radius:calc(var(--cw)*.07);border:2px solid var(--plum);overflow:hidden;
+  background-color:var(--tb);background-image:radial-gradient(color-mix(in srgb, var(--tc) 55%, transparent) 1.2px, transparent 1.4px);background-size:calc(var(--cw)*.09) calc(var(--cw)*.09)}
+.pc-name{display:block;width:100%;background:var(--tc);border-bottom:2px solid var(--plum);font-family:var(--display);line-height:1.05;padding:.38em .25em .32em;font-size:calc(var(--cw)*.105)}
+.pc-art{display:grid;place-items:center;width:64%;aspect-ratio:1;margin:auto 0;border-radius:50%;background:#fff;border:2px solid var(--plum);box-shadow:inset 0 -4px 0 color-mix(in srgb, var(--tc) 45%, transparent)}
+.pc-art img{width:84%;height:84%;object-fit:contain}
+.pc-art svg{width:72%;height:72%}
+.pc-text{display:block;margin:0 .5em .45em;padding:.45em .5em;background:#fff;border:2px solid var(--plum);border-radius:.7em;font-size:calc(var(--cw)*.068);line-height:1.3;font-weight:700}
+.pc-foot{display:block;width:100%;font-weight:900;font-size:calc(var(--cw)*.075);padding:.25em 0 .35em;letter-spacing:.02em}
+.pc-corner{position:absolute;width:calc(var(--cw)*.17);height:calc(var(--cw)*.17);border-radius:50%;background:#fff;border:1.5px solid var(--plum);display:grid;place-items:center;font-family:var(--display);font-size:calc(var(--cw)*.1);line-height:1;z-index:1}
+.pc-corner img{width:86%;height:86%;object-fit:contain}
+.pc-corner.tl{left:calc(var(--cw)*.025);top:calc(var(--cw)*.025)}
+.pc-corner.br{right:calc(var(--cw)*.025);bottom:calc(var(--cw)*.025);transform:rotate(180deg)}
+.pcard.pc-sm .pc-corner{display:none}
+.pcard.pc-sm .pc-name{font-size:10.5px;padding:.4em .2em}
+.pcard.pc-sm .pc-art{width:74%}
+.pcard.pc-sm .pc-foot{font-size:9.5px}
+.pc-md{--cw:160px}.pc-lg{--cw:230px}
+.pc-md .pc-name,.pc-lg .pc-name{padding-left:calc(var(--cw)*.19);padding-right:calc(var(--cw)*.19)}
+.pc-lg .pc-text{font-size:14px}.pc-md .pc-text{font-size:10.5px;line-height:1.25;padding:.4em .45em;margin:0 .4em .3em}
+.pc-md .pc-art{width:44%;margin:.45em 0 auto}.pc-lg .pc-art{width:54%;margin:.6em 0 auto}
+.pc-md .pc-name{font-size:14px}.pc-lg .pc-name{font-size:21px}
+.pc-md .pc-foot{font-size:11px}
+/* the back: a plum card with a paw pattern, used for the jar and the flip when buying */
+.pcard.back{background:#fff}
+.pcard.back .pc-in{background-color:#4A2D52;background-image:radial-gradient(circle at 50% 50%, #6B4F73 0 18%, transparent 19%),radial-gradient(#F5B8CC 1.5px, transparent 1.7px);background-size:100% 100%, calc(var(--cw)*.12) calc(var(--cw)*.12);justify-content:center}
+.pcard.back .pc-paw{width:46%;aspect-ratio:1;border-radius:50%;background:var(--sakura);border:2px solid var(--plum);display:grid;place-items:center;font-family:var(--display);font-size:calc(var(--cw)*.13);color:var(--plum)}
+.pcard.back .pc-paw svg{width:70%;height:70%}
+/* hand: the cards fan out; tap one to read it and play it */
+.hand-fan{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));justify-items:center;gap:18px 6px;padding:14px 2px 8px}
+.hand-fan .card-btn{border:0;background:none;padding:0;transform:rotate(var(--rot,0deg));transition:transform .18s ease;position:relative;border-radius:10px}
+.hand-fan .card-btn:hover,.hand-fan .card-btn:focus-visible{transform:rotate(0) translateY(-8px) scale(1.04);z-index:5}
+.card-btn .under{position:absolute;inset:0;transform:translate(var(--ux),var(--uy)) rotate(var(--ur));z-index:-1}
+.card-btn .count{position:absolute;right:-8px;top:-8px;z-index:3;min-width:24px;height:24px;padding:0 5px;border-radius:999px;background:var(--strawberry);color:#fff;border:2px solid var(--plum);font-weight:900;font-size:12px;display:grid;place-items:center}
+.card-btn.can .pcard{box-shadow:var(--sticker),0 0 0 4px var(--butter)}
+.card-btn .tag{position:absolute;left:50%;top:-9px;transform:translateX(-50%);white-space:nowrap;background:var(--plum);color:#fff;font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;border:1.5px solid #fff;z-index:2}
+.card-btn .tag.gold{background:var(--butter);color:var(--plum);border-color:var(--plum)}
+.card-btn.wait .pcard{filter:saturate(.55)}
+/* card view */
+.card-view{text-align:center}
+.card-view .flip{display:inline-block;perspective:900px;margin:4px auto 10px}
+.card-view .flip-in{display:grid;transform-style:preserve-3d}
+.card-view .flip-in>*{grid-area:1/1;backface-visibility:hidden}
+.card-view .flip-in>.back{transform:rotateY(180deg)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.card-view .why{color:var(--plum-2);font-weight:700;max-width:30ch;margin:0 auto}
+.treat-grid .pcard{margin:0 auto}
+.build .mini-back{--cw:24px;box-shadow:1.5px 1.5px 0 var(--plum);border-width:1.5px;padding:2px;margin-right:2px}
+.build .mini-back .pc-in{border-width:1px}
+.build .mini-back .pc-paw{display:none}
 .treat{width:84px;border:2.5px solid var(--plum);border-radius:var(--r-md);background:#FFF7DA;padding:6px;text-align:center;font-size:.76rem;font-weight:900;box-shadow:2px 2px 0 var(--plum)}
 .treat .ic{width:44px;height:44px;margin:0 auto 2px;display:block}
 .treat .ic img{width:100%;height:100%;object-fit:contain}
@@ -259,7 +310,7 @@ svg :focus{outline:none}
 .res-item small,.bcard small,.tcard small,.dock small{color:var(--plum-2);font-size:.76rem;line-height:1.3}
 .tile-thumb{width:64px;height:74px;object-fit:contain;display:block}
 .build-grid,.treat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.treat-grid{grid-template-columns:repeat(5,1fr)}
+.treat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));justify-items:center;gap:16px}
 .bcard,.tcard{border:2.5px solid var(--plum);border-radius:var(--r-md);padding:10px 8px;display:grid;justify-items:center;text-align:center;gap:4px;background:#fff;align-content:start}
 .tcard{background:#FFF7DA}
 .bcard > svg,.bcard > .ic{height:44px;width:auto}
@@ -330,6 +381,7 @@ div.build{cursor:default}
   .res-grid{grid-template-columns:repeat(3,1fr)}
   .build-grid{grid-template-columns:repeat(2,1fr)}
   .treat-grid{grid-template-columns:repeat(2,1fr)}
+  .treat-grid .pcard{--cw:146px}
   .steps li{grid-template-columns:26px 1fr}
   .step-pic{display:none}
   .split{grid-template-columns:70px 1fr}
@@ -769,6 +821,37 @@ function treatGlyph(t){
     case 'gift': return `<path d="M-15-2h30l-4 17h-22Z" fill="#E8B27A" ${s}/><path d="M-12-2a12 12 0 0 1 24 0" fill="none" ${s}/>`;
     case 'pounce': return `<circle cx="8" cy="-6" r="9" fill="#F6E8D5" ${s}/><path d="M-18 12q8-24 22-20" fill="none" stroke="${P}" stroke-width="2" stroke-dasharray="3 4"/>`;
   }
+}
+/* each treat's card colours and the label along its foot */
+const TREAT_CARD = {
+  zoomies:{c:'#F7A0B4', b:'#FFE6EC', foot:'Vacuum'},
+  trophy: {c:'#FFD36E', b:'#FFF4CF', foot:'Secret point'},
+  spree:  {c:'#8EDFC0', b:'#E2F8EF', foot:'Free paths'},
+  gift:   {c:'#C7BDF7', b:'#EFEBFE', foot:'Free cards'},
+  pounce: {c:'#FFB27A', b:'#FFEBDC', foot:'Steal'}
+};
+function treatArt(t){ const a = TREATS[t].art; return ART.has(a) ? `<img src="${artSrc(a)}" alt="">` : `<svg viewBox="-21 -21 42 42" aria-hidden="true">${treatGlyph(t)}</svg>`; }
+/* size: 'sm' in the hand, 'md' in the rules, 'lg' in the card view. md and lg show the rule text. */
+function treatCard(t, size){
+  if(!TREATS[t]) return cardBack(size);
+  const k = TREAT_CARD[t], big = size!=='sm', art = treatArt(t), mark = t==='trophy' ? '1' : art;
+  return `<span class="pcard pc-${size||'sm'}" style="--tc:${k.c};--tb:${k.b}" aria-hidden="true">
+    <span class="pc-corner tl">${mark}</span><span class="pc-corner br">${mark}</span>
+    <span class="pc-in"><span class="pc-name">${TREATS[t].name}</span><span class="pc-art">${art}</span>${big?`<span class="pc-text">${TREATS[t].text}</span>`:''}<span class="pc-foot">${k.foot}</span></span></span>`;
+}
+function cardBack(size, cls){
+  const paw = '<svg viewBox="-20 -20 40 40"><g fill="#3A2341"><ellipse cx="0" cy="6" rx="9" ry="7.5"/><circle cx="-10" cy="-4" r="4"/><circle cx="-4" cy="-11" r="4"/><circle cx="4" cy="-11" r="4"/><circle cx="10" cy="-4" r="4"/></g></svg>';
+  return `<span class="pcard back pc-${size||'sm'} ${cls||''}" aria-hidden="true"><span class="pc-in"><span class="pc-paw">${paw}</span></span></span>`;
+}
+/* why a card in the hand can't be played right now ('' when it can) */
+function treatWhy(c){
+  if(c.t==='trophy') return 'Trophies stay secret and count as 1 point. Everyone sees them at the end.';
+  if(c.turn>=S.turn) return 'You can play this from your next turn.';
+  if(!myTurn()) return 'Wait for your turn to play it.';
+  if(S.playedTreat) return 'You\'ve already played a treat this turn.';
+  if(S.sub) return 'Finish what you\'re doing first.';
+  if(c.t!=='zoomies' && !S.rolled) return 'Roll the dice first. Only Zoomies can be played before you roll.';
+  return '';
 }
 function treatIcon(t, px){
   if(!TREATS[t]) t = 'gift';
@@ -1742,7 +1825,7 @@ function renderPanel(){
       ${buildBtn('path','Yarn path', `${cp.pieces.path} left · connects your beds`, pathOK, pathIcon(br.color))}
       ${buildBtn('bed','Cat bed', `${cp.pieces.bed} left · 1 point`, bedOK, `<svg viewBox="-19 -14 38 29" width="34" height="26" aria-hidden="true">${bedShape(br.color)}</svg>`)}
       ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, `<svg viewBox="-21 -28 42 46" width="30" height="33" aria-hidden="true">${towerShape(br.color)}</svg>`)}
-      <button class="build" ${treatOK?'':'disabled'} onclick="G.buyTreat()">${treatIcon('gift',30)}<span class="nm">Treat card<small>${S.deck.length} in the jar</small></span>${costChips(COST.treat)}</button>
+      <button class="build" ${treatOK?'':'disabled'} onclick="G.buyTreat()">${cardBack('sm','mini-back')}<span class="nm">Treat card<small>${S.deck.length} in the jar</small></span>${costChips(COST.treat)}</button>
     </div>
     <div class="row" style="margin-top:10px">
       <button class="btn small" ${free?'':'disabled'} onclick="G.open('bank')">Trade with the shop</button>
@@ -1755,11 +1838,20 @@ function renderPanel(){
   if(play && mp){
     html += `<section class="card">
     <h3>Treat cards</h3>
-    ${mp.cards.length ? `<div class="treats">${mp.cards.map((c,i)=>{
-      if(!TREATS[c.t]) return `<button class="treat new" disabled>${treatIcon('gift')}Unwrapping…</button>`;
-      const fresh = c.turn>=S.turn, vpCard = c.t==='trophy';
-      const ok = mt && !vpCard && !fresh && !S.playedTreat && !S.sub && (c.t==='zoomies' || S.rolled);
-      return `<button class="treat${fresh?' new':''}" ${ok?'':'disabled'} onclick="G.playTreat(${i})" title="${esc(TREATS[c.t].text)}">${treatIcon(c.t)}${TREATS[c.t].name}${vpCard?'<br><small>secret point</small>':fresh?'<br><small>next turn</small>':''}</button>`; }).join('')}</div>`
+    ${mp.cards.length ? (()=>{
+      /* matching cards (same treat, same "next turn" state) stack into one pile with a count */
+      const piles = [];
+      mp.cards.forEach((c,i)=>{ const key = (TREATS[c.t]?c.t:'new') + (c.turn>=S.turn?':fresh':'');
+        const p = piles.find(p=>p.key===key); if(p) p.idx.push(i); else piles.push({key, idx:[i], c}); });
+      const TILT = [-3, 2.5, -1.5, 3, -2.5, 1.5];
+      return `<div class="hand-fan">${piles.map((p,k)=>{
+        const c = p.c, n = p.idx.length, rot = TILT[k%TILT.length];
+        const under = Array.from({length:Math.min(n-1,2)},(_,j)=>`<span class="under" style="--ux:${(j+1)*4}px;--uy:${(j+1)*3}px;--ur:${(j+1)*(rot>0?-3:3)}deg">${TREATS[c.t]?treatCard(c.t,'sm'):cardBack('sm')}</span>`).join('');
+        const count = n>1 ? `<span class="count" aria-hidden="true">×${n}</span>` : '';
+        if(!TREATS[c.t]) return `<button class="card-btn wait" style="--rot:${rot}deg" disabled aria-label="Unwrapping a treat card">${under}${cardBack('sm')}${count}<span class="tag">Unwrapping…</span></button>`;
+        const why = treatWhy(c), fresh = c.turn>=S.turn, vpCard = c.t==='trophy';
+        const tag = vpCard ? '<span class="tag gold">Secret</span>' : fresh ? '<span class="tag">Next turn</span>' : '';
+        return `<button class="card-btn${why?' wait':' can'}" style="--rot:${rot}deg" onclick="G.card(${p.idx[0]})" aria-label="${n>1?n+' ':''}${esc(TREATS[c.t].name)}. ${why?esc(why):'Ready to play.'}">${under}${treatCard(c.t,'sm')}${count}${tag}</button>`; }).join('')}</div>`; })()
       : `<p class="empty">No treats yet. Buy one with Fish, Catnip and Litter.</p>`}
     </section>`;
   }
@@ -1812,6 +1904,8 @@ function renderOverlay(){
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
   if(S && S.phase==='over' && !ui.hideWin) playClimb();
+  /* a bought card arrives face down and turns over */
+  const fl = o.querySelector('#flip-in'); if(fl && !reduceMotion) fl.animate([{transform:'rotateY(180deg) scale(.7)'},{transform:'rotateY(90deg) scale(1.05)',offset:.55},{transform:'rotateY(0) scale(1)'}],{duration:850,easing:'cubic-bezier(.3,.1,.3,1)',delay:150,fill:'backwards'});
 }
 /* full-screen confetti for the winner, in the island's colours */
 function confetti(){
@@ -1934,7 +2028,14 @@ function modalHTML(){
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>You can come back with code <b>${esc(S.code)}</b> while the game is still running.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>Start a new game?</h2><p>This game will be lost.</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Start a new game</button></div></div>`;
-  if(m.kind==='bought') return `<div class="modal handoff"><div class="big-ic">${treatIcon(m.t,120)}</div><h2>${TREATS[m.t].name}</h2><p>${TREATS[m.t].text}</p><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
+  if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
+  if(m.kind==='treat'){
+    const c = S.players[me()] && S.players[me()].cards[m.i]; if(!c || !TREATS[c.t]) return '';
+    const why = treatWhy(c);
+    return `<div class="modal handoff card-view" role="dialog" aria-label="${esc(TREATS[c.t].name)}"><div class="flip">${treatCard(c.t,'lg')}</div>
+      <p class="vh">${TREATS[c.t].text}</p>${why?`<p class="why">${why}</p>`:''}
+      <div class="actions center"><button class="btn small" onclick="G.close()">Keep it</button>${why?'':`<button class="btn primary" onclick="G.playCard(${m.i})">Play ${esc(TREATS[c.t].name)}</button>`}</div></div>`;
+  }
   if(m.kind==='stolen') return `<div class="modal handoff"><div class="big-ic">${resIcon(m.r,90)}</div><h2>You swiped ${RINFO[m.r].name}</h2><p>Taken from ${pname(m.from)}.</p><div class="actions center"><button class="btn primary" onclick="G.close()">Nice</button></div></div>`;
   if(m.kind==='gift'){
     return `<div class="modal"><h2>Gift basket</h2><p>Pick 2 resources. You can pick the same one twice.</p>
@@ -2043,7 +2144,7 @@ function rulesHTML(){
   </div></section>
 
   <section class="rule-block"><h3>Treat cards</h3>
-  <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div class="tcard">${treatIcon(k,56)}<b>${TREATS[k].name}</b><small>${TREATS[k].text}</small></div>`).join('')}</div>
+  <div class="treat-grid">${Object.keys(TREATS).map(k=>`<div role="img" aria-label="${esc(TREATS[k].name)}: ${esc(TREATS[k].text)}">${treatCard(k,'md')}</div>`).join('')}</div>
   <p class="small">Play one treat per turn, starting the turn after you buy it.</p></section>
 
   <div class="actions"><button class="btn primary" onclick="G.close()">Back to the game</button></div></div>`;
@@ -2245,6 +2346,8 @@ const G = {
     render();
   },
   close(){ ui.modal=null; render(); },
+  card(i){ ui.modal={kind:'treat', i}; ui.refocus='.card-view .btn'; render(); },
+  playCard(i){ ui.modal=null; playTreat(i); render(); },
   hideWin(){ ui.hideWin=true; render(); },
   discardStep(r,d){ const p=discardSeat(); if(p<0) return; const pl=S.players[p]; const need=Math.floor(total(pl.res)/2); const n=ui.discardSel[r]+d; if(n<0||n>pl.res[r]||(d>0&&total(ui.discardSel)>=need)) return; ui.discardSel[r]=n; lastOverlay=''; renderOverlay(); },
   confirmDiscard, steal(v){ steal(v); },
