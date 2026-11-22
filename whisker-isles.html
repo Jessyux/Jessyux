@@ -47,7 +47,8 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 a.btn{color:var(--plum);text-decoration:none}
 .back-row{max-width:1100px;margin:0 auto 6px}
 .make-own{margin-top:10px}
-.make-own[aria-pressed="true"]{background:var(--butter)}
+.make-own[aria-expanded="true"]{background:var(--butter)}
+.swatches button.orig{aspect-ratio:auto;border-radius:999px;background:#fff;font-weight:900;font-size:.72rem;padding:0 .7em;grid-column:span 2}
 .cat-maker{margin-top:6px;padding:4px 14px 12px;border:2.5px dashed var(--plum-2);border-radius:var(--r-md);background:#FFFBF0}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
 .pills button{border:2.5px solid var(--plum);border-radius:999px;background:#fff;padding:.3em .85em;font-weight:900;font-size:.85rem}
@@ -608,8 +609,107 @@ function catDraw(t, mood){
   <path d="M8 66l12 2M8 74l12-1M92 66l-12 2M92 74l-12-1" stroke="${dark?'#fff':P}" stroke-width="2" stroke-linecap="round" opacity=".7"/>
 </svg>`;
 }
-/* a player's own cat if they made one, otherwise their premade breed */
-function playerArt(x, mood){ return x && x.cat ? catDraw(x.cat, mood) : catArt(x.breed, mood); }
+/* ---------- recolouring the premade art ----------
+   Each premade cat's picture is split into parts by colour and position: the collar is filled from
+   a point on the neck, each eye is filled from its highlight inside the outline, and the coat and
+   markings are matched to the picture's own fur colours. A new colour keeps the picture's shading
+   by moving every pixel by the same amount as its part's reference colour. The tortie's speckled
+   coat can't be split cleanly, so only its eyes and collar change. */
+const RECOLOUR = {
+  ginger: {coat:['#f8ad69','#f6b481'], mark:['#e58046'], keep:'#4b222f', collarY:210},
+  tuxedo: {coat:['#27282d','#2e232b'], mark:['#f4f3eb'], keep:'#381c2c', collarY:206},
+  calico: {coat:['#fcf8ef','#fefaf9'], mark:['#fab982'], keep:'#4d2538', collarY:204},
+  siamese:{coat:['#faeddd'], mark:['#674d4b','#8b5d60','#a47879'], keep:'#412335', collarY:208},
+  grey:   {coat:['#8b94ae','#8a91ab','#9fa8c2'], mark:['#71728b'], keep:'#4d2c40', collarY:208},
+  black:  {coat:['#544c53','#635a64','#483a44'], mark:[], keep:'#482735', collarY:210},
+  persian:{coat:['#f8f1fd','#f6f0fb','#fef8ff','#e5d5ef','#dbc5e0','#f1e1f4'], mark:[], keep:'#4e253e', collarY:188},
+  tortie: {coat:[], mark:[], keep:'#4c2634', collarY:208},
+  fold:   {coat:['#dcc8cf','#c5a7b5','#f3e4ea'], mark:[], keep:'#4b2637', collarY:207},
+  bengal: {coat:['#e8b159','#e9b471'], mark:['#633522','#9a8448'], keep:'#502835', collarY:210}
+};
+const hexRGB = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgbDist = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1], a[2]-b[2]);
+const MASKS = {}, TINTED = {};
+function catMasks(bid){
+  if(MASKS[bid]) return MASKS[bid];
+  return MASKS[bid] = new Promise((done, fail)=>{
+    const img = new Image();
+    img.onload = ()=>{ try{
+      const S2 = 256, N = S2*S2, c = document.createElement('canvas'); c.width = c.height = S2;
+      const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(img, 0, 0, S2, S2);
+      const id = x.getImageData(0,0,S2,S2), d = id.data, at = (X,Y)=>{ const i=(Y*S2+X)*4; return [d[i],d[i+1],d[i+2]]; };
+      const lum = q => 0.299*q[0]+0.587*q[1]+0.114*q[2];
+      const cfg = RECOLOUR[bid], role = new Uint8Array(N), ref = new Array(N), outl = hexRGB(cfg.keep);   // roles: 1 coat, 2 markings, 3 eyes, 4 collar
+      const flood = (sx,sy,ok,limit,maxR)=>{ const st=[[sx,sy]], seen=new Uint8Array(N), got=[];
+        while(st.length){ const [X,Y]=st.pop(); if(X<0||Y<0||X>=S2||Y>=S2) continue; const p=Y*S2+X; if(seen[p]) continue; seen[p]=1;
+          if(maxR && Math.hypot(X-sx,Y-sy)>maxR) continue; if(d[p*4+3]<128 || !ok(at(X,Y))) continue;
+          got.push(p); if(got.length>limit) break; st.push([X+1,Y],[X-1,Y],[X,Y+1],[X,Y-1]); }
+        return got; };
+      for(const sx of [100,156]){ const seed = at(sx,cfg.collarY); flood(sx,cfg.collarY,q=>rgbDist(q,seed)<70,9000,0).forEach(p=>{ role[p]=4; ref[p]=seed; }); }
+      const eyeC = [], coatRefs = cfg.coat.map(hexRGB);
+      for(const side of [0,1]){
+        const pts = []; for(let y=95;y<160;y++) for(let X=side?129:50; X<(side?206:127); X++){ const q=at(X,y); if(q[0]>245&&q[1]>245&&q[2]>245&&Math.abs(X-128)>14) pts.push([X,y]); }
+        if(!pts.length) continue;
+        const hx = Math.round(pts.reduce((a,p)=>a+p[0],0)/pts.length), hy = Math.round(pts.reduce((a,p)=>a+p[1],0)/pts.length); eyeC.push([hx,hy]);
+        /* the eye is everything round the highlight that isn't fur; it's stored as a 0 to 1 shade,
+           darkest (pupil and rim) to lightest, so any colour can be laid over it */
+        const furRefs = [...coatRefs, ...cfg.mark.map(hexRGB)];
+        const notWhite = p=>!(d[p*4]>228&&d[p*4+1]>228&&d[p*4+2]>228), isFur = q=>furRefs.some(cc=>rgbDist(q,cc)<42);
+        /* the iris: coloured pixels near the highlight that are neither fur, rim nor highlight; its centre and size give the eye disc */
+        const cand = []; for(let Y=Math.max(0,hy-30); Y<Math.min(S2,hy+31); Y++) for(let X=Math.max(0,hx-30); X<Math.min(S2,hx+31); X++){
+          if(Math.hypot(X-hx,Y-hy)>30) continue; const p=Y*S2+X, q=at(X,Y); if(d[p*4+3]<128 || !notWhite(p) || isFur(q) || rgbDist(q,outl)<48 || lum(q)<28) continue; cand.push([X,Y]); }
+        if(cand.length<20) continue;
+        const cx = cand.reduce((a,c)=>a+c[0],0)/cand.length, cy = cand.reduce((a,c)=>a+c[1],0)/cand.length, rad = Math.min(24, Math.sqrt(cand.length/Math.PI)+5);
+        const got = []; for(let Y=Math.floor(cy-rad); Y<=cy+rad; Y++) for(let X=Math.floor(cx-rad); X<=cx+rad; X++){
+          if(X<0||Y<0||X>=S2||Y>=S2||Math.hypot(X-cx,Y-cy)>rad) continue; const p=Y*S2+X; if(d[p*4+3]<128 || !notWhite(p) || isFur(at(X,Y))) continue; got.push(p); }
+        eyeC.push([cx-4,cy-4]);
+        if(got.length>40 && got.length<2400){
+          const ls = got.map(p=>lum([d[p*4],d[p*4+1],d[p*4+2]])).sort((a,b)=>a-b);
+          const lo = ls[Math.floor(ls.length*.3)], hi = Math.max(lo+20, ls[Math.floor(ls.length*.95)]);
+          got.forEach(p=>{ role[p]=3; ref[p]=Math.max(0, Math.min(1, (lum([d[p*4],d[p*4+1],d[p*4+2]])-lo)/(hi-lo))); });
+        }
+      }
+      const refs = [...cfg.coat.map(h=>[1,hexRGB(h)]), ...cfg.mark.map(h=>[2,hexRGB(h)]), [0,outl]];
+      const cm = new Uint8Array(N);
+      for(let p=0;p<N;p++){ if(role[p]||d[p*4+3]<128) continue; const X=p%S2, Y=(p/S2)|0;
+        if(eyeC.some(([ex,ey])=>Math.hypot(X-ex-4,Y-ey-4)<22)) continue;
+        const q=[d[p*4],d[p*4+1],d[p*4+2]]; let bd=1e9, br=null; for(const r of refs){ const dd=rgbDist(q,r[1]); if(dd<bd){ bd=dd; br=r; } }
+        if(br && br[0] && bd<38){ cm[p]=br[0]; ref[p]=br[1]; } }
+      /* opening the fur mask drops thin outline strokes that share the fur's colour */
+      const nb=[[1,0],[-1,0],[0,1],[0,-1]], inside=(m,X,Y)=>X>=0&&Y>=0&&X<S2&&Y<S2&&m[Y*S2+X];
+      let a=cm; for(let k=0;k<2;k++){ const b=new Uint8Array(N); for(let p=0;p<N;p++){ if(a[p] && nb.every(([dx,dy])=>inside(a,p%S2+dx,((p/S2)|0)+dy))) b[p]=a[p]; } a=b; }
+      for(let k=0;k<2;k++){ const b=a.slice(); for(let p=0;p<N;p++){ if(!a[p] && cm[p] && nb.some(([dx,dy])=>inside(a,p%S2+dx,((p/S2)|0)+dy))) b[p]=cm[p]; } a=b; }
+      for(let p=0;p<N;p++) if(a[p]) role[p]=a[p];
+      done({id, role, ref});
+    }catch(e){ fail(e); } };
+    img.onerror = fail; img.src = artSrc('cat-'+bid);
+  });
+}
+const tintKey = (bid,t) => [bid,t.coat||'',t.mark||'',t.iris||'',t.collar||''].join('|');
+const hasTint = t => !!(t && (t.coat||t.mark||t.iris||t.collar));
+function tintCat(bid, t){
+  const key = tintKey(bid,t); if(TINTED[key]) return TINTED[key];
+  return TINTED[key] = catMasks(bid).then(m=>{
+    const out = new ImageData(new Uint8ClampedArray(m.id.data), 256, 256), d = out.data, tgt = {1:t.coat, 2:t.mark, 3:t.iris, 4:t.collar};
+    const PUPIL = [42,23,38];
+    for(let p=0;p<65536;p++){ const r=m.role[p], c=tgt[r]; if(!r||!c) continue; const T=hexRGB(c), R=m.ref[p];
+      if(r===3){ const t = Math.pow(R,.75); for(let k=0;k<3;k++) d[p*4+k] = Math.round(PUPIL[k]+(Math.min(255,T[k]*1.12)-PUPIL[k])*t); continue; }
+      for(let k=0;k<3;k++) d[p*4+k] = Math.max(0, Math.min(255, T[k]+(d[p*4+k]-R[k]))); }
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256; cv.getContext('2d').putImageData(out,0,0);
+    return cv.toDataURL('image/png');
+  });
+}
+/* the recoloured picture is made once and swapped into every <img> waiting for it */
+function tintedImg(bid, t){
+  const key = tintKey(bid,t), done = TINTED[key] && TINTED[key].url;
+  if(!done) tintCat(bid,t).then(url=>{ TINTED[key].url = url; document.querySelectorAll('img[data-ck]').forEach(i=>{ if(i.dataset.ck===key) i.src = url; }); }).catch(()=>{});
+  return `<img src="${done || artSrc('cat-'+bid)}" data-ck="${esc(key)}" alt="">`;
+}
+/* a player's recoloured cat if they changed colours, otherwise their premade cat */
+function playerArt(x, mood){
+  const bid = BREEDS[x.breed].id;
+  return x && hasTint(x.tint) && RECOLOUR[bid] && ART.has('cat-'+bid) ? tintedImg(bid, x.tint) : catArt(x.breed, mood);
+}
 function catArt(bi, mood){
   const key = 'cat-'+BREEDS[bi].id+(mood==='win'?'-win':'');
   return ART.has(key) ? `<img src="${artSrc(key)}" alt="">` : catSVG(bi,mood);
@@ -779,7 +879,7 @@ function newGame(seats, opts){
   S = {
     online: !!opts.online, code: opts.code || null,
     board, deck,
-    players: seats.map(s=>({name:s.name, breed:s.breed, color:s.color, cat:s.cat||null, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
+    players: seats.map(s=>({name:s.name, breed:s.breed, color:s.color, tint:s.tint||null, res:emptyRes(), cards:[], zoomies:0, pieces:{path:15,bed:5,tower:4}})),
     bld:{}, roads:{}, vac: board.tiles.findIndex(t=>t.type==='nap'),
     cur:0, turn:1, phase:'setup',
     setup:{i:0, step:'bed', lastBed:null, order:[...Array(n).keys(), ...[...Array(n).keys()].reverse()]},
@@ -1937,31 +2037,29 @@ function startScreen(){
 }
 /* a returning player sees their total as they type */
 function seatNote(name){ const r = name && name.trim() && boardRow(name); return r ? `On the board with ${r.points} point${r.points===1?'':'s'}` : ''; }
-const COATS = [['#FFFFFF','White'],['#FFF6EC','Cream'],['#F3C46B','Golden'],['#FFB067','Ginger'],['#8C5A3C','Brown'],['#A9B4C6','Grey'],['#D8CCE8','Lilac'],['#2E2838','Black']];
-const MARKS = [['#E9853A','Orange'],['#9B6A2F','Caramel'],['#7A5A4A','Chocolate'],['#3D3550','Charcoal'],['#8592A8','Blue grey'],['#BFAED6','Lavender'],['#F6E8D5','Cream'],['#FFFFFF','White']];
-const EYES = [['#7CCB5B','Green'],['#6FB7FF','Blue'],['#F2A93B','Amber'],['#F2D23B','Yellow'],['#E89A3C','Copper'],['#B9A2E6','Lilac']];
-const PATTERNS = [['solid','Plain'],['tabby','Tabby stripes'],['spots','Spots'],['patches','Patches'],['calico','Calico'],['tuxedo','Tuxedo'],['point','Colour point']];
-function catMaker(i, c){
-  const sw = (k, list, label) => `<div class="field">${label}</div><div class="swatches" role="radiogroup" aria-label="${label}">${list.map(([v,n])=>
-    `<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${c[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="G.catSet(${i},'${k}','${v}')"></button>`).join('')}</div>`;
-  const pills = (k, list, label) => `<div class="field">${label}</div><div class="pills" role="radiogroup" aria-label="${label}">${list.map(([v,n])=>
-    `<button role="radio" id="cm-${k}-${v}" aria-checked="${c[k]===v}" onclick="G.catSet(${i},'${k}','${v}')">${n}</button>`).join('')}</div>`;
+const COATS = [['#FFFFFF','White'],['#FFF1DC','Cream'],['#F3C46B','Golden'],['#F8AD69','Ginger'],['#9B6A4A','Brown'],['#8B94AE','Grey'],['#C9B3E6','Lilac'],['#F2A7C3','Pink'],['#3A3640','Black']];
+const MARKS = [['#E58046','Orange'],['#9B6A2F','Caramel'],['#674D4B','Chocolate'],['#2E2A33','Black'],['#71728B','Grey'],['#9B7FD1','Purple'],['#2BA89A','Teal'],['#FFFFFF','White']];
+const EYES = [['#5DBB4A','Green'],['#4C93DC','Blue'],['#E8A23A','Amber'],['#F2D23B','Yellow'],['#8A5A3C','Brown'],['#9B7FD1','Violet'],['#E0335A','Ruby']];
+function catMaker(i, s){
+  const t = s.tint || {}, cfg = RECOLOUR[BREEDS[s.breed].id];
+  const row = (k, list, label) => `<div class="field">${label}</div><div class="swatches" role="radiogroup" aria-label="${label}">
+    <button role="radio" id="cm-${k}-orig" class="orig" aria-checked="${!t[k]}" aria-label="Original" title="Original" onclick="G.catSet(${i},'${k}','')">Original</button>
+    ${list.map(([v,n])=>`<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${t[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="G.catSet(${i},'${k}','${v}')"></button>`).join('')}</div>`;
   return `<div class="cat-maker">
-    ${sw('base', COATS, 'Coat')}
-    ${pills('pattern', PATTERNS, 'Pattern')}
-    ${c.pattern==='solid' || c.pattern==='tuxedo' ? '' : sw('mark', MARKS, 'Markings')}
-    ${pills('hair', [['short','Short'],['long','Long and fluffy']], 'Hair')}
-    ${pills('ears', [['up','Pointy'],['fold','Folded']], 'Ears')}
-    ${sw('iris', EYES, 'Eyes')}
+    ${cfg.coat.length ? row('coat', COATS, 'Coat') : '<p class="muted small">This cat\'s speckled coat keeps its colours. Its eyes and collar can change.</p>'}
+    ${cfg.mark.length ? row('mark', MARKS, 'Markings') : ''}
+    ${row('iris', EYES, 'Eyes')}
+    ${row('collar', COLORS.map((c,k)=>[c, COLOR_NAMES[k]]), 'Collar')}
+    <p class="center" style="margin:12px 0 0"><button class="btn small" onclick="G.catReset(${i})">Back to the original colours</button></p>
   </div>`;
 }
 function catSheetHTML(i){
   const s = ui.seats[i]; if(!s) return '';
   const owner = c => ui.seats.find((x,j)=>j!==i&&x.color===c);
   return `<div class="modal cat-sheet"><div class="turn" style="margin-bottom:10px">${portrait(s)}<div><h2>Customise ${esc(s.name.trim()||BREEDS[s.breed].label)}</h2><div class="sub">Cats can match. Colours can't, so everyone can spot their pieces.</div></div></div>
-    <div class="field">Pick a cat</div>${breedPicker(s.cat?-1:s.breed, [], 'G.seatPick.bind(null,'+i+')')}
-    <button class="btn small make-own" id="cs-own" aria-pressed="${!!s.cat}" onclick="G.seatCustom(${i})">${s.cat?'Making your own cat':'Make your own cat'}</button>
-    ${s.cat ? catMaker(i, s.cat) : ''}
+    <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.seatPick.bind(null,'+i+')')}
+    ${ART.has('cat-'+BREEDS[s.breed].id) ? `<button class="btn small make-own" id="cs-own" aria-expanded="${ui.tintOpen===i}" onclick="G.seatCustom(${i})">${ui.tintOpen===i?'Hide colour options':hasTint(s.tint)?'Change colours (changed)':'Change colours'}</button>
+    ${ui.tintOpen===i ? catMaker(i, s) : ''}` : ''}
     <div class="field" style="margin-top:14px">Colour on the board</div>
     <div class="swatches" role="radiogroup" aria-label="Pick a colour">${COLORS.map((c,k)=>{ const o=owner(k);
       return `<button role="radio" aria-checked="${s.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.seatColor(${i},${k})"></button>`; }).join('')}</div>
@@ -2012,7 +2110,7 @@ const G = {
       render(); const f=$('#seat-name-'+ui.badSeat); if(f) f.focus(); return;
     }
     ui.startErr = null; ui.badSeat = null;
-    const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color, cat:s.cat ? Object.assign({}, s.cat) : null}));
+    const seats = ui.seats.map((s,i)=>({name:names[i], breed:s.breed, color:s.color, tint:hasTint(s.tint) ? Object.assign({}, s.tint) : null}));
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); save(); render(); window.scrollTo(0,0);
   },
@@ -2026,10 +2124,12 @@ const G = {
   seatName(i,v){ ui.seats[i].name=v; const n=$('#seat-note-'+i); if(n) n.textContent=seatNote(v); if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); } },
   lbAll(){ ui.lbAll=!ui.lbAll; render(); },
   /* customise sheet: any cat for anyone, and a colour nobody else has */
-  seatPick(i,b){ const s=ui.seats[i]; s.breed=b; s.cat=null; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; ui.refocus='.breeds [aria-checked="true"]'; render(); },
+  seatPick(i,b){ const s=ui.seats[i]; s.breed=b; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; ui.refocus='.breeds [aria-checked="true"]'; render(); },
   /* starts from the premade cat they had, so it's a tweak rather than a blank */
-  seatCustom(i){ const s=ui.seats[i]; s.cat = s.cat ? null : breedTraits(s.breed); ui.refocus='#cs-own'; render(); },
-  catSet(i,k,v){ const c=ui.seats[i].cat; if(!c) return; c[k]=v; ui.refocus='#cm-'+k+'-'+v.replace('#',''); render(); },
+  /* colour choices stay when another premade cat is picked, so a player can try their colours on each */
+  seatCustom(i){ ui.tintOpen = ui.tintOpen===i ? null : i; ui.refocus='#cs-own'; render(); },
+  catSet(i,k,v){ const s=ui.seats[i]; s.tint = s.tint || {coat:'',mark:'',iris:'',collar:''}; s.tint[k]=v; ui.refocus='#cm-'+k+'-'+(v?v.slice(1):'orig'); render(); },
+  catReset(i){ const s=ui.seats[i]; s.tint={coat:'',mark:'',iris:'',collar:''}; ui.refocus='#cm-coat-orig'; render(); },
   seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; ui.refocus='.swatches[aria-label="Pick a colour"] [aria-checked="true"]'; render(); },
   seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:'', breed:b}); ui.seats=fixColors(ui.seats); render(); },
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
