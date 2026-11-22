@@ -1,6 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanTint, renameSeat } from '../worker/whisker-seat.mjs';
+import * as seat from '../worker/whisker-seat.mjs';
+const { cleanTint, renameSeat } = seat;
+
+test('pickColor accepts a free board colour and refuses a taken or unknown one', () => {
+  assert.equal(typeof seat.pickColor, 'function');
+  const seats = [{ pid: 'a', name: 'Mochi', color: 2 }, { pid: 'b', name: 'Bean', color: 5 }];
+  assert.deepEqual(seat.pickColor(seats, 'a', 3), { ok: true, color: 3 });
+  assert.deepEqual(seat.pickColor(seats, 'a', 2), { ok: true, color: 2 });
+  assert.match(seat.pickColor(seats, 'a', 5).error, /Bean/);
+  assert.equal(seat.pickColor(seats, 'a', 99).ok, false);
+  assert.equal(seat.pickColor(seats, 'a', 'x').ok, false);
+});
 
 test('cleanTint keeps only the four colour slots as #rrggbb', () => {
   assert.deepEqual(cleanTint({ coat: '#FFF1DC', mark: 'red', iris: '#4c93dc', collar: '', x: '#000000' }),

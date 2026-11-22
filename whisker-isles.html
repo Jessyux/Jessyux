@@ -46,6 +46,8 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.15}
 .btn:disabled{opacity:.42;box-shadow:none}
 a.btn{color:var(--plum);text-decoration:none}
 .back-row{max-width:1100px;margin:0 auto 6px}
+.lobby-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lobby-top span{display:flex;gap:8px}
 .make-own{margin-top:10px}
 .make-own[aria-expanded="true"]{background:var(--butter)}
 .swatches button.orig{aspect-ratio:auto;border-radius:999px;background:#fff;font-weight:900;font-size:.72rem;padding:0 .7em;grid-column:span 2}
@@ -703,7 +705,14 @@ body{overflow-x:clip}
 .code-pill.copied{background:#E3F7D9}
 .code-label{font-size:.75rem;font-weight:800;color:var(--plum-2)}
 .code-txt{font-family:var(--display);font-size:clamp(1.6rem,6vw,2.4rem);line-height:1.1;word-break:break-all}
+.code-row{display:flex;align-items:center;gap:12px}
+.copy-ic{flex:none;width:44px;height:44px;border-radius:12px;border:2.5px solid var(--plum);background:#FFF7DA;display:grid;place-items:center;box-shadow:2px 2px 0 var(--plum)}
+.copy-ic .ic-done{display:none}
+.code-pill.copied .copy-ic{background:#BFEBB0}
+.code-pill.copied .ic-copy{display:none}
+.code-pill.copied .ic-done{display:block}
 .code-hint{font-size:.8rem;font-weight:800}
+.code-hint:empty{display:none}
 .nooks{list-style:none;margin:14px 0 8px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px 10px}
 .nook{display:grid;justify-items:center;text-align:center;gap:2px}
 .nook-cat{position:relative;z-index:1;margin-bottom:-22px}
@@ -802,11 +811,13 @@ const COLORS = BREEDS.map(b=>b.color);
 const COLOR_NAMES = ['Orange','Indigo','Pink','Teal','Slate','Gold','Purple','Brown','Blue','Green'];
 function pcol(pl){ return COLORS[pl.color!=null ? pl.color : pl.breed]; }
 /* keeps a chosen colour if it's free, then tries the cat's own colour, then the first free one */
+/* every cat gets its own board colour: colours a cat picked come first, the rest get their cat's colour or the next free one */
 function fixColors(seats){
   const used = [];
-  return seats.map(x=>{
-    let c = x.color!=null && !used.includes(x.color) ? x.color
-      : !used.includes(x.breed) ? x.breed : COLORS.findIndex((_,k)=>!used.includes(k));
+  const keep = seats.map(x=>{ const ok = x.color!=null && !used.includes(x.color); if(ok) used.push(x.color); return ok; });
+  return seats.map((x,i)=>{
+    if(keep[i]) return Object.assign({}, x);
+    const c = !used.includes(x.breed) ? x.breed : COLORS.findIndex((_,k)=>!used.includes(k));
     used.push(c); return Object.assign({}, x, {color:c});
   });
 }
@@ -2784,6 +2795,14 @@ function hostActs(s){
 }
 const CROWN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#FFD66B" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 3h6v8l6 3c1.5.8 2 2 2 3.5V20H4V3z" fill="#F7A6A0" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 16h17" stroke="currentColor" stroke-width="2"/></svg>';
+/* your colour for beds and yarn on the board; colours other cats have are greyed out */
+function lobbyColorHTML(){
+  const L = ON.lobby, F = fixColors(L.seats), me = F.find(x=>x.pid===ON.pid); if(!me) return '';
+  const owner = c => F.find(x=>x.pid!==ON.pid && x.color===c);
+  return `<div class="field" style="margin-top:14px">Colour on the board</div>
+    <div class="swatches" role="radiogroup" aria-label="Pick your colour on the board">${COLORS.map((c,k)=>{ const o = owner(k);
+      return `<button role="radio" id="lc-col-${k}" aria-checked="${me.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.lobbyColor(${k})"></button>`; }).join('')}</div>`;
+}
 /* your own cat in the lobby: name, cat and colours */
 function lobbyCatHTML(){
   const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return '';
@@ -2793,6 +2812,7 @@ function lobbyCatHTML(){
     ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.lobbyBreed')}
     ${ART.has('cat-'+bid) && RECOLOUR[bid] ? `<div class="field" style="margin-top:12px">Colours</div>${catMaker(-1, s, 'G.lobbyTint')}` : ''}
+    ${lobbyColorHTML()}
     <div class="actions center" style="margin-top:18px"><button class="btn primary" onclick="G.lobbyDone()">Done</button></div></div>`;
 }
 /* in a game, the host's tools: skip the turn, pass the host role, remove a cat */
@@ -2819,14 +2839,14 @@ function lobbyScreen(){
   const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
   const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
   return `<main class="start lobby">
-    <p class="back-row"><a class="btn small" href="/">Back to portfolio</a></p>
+    <nav class="back-row lobby-top" aria-label="Game"><a class="btn small" href="/">Back to portfolio</a><span><button class="btn small" onclick="G.open('rules')">How to play</button><button class="btn small" onclick="fetchBoard();G.open('board')">Leaderboard</button></span></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-head">
         <h2>The cat corner</h2>
         <p>${n<2 ? 'Cushions are fluffed. Share the code so a friend can curl up with you.' : `${n} cats are curled up and waiting${isHost?'. Start when everyone is in.':' for the host to start.'}`}</p>
       </div>
-      <button class="code-pill" onclick="G.copy('${esc(L.code)}', this, 'Code copied')" aria-label="Copy the game code ${esc(L.code)}">
-        <span class="code-label">Game code</span><span class="code-txt">${esc(L.code)}</span><span class="code-hint" aria-live="polite">Tap to copy</span>
+      <button class="code-pill" onclick="G.copy('${esc(L.code)}', this, 'Copied to clipboard')" aria-label="Copy the game code ${esc(L.code)} to the clipboard">
+        <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
       <p class="center"><button class="btn small" onclick="G.copy('${esc(link)}', this, 'Link copied')">Copy invite link</button></p>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
@@ -2893,6 +2913,11 @@ const G = {
   rejoin(code){ ui.form.code = code; G.join(); },
   join(){ if(!ui.form.name.trim()){ ON.err='Add your name so friends know who you are.'; render(); $('#on-name').focus(); return; } ON.status='connecting'; connect(ui.form.code); },
   lobbyBreed(i){ if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
+  lobbyColor(c){
+    const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.pid); if(!s) return;
+    s.color = c; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', color:c}));
+    ui.refocus = '#lc-col-'+c; render();
+  },
   lobbyTintReset(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.pid); if(!s) return; s.tint=null; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:null})); render(); },
   lobbyRename(){ ON.note = null; const v = $('#lc-name').value.trim(); if(!v){ ON.note='Add a name so friends know who you are.'; render(); return; } if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', name:v})); },
   lobbyTint(_, k, v){
@@ -2915,7 +2940,7 @@ const G = {
   skip(){ if(!S || !ON.lobby || ON.lobby.host!==ON.pid || S.phase!=='play') return; ui.mode=null; skipTurn(); ui.modal=null; commit(); },
   hostStart(){
     const L = ON.lobby; if(L.host!==ON.pid || L.seats.length<2) return;
-    newGame(L.seats.map(s=>({name:s.name, breed:s.breed, tint:s.tint||null})), {online:true, code:L.code});
+    newGame(L.seats.map(s=>({name:s.name, breed:s.breed, color:s.color, tint:s.tint||null})), {online:true, code:L.code});
     ON.ws.send(JSON.stringify({type:'start', state:S}));
     S = null;   // wait for the server to confirm, so every screen starts together
   },

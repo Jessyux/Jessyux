@@ -13,6 +13,15 @@ export function cleanTint(t) {
   return SLOTS.some(k => out[k]) ? out : null;
 }
 
+/* a board colour for the seat with this pid: one of the game's 10, and not one another cat has picked */
+export const COLOR_COUNT = 10;
+export function pickColor(seats, pid, c) {
+  if (!Number.isInteger(c) || c < 0 || c >= COLOR_COUNT) return { ok: false, error: 'That colour is not in the game.' };
+  const other = seats.find(s => s.pid !== pid && s.color === c);
+  if (other) return { ok: false, error: `${other.name} already has that colour. Pick another.` };
+  return { ok: true, color: c };
+}
+
 /* a new name for the seat with this pid: not empty, at most 14 letters, and not a name another cat uses */
 export function renameSeat(seats, pid, name) {
   const n = String(name || '').trim().slice(0, MAX_NAME).trim();

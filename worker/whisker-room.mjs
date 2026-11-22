@@ -14,7 +14,7 @@
 //   error {message, kicked?}   the connection ends
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
-import { cleanTint, renameSeat } from './whisker-seat.mjs';
+import { cleanTint, renameSeat, pickColor } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -132,6 +132,7 @@ export class WhiskerRoom extends DurableObject {
       if ('name' in m) { const r = renameSeat(room.seats, me, m.name); if (!r.ok) return this.send(ws, { type: 'oops', message: r.error }); seat.name = r.name; }
       if ('breed' in m) seat.breed = clampBreed(m.breed);
       if ('tint' in m) seat.tint = cleanTint(m.tint);
+      if ('color' in m) { const r = pickColor(room.seats, me, m.color); if (!r.ok) return this.send(ws, { type: 'oops', message: r.error }); seat.color = r.color; }
       await this.put(room); this.broadcast(room, false); return;
     }
     if (m.type === 'host') {
