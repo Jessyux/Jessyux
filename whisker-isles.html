@@ -702,7 +702,8 @@ function newGame(seats, opts){
   log(`A new game begins on ${big?'Big Island':'Whisker Isles'}. ${pname(0)} places first.`);
 }
 
-function save(){ if(S && !S.online) store.set(SAVE_KEY, JSON.stringify(S)); }
+/* take-backs only last for the turn in play, so a saved game never carries them */
+function save(){ if(S && !S.online){ const u=S.undo; S.undo=[]; store.set(SAVE_KEY, JSON.stringify(S)); S.undo=u; } }
 function loadSave(){ try{ const s = JSON.parse(store.get(SAVE_KEY)); return s && s.players ? s : null; }catch(e){ return null; } }
 
 function log(msg){ S.log.unshift(msg); S.log.length = Math.min(S.log.length, 80); const l=$('#live'); if(l) l.textContent = msg.replace(/<[^>]+>/g,''); }
@@ -792,10 +793,10 @@ let placing = false;
 function snap(k, at){
   const u = S.undo || []; S.undo = null;
   const j = JSON.stringify(S);
-  S.undo = u; u.push({j, k, at}); placing = true;
+  S.undo = u; u.push({j, k, at, turn:S.turn, cur:S.cur, si:S.phase==='setup'?S.setup.i:-1}); placing = true;
 }
 function undoPlace(){
-  if(!S.undo || !S.undo.length || !myTurn()) return;
+  if(!canUndo()) return;
   const top = S.undo.pop(), rest = S.undo, name = pname(S.cur);
   S = JSON.parse(top.j); S.undo = rest; ui.mode = null;
   log(`${name} takes back a ${top.k==='bed'?'cat bed':top.k==='tower'?'cat tower':'yarn path'}.`);
@@ -831,7 +832,7 @@ function placeBed(v){
 }
 function placePath(e){
   const p = S.cur, pl = P();
-  snap('path', 'e'+e);
+  if(S.sub!=='spree') snap('path', 'e'+e);   // free spree paths weren't bought, so they can't be taken back
   S.roads[e] = p; pl.pieces.path--;
   if(S.phase==='setup'){
     log(`${pname(p)} rolls out a yarn path.`);
@@ -1201,7 +1202,7 @@ function miniMark(){ return `<svg viewBox="0 0 100 100" aria-hidden="true"><path
 function hexPoints(cx,cy,r,rot){ rot=rot||0; return Array.from({length:6},(_,i)=>{ const a=Math.PI/180*(60*i-30+rot); return (cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1); }).join(' '); }
 function pips(n){ return 6-Math.abs(7-n); }
 
-function canUndo(){ return S && S.undo && S.undo.length && myTurn() && !(S.handoff && !S.online) && !ui.modal && !S.offer && S.phase!=='over' && !['discard','vacuum','steal'].includes(S.sub); }
+function canUndo(){ const t = S && S.undo && S.undo[S.undo.length-1]; return !!t && t.turn===S.turn && t.cur===S.cur && t.si===(S.phase==='setup'?S.setup.i:-1) && myTurn() && !(S.handoff && !S.online) && !ui.modal && !S.offer && S.phase!=='over' && !['discard','vacuum','steal'].includes(S.sub); }
 function boardMode(){
   if((S.handoff && !S.online) || S.phase==='over' || ui.modal || S.offer || !myTurn()) return null;
   if(S.phase==='setup') return S.setup.step;
@@ -1342,7 +1343,7 @@ function hintText(){
   if(ui.mode==='path') return `Tap a glowing edge to roll out yarn.`;
   if(ui.mode==='tower') return `Tap one of your cat beds to upgrade it.`;
   if(!S.rolled) return `Roll the dice to see which tiles produce.`;
-  if(S.undo && S.undo.length) return `Tap the piece you just placed to take it back. Trading, buying or playing a treat, or ending your turn, locks it in.`;
+  if(canUndo()) return `Tap the piece you just placed to take it back. Trading, buying or playing a treat, or ending your turn, locks it in.`;
   return `Build, trade or play a treat, then end your turn.`;
 }
 
@@ -1631,7 +1632,7 @@ function rulesHTML(){
     [`<span class="pill">Build</span>`, `<b>Build, trade and play one treat</b>, in any order.`],
     [`<span class="pill">End</span>`, `<b>End your turn.</b> The next cat goes.`]
   ])}
-  <p class="small"><b>Changed your mind?</b> Tap the bed, path or tower you just built to take it back and get your cards back. You can keep taking pieces back, newest first, until you trade, buy or play a treat, or end your turn.</p></section>
+  <p class="small"><b>Changed your mind?</b> Bought a bed, path or tower and want it somewhere else? Tap it on the same turn to take it back and get your cards back. You can keep taking pieces back, newest first, until you trade, buy or play a treat, or end your turn. Pieces from earlier turns and free paths from a Yarn spree stay put.</p></section>
 
   <section class="rule-block"><h3>Build cards</h3>
   <div class="build-grid">
