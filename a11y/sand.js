@@ -72,13 +72,14 @@
         .then(function(data){
           var msgs=data.messages||[],top=msgs[0]&&msgs[0].id;
           loaded=true;
-          status.textContent=msgs.length?'':'Nothing here yet. You could be first.';
+          /* an empty wall is just empty sand: no words on screen, a quiet note for screen readers only */
+          status.textContent=msgs.length?'':'No messages yet.';status.classList.toggle('sand-sr',!msgs.length);
           if(top===newest&&list.children.length===msgs.length)return;
           newest=top;
           list.textContent='';
           msgs.forEach(function(m){list.appendChild(messageEl(m))});
         })
-        .catch(function(){if(!loaded)status.textContent='Messages can\'t be loaded right now.'});
+        .catch(function(){if(!loaded){status.classList.remove('sand-sr');status.textContent='Messages can\'t be loaded right now.'}});
     }
     load();
     setInterval(load,LOAD_EVERY);
