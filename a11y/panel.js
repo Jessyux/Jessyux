@@ -114,7 +114,7 @@
   }
 
   function show(){
-    if(!panel)return;
+    if(!panel||!A.playgroundOn())return;
     lastFocus=d.activeElement;
     refresh();
     panel.classList.add('open');
@@ -164,7 +164,8 @@
       if(typeof o.view==='function')viewFn=o.view;else if(o.view)viewFn=function(){return o.view};
       build();
       A.subscribe(refresh);
-      if(o.showFloatingButton){
+      /* hidden while it's being refined (settings.js, ?playground=1) */
+      if(o.showFloatingButton&&A.playgroundOn()){
         opener=el('button','jux-open jux-ui','Accessibility playground');opener.type='button';
         opener.setAttribute('aria-expanded','false');opener.setAttribute('aria-controls','jux-panel');
         opener.onclick=show;d.body.appendChild(opener);

@@ -98,3 +98,17 @@ test('apply loads a font only when the setting needs it', () => {
   assert.strictEqual(root.added.length, 1);
   assert.match(root.added[0].href, /Lexend/);
 });
+
+test('with the playground hidden, saved settings are ignored and the page shows defaults', () => {
+  const saved = JSON.stringify({ ...DEFAULTS, style: 'classic', size: '3' });
+  const s = makeSettings({ storage: memStore(saved), playground: () => false });
+  assert.deepStrictEqual(s.load(), DEFAULTS);
+  assert.strictEqual(s.playgroundOn(), false);
+});
+
+test('with the playground on, saved settings apply', () => {
+  const saved = JSON.stringify({ ...DEFAULTS, style: 'classic' });
+  const s = makeSettings({ storage: memStore(saved), playground: () => true });
+  assert.strictEqual(s.load().style, 'classic');
+  assert.strictEqual(s.playgroundOn(), true);
+});

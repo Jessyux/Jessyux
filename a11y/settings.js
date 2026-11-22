@@ -37,9 +37,12 @@
     var storage=opts.storage;
     var prefersReduced=opts.prefersReduced||function(){return false};
     var prefersDark=opts.prefersDark||function(){return false};
+    /* while the playground is hidden, nobody can change a setting, so the page shows the defaults */
+    var playground=opts.playground||function(){return true};
     var listeners=[],memory=null;
 
     function load(){
+      if(!playground())return sanitize();
       if(memory)return sanitize(memory);
       try{
         var raw=storage.getItem(KEY);
@@ -86,13 +89,26 @@
     /* other documents (a case study frame, another tab) saved something */
     function handleStorage(){notify(load())}
 
-    return {load:load,save:save,reset:reset,subscribe:subscribe,isCalm:isCalm,resolvedTheme:resolvedTheme,apply:apply,handleStorage:handleStorage};
+    return {load:load,save:save,reset:reset,subscribe:subscribe,isCalm:isCalm,resolvedTheme:resolvedTheme,apply:apply,handleStorage:handleStorage,playgroundOn:function(){return !!playground()}};
+  }
+
+  /* The playground is hidden from visitors while it's being refined. Open any page with
+     ?playground=1 to turn it on in this browser, and ?playground=0 to hide it again. */
+  var PLAY_KEY='jux-playground';
+  function playgroundFlag(store,search){
+    try{
+      var m=/[?&]playground=([01])/.exec(search||'');
+      if(m){if(m[1]==='1')store.setItem(PLAY_KEY,'1');else store.removeItem(PLAY_KEY)}
+      return store.getItem(PLAY_KEY)==='1';
+    }catch(e){return false}
   }
 
   if(g.document){
     var store=null;try{store=g.localStorage}catch(e){}
     var mm=function(q){return function(){return !!(g.matchMedia&&g.matchMedia(q).matches)}};
-    var inst=makeSettings({storage:store,prefersReduced:mm('(prefers-reduced-motion: reduce)'),prefersDark:mm('(prefers-color-scheme: dark)')});
+    /* frames inside the home page have no query string of their own; they read the saved flag */
+    var playOn=playgroundFlag(store,g.location&&g.location.search);
+    var inst=makeSettings({storage:store,prefersReduced:mm('(prefers-reduced-motion: reduce)'),prefersDark:mm('(prefers-color-scheme: dark)'),playground:function(){return playOn}});
     inst.DEFAULTS=DEFAULTS;inst.sanitize=sanitize;
     g.juxA11y=inst;
     g.addEventListener('storage',function(e){if(e.key===KEY||e.key===null){inst.apply(g.document.documentElement);inst.handleStorage()}});

@@ -63,12 +63,13 @@
     ]);
   }
   function fellow(){
-    message('Hello, fellow designer.','Have a poke around. The accessibility playground shows how I think about inclusive design, and I\'d love to swap notes.',[
+    var play=g.juxA11y&&juxA11y.playgroundOn&&juxA11y.playgroundOn();
+    message('Hello, fellow designer.',play?'Have a poke around. The accessibility playground shows how I think about inclusive design, and I\'d love to swap notes.':'Have a poke around, and I\'d love to swap notes.',[
       link('Write in the sand','/sand'),
-      btn('Open the playground',function(){close();g.juxPanel&&juxPanel.open()}),
+      play?btn('Open the playground',function(){close();g.juxPanel&&juxPanel.open()}):null,
       btn('See the work',function(){close();if(classic()&&g.juxClassic)juxClassic.show('cases')}),
       link('LinkedIn',LINKEDIN,true)
-    ]);
+    ].filter(Boolean));
   }
   function build(){
     dlg=el('dialog','jux-welcome jux-ui');
