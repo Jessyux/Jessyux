@@ -774,9 +774,10 @@ div.build{cursor:default}
 .tp-die .d3-hop{position:absolute;inset:0}
 .tp-card .actions{margin:0}
 .tp-card .tp-later{margin-top:10px}
-.thumbs-up{position:fixed;left:0;right:0;bottom:0;z-index:175;display:flex;justify-content:center;gap:clamp(40px,22vw,220px);pointer-events:none;overflow:hidden;height:min(46vh,300px);align-items:flex-end}
-.thumbs-up .paw{height:100%;width:auto;display:block}
+.thumbs-up{position:fixed;left:0;right:0;bottom:0;height:min(46vh,300px);z-index:175;pointer-events:none;overflow:hidden}
+.thumbs-up .paw{position:absolute;bottom:0;display:block}
 .thumbs-up .paw.l{scale:-1 1}
+#dock.thumbing .paw-hand{visibility:hidden}
 .tu-roll{position:absolute;left:50%;top:6px;transform:translateX(-50%);display:grid;justify-items:center;background:var(--milk);border:3px solid var(--plum);border-radius:18px;box-shadow:3px 3px 0 var(--plum);padding:4px 16px 2px;color:var(--plum);animation:tuPop .45s cubic-bezier(.3,1.5,.5,1)}
 .tu-roll small{font-weight:800;font-size:.78rem}
 .tu-roll b{font-family:var(--display);font-weight:400;font-size:2.4rem;line-height:1}
@@ -2824,19 +2825,23 @@ function setupPromptSync(){
   if(!reduceMotion) root.querySelectorAll('.tp-die .sprite-spin').forEach((c,k)=>c.animate([{transform:'rotate(-7deg) translateY(2px)'},{transform:'rotate(8deg) translateY(-4px)'},{transform:'rotate(-7deg) translateY(2px)'}],{duration:2200,iterations:Infinity,easing:'ease-in-out',delay:k*-700}));
   if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
 }
-/* a roll is done: both paws pop up from the bottom with a thumbs up, in the colour of the cat that rolled */
+/* a roll is done: the two paws at the bottom swap for thumbs up in the rolling cat's colour, hold for 2 seconds, then
+   sink back. Only then does the dock take the next cat's colour and the next cat's pop-up appear. */
 function thumbsUp(i, sum){
   const q = S && S.players[i]; if(!q || !ART.has('paw-up')) return;
-  /* hold the next cat's pop-up back for 2 seconds so everyone sees this roll */
-  ui.setupHold = Date.now()+2000; setTimeout(()=>{ if(S) setupPromptSync(); }, 2050);
+  ui.holdCat = i; ui.setupHold = Date.now()+2000;
+  const dock = $('#dock'), end = () => { ui.setupHold = 0; ui.holdCat = null; if(dock) dock.classList.remove('thumbing'); document.querySelectorAll('.thumbs-up').forEach(e=>e.remove()); if(S){ renderDock(); setupPromptSync(); } };
   document.querySelectorAll('.thumbs-up').forEach(e=>e.remove());
+  const H = Math.min(innerHeight*.4, 280), Wd = H*.564;
+  const hands = dock ? [...dock.querySelectorAll('.paw-hand')] : [];
+  const cx = hands.length===2 ? hands.map(h=>{ const im = [...h.querySelectorAll('.paw')].find(e=>e.offsetParent!==null), r = (im||h).getBoundingClientRect(); return r.left + r.width/2; }) : [innerWidth*.25, innerWidth*.75];
   const el = document.createElement('div'); el.className = 'thumbs-up'; el.setAttribute('aria-hidden','true');
   el.innerHTML = pawImg(q,'l','paw-up') + pawImg(q,'r','paw-up') + `<div class="tu-roll"><small>${esc(q.name)} rolled</small><b>${sum}</b></div>`;
-  document.body.appendChild(el);
+  [...el.querySelectorAll('.paw')].forEach((p,k)=>{ p.style.height = H+'px'; p.style.width = Wd+'px'; p.style.left = Math.max(0, Math.min(innerWidth-Wd, cx[k]-Wd/2))+'px'; });
+  document.body.appendChild(el); if(dock) dock.classList.add('thumbing');
   sfx('award');
-  if(reduceMotion){ setTimeout(()=>el.remove(), 2000); return; }
-  [...el.querySelectorAll('.paw')].forEach((p,k)=>p.animate([{transform:`translateY(105%) rotate(${k?10:-10}deg)`},{transform:`translateY(-6%) rotate(${k?-4:4}deg)`,offset:.45},{transform:'translateY(2%) rotate(0deg)',offset:.55},{transform:'translateY(0) rotate(0deg)',offset:.8},{transform:`translateY(105%) rotate(${k?8:-8}deg)`}],{duration:2000,easing:'ease-in-out',delay:k*90,fill:'both'}));
-  setTimeout(()=>el.remove(), 2250);
+  if(!reduceMotion) [...el.querySelectorAll('.paw')].forEach((p,k)=>p.animate([{transform:'translateY(88%)'},{transform:'translateY(-3%)',offset:.18},{transform:'translateY(0)',offset:.26},{transform:'translateY(0)',offset:.84},{transform:'translateY(88%)'}],{duration:2000,easing:'ease-in-out',fill:'both'}));
+  setTimeout(end, 2000);
 }
 function onMsg(m){
   if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); setTimeout(maybeA2HS, 1800); }
@@ -3352,7 +3357,7 @@ function pawFan(cards, step){
 }
 function renderDock(){
   const el = $('#dock'); if(!el) return;
-  const mine = me(), mp = mine>=0 ? S.players[mine] : null;
+  const mine = (ui.setupHold>Date.now() && ui.holdCat!=null) ? ui.holdCat : me(), mp = mine>=0 ? S.players[mine] : null;
   /* in person, the paws hide while a trade is with the other cat, so neither sees the other's cards */
   const hide = !dockOn() || !mp || (S.handoff && !S.online) || (!S.online && (S.offer || S.handback!=null)) || S.phase==='over';
   document.body.classList.toggle('has-dock', !hide);
