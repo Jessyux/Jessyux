@@ -746,11 +746,12 @@ div.build{cursor:default}
 @media (prefers-reduced-motion:reduce){.breeds button[aria-checked="true"].just::after{animation:none}}
 .breeds button:disabled{opacity:.3;filter:grayscale(1)}
 /* Create, or, the code box and Join stay on one line, even on a phone: the code box takes what's left */
-.online-actions{display:flex;gap:8px;align-items:center;margin-top:16px}
+.online-actions{display:flex;gap:14px;align-items:center;margin-top:22px;padding:6px 6px 8px}
 .online-actions .btn{white-space:nowrap;flex:none}
 .online-actions .or{color:var(--plum-2);font-weight:700}
-.join{display:flex;gap:8px;flex:1;min-width:0}
+.join{display:flex;gap:12px;flex:1;min-width:0}
 .join input{margin:0;flex:1;min-width:0}
+@media (max-width:440px){.online-actions{gap:8px;padding:6px 0 8px}.online-actions .btn{padding-left:.8em;padding-right:.8em}.join{gap:8px}}
 /* ---------- start screen: the island floats in a full-width sea ---------- */
 body{overflow-x:clip}
 .start{max-width:none;padding:0 0 40px}
@@ -778,7 +779,7 @@ body{overflow-x:clip}
 .where-ic img{width:70px;height:70px;object-fit:contain}
 .where-ic.together img+img{margin-left:-22px}
 .where-ic.apart i{width:34px;border-top:3px dashed var(--plum-2);margin:0 6px 34px}
-.where-swap{margin:14px 0 0;text-align:center}
+.card .where-swap{margin:26px 0 6px;text-align:center}
 @media (max-width:560px){.where-opts{grid-template-columns:1fr}}
 .raft .hint.alert{grid-column:1/-1;margin:0 0 12px}
 .crew{padding:20px 22px 22px}
@@ -2384,7 +2385,7 @@ function onMsg(m){
   if(m.type==='pick'){ ON.status='pick'; ON.pick = {cats:m.cats||[]}; ON.err=null; render(); return; }
   if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
   if(m.type==='error'){ ON.convert = null; }
-  if(m.type==='error' && (m.kicked || m.deleted || m.detached)){ S = null; ui.modal = null; if((m.deleted || m.detached) && ON.code) forgetGame(ON.code); }
+  if(m.type==='error' && (m.kicked || m.deleted || m.detached || m.replaced)){ S = null; ui.modal = null; if((m.deleted || m.detached) && ON.code) forgetGame(ON.code); }
   if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'','/'); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
     const wasLobby = ON.status==='lobby', prevPids = ON.lobby ? ON.lobby.seats.map(x=>x.pid) : null, prevOpen = ON.lobby ? ON.lobby.seats.filter(x=>x.open).map(x=>x.name) : null;

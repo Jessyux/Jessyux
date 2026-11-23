@@ -25,7 +25,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
-import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat } from './whisker-seat.mjs';
+import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -143,6 +143,14 @@ export class WhiskerRoom extends DurableObject {
     } catch (e) { console.log('push error', String(e && e.stack || e)); } })());
   }
 
+  /* closes every connection a device has open, telling it why */
+  signOut(pid, message) {
+    for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === pid) {
+      this.send(w, { type: 'error', replaced: true, message });
+      w.serializeAttachment({ pid: null }); try { w.close(1000, 'replaced'); } catch (e) { /* closed */ }
+    }
+  }
+
   async webSocketMessage(ws, data) {
     if (typeof data !== 'string' || data.length > MAX_STATE) return this.fail(ws, 'That move was too big to send.');
     let m; try { m = JSON.parse(data); } catch (e) { return; }
@@ -176,9 +184,9 @@ export class WhiskerRoom extends DurableObject {
         else if (!room.seats.some(s => key(s.name) === key(name))) return this.fail(ws, `There is no cat called ${name} in this game.`);
       }
       if (!seat && name) {
-        const same = room.seats.find(s => key(s.name) === key(name));
-        if (same && !this.online().includes(same.pid)) { if (room.host === same.pid) room.host = pid; same.pid = pid; seat = same; }
-        else if (same) return this.fail(ws, `${name} is already playing in this game. Pick another name to join.`);
+        // the same name from another browser takes the cat over; the old browser is signed out
+        const t = takeOverByName(room, pid, name);
+        if (t.ok) { seat = t.seat; if (t.oldPid) this.signOut(t.oldPid, 'You joined from another browser, so this one was signed out.'); }
       }
       if (!seat) {
         if (room.started) return this.fail(ws, 'This game has already started. Only the cats who started it can rejoin, using the same name.');

@@ -121,3 +121,29 @@ test('the lobby marks open cats and which seat is yours; open cats are never onl
   assert.equal(host.lobby.seats.filter(s => s.open).length, 1);
   assert.ok(!JSON.stringify(host).includes('"H"') && !JSON.stringify(host).includes('F1'), 'device ids stay private');
 });
+
+import { takeOverByName } from '../worker/whisker-seat.mjs';
+test('joining again with the same name moves the cat to the new device', () => {
+  const room = { host: 'old', seats: [{ pid: 'old', name: 'Jess' }, { pid: 'p2', name: 'Mochi' }], push: { old: { endpoint: 'x' } } };
+  const r = takeOverByName(room, 'new', ' jess ');
+  assert.equal(r.ok, true);
+  assert.equal(r.oldPid, 'old');
+  assert.equal(room.seats[0].pid, 'new');
+  assert.equal(room.host, 'new');
+  assert.equal(room.push.old, undefined);
+});
+test('taking over keeps the host with someone else when the cat was not the host', () => {
+  const room = { host: 'p2', seats: [{ pid: 'old', name: 'Jess' }, { pid: 'p2', name: 'Mochi' }] };
+  takeOverByName(room, 'new', 'Jess');
+  assert.equal(room.host, 'p2');
+});
+test('the same device saying hello again changes nothing', () => {
+  const room = { host: 'a', seats: [{ pid: 'a', name: 'Jess' }] };
+  const r = takeOverByName(room, 'a', 'Jess');
+  assert.equal(r.ok, true); assert.equal(r.oldPid, null);
+});
+test('an unknown name, or an open seat, is not taken over', () => {
+  const room = { host: 'a', seats: [{ pid: 'a', name: 'Jess' }, { pid: null, name: 'Tofu' }] };
+  assert.equal(takeOverByName(room, 'new', 'Nobody').ok, false);
+  assert.equal(takeOverByName(room, 'new', 'Tofu').ok, false);
+});

@@ -98,3 +98,16 @@ export function renameSeat(seats, pid, name) {
   if (other) return { ok: false, error: `${other.name} is already in this game. Pick another name.` };
   return { ok: true, name: n };
 }
+
+/* Joining again with the same name from another browser takes that cat over: the seat moves to the new device
+   (and the host role with it), and the caller closes the old device. Seats nobody holds are left to claimOpen. */
+export function takeOverByName(room, newPid, name) {
+  const same = room.seats.find(s => key(s.name) === key(name));
+  if (!same || !same.pid) return { ok: false };
+  if (same.pid === newPid) return { ok: true, seat: same, oldPid: null };
+  const oldPid = same.pid;
+  if (room.host === oldPid) room.host = newPid;
+  same.pid = newPid;
+  if (room.push && room.push[oldPid]) delete room.push[oldPid];   // the old device no longer gets this cat's alerts
+  return { ok: true, seat: same, oldPid };
+}
