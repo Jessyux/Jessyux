@@ -2910,11 +2910,15 @@ function renderOverlay(){
   } else if(ui.modal) html = modalHTML();
   const full = html ? `<div class="overlay" role="dialog" aria-modal="true">${html}</div>` : '';
   if(full===lastOverlay) return;
-  const sameKind = lastOverlay && full && lastOverlay.slice(0,120)===full.slice(0,120);
+  /* the same pop-up re-drawn (a colour was tapped) keeps its scroll place; a different one starts at the top */
+  const kindOf = h => { const m = h && h.match(/class="modal ([\w -]+)"/); return m ? m[1] : null; };
+  const sameKind = lastOverlay && full && (lastOverlay.slice(0,120)===full.slice(0,120) || (kindOf(lastOverlay) && kindOf(lastOverlay)===kindOf(full)));
   lastOverlay = full;
   const keepScroll = sameKind && o.querySelector('.modal') ? o.querySelector('.modal').scrollTop : 0;
+  const keepBody = sameKind && o.querySelector('.cs-body') ? o.querySelector('.cs-body').scrollTop : 0;
   o.innerHTML = full;
   if(keepScroll){ const m=o.querySelector('.modal'); if(m) m.scrollTop=keepScroll; }
+  if(keepBody){ const b=o.querySelector('.cs-body'); if(b) b.scrollTop=keepBody; }
   if(ui.refocus){ const f=o.querySelector(ui.refocus); ui.refocus=null; if(f){ f.focus({preventScroll:true}); if(f.closest('.swatches, .breeds')){ f.classList.add('just'); f.addEventListener('animationend', ()=>f.classList.remove('just'), {once:true}); } } }
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
