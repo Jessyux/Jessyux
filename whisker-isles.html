@@ -860,9 +860,11 @@ body{overflow-x:clip}
 .where-ic.together img+img{margin-left:-22px}
 .where-ic.apart i{width:34px;border-top:3px dashed var(--plum-2);margin:0 6px 34px}
 .card .where-swap{margin:26px 0 6px;text-align:center}
-.room-prop{position:absolute!important;left:50%;top:136px;transform:translateX(-50%);z-index:2;width:clamp(110px,22%,175px);padding:0;border:0;background:none;cursor:pointer;border-radius:18px;transition:transform .18s}
-.room-prop img{display:block;width:100%;height:auto}
-.room-prop.side{left:78%;top:44%;width:clamp(84px,17%,128px)}
+.room-prop{position:absolute!important;left:50%;top:158px;transform:translateX(-50%);z-index:2;width:clamp(110px,22%,165px);padding:0;border:0;background:none;cursor:pointer;border-radius:18px;transition:transform .18s}
+.room-prop img{display:block;width:100%;height:auto;filter:drop-shadow(0 0 7px rgba(255,214,102,.95)) drop-shadow(0 0 16px rgba(255,196,80,.65));animation:propGlow 2.2s ease-in-out infinite}
+.room-prop:hover img,.room-prop:focus-visible img{animation-duration:1.1s}
+@keyframes propGlow{0%,100%{filter:drop-shadow(0 0 5px rgba(255,214,102,.8)) drop-shadow(0 0 11px rgba(255,196,80,.45))}50%{filter:drop-shadow(0 0 11px rgba(255,224,120,1)) drop-shadow(0 0 26px rgba(255,200,90,.85))}}
+@media (prefers-reduced-motion:reduce){.room-prop img{animation:none}}
 .room-prop:hover,.room-prop:focus-visible{transform:translateX(-50%) translateY(-4px) rotate(-2deg) scale(1.05)}
 .room-prop:focus-visible{outline:3px solid var(--plum);outline-offset:4px}
 .room-prop::after{content:attr(data-tip);position:absolute;left:50%;top:100%;transform:translate(-50%,-4px);margin-top:4px;white-space:nowrap;padding:3px 10px;border-radius:999px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;opacity:0;pointer-events:none;transition:opacity .15s}
@@ -4007,7 +4009,7 @@ function lobbyScreen(){
         <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
-      <button class="room-prop side" onclick="G.lobbyToPerson()" data-tip="Play in person instead" aria-label="Leave this lobby and play in person instead"><img src="${artSrc('table-game')}" alt=""></button>
+      <button class="room-prop" onclick="G.lobbyToPerson()" data-tip="Play in person instead" aria-label="Leave this lobby and play in person instead"><img src="${artSrc('table-game')}" alt=""></button>
       <ul class="nooks" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
     <div class="online-actions lobby-go">
