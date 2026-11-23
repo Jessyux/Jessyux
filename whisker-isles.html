@@ -3387,11 +3387,15 @@ function arrangeNooks(){
     const items = [...ul.children], n = items.length, box = ul.parentElement.getBoundingClientRect(); if(!n || !box.width) return;
     ul.classList.add('ring');
     const w = box.width, h = box.height, cx = w/2, rx = w*.40, ry = h*.22, cy = h - ry - 108;
-    /* the cats sit evenly either side of the middle; the "+" slot waits one step past the last cat */
-    const hasPlus = items[n-1].classList.contains('empty'), cats = hasPlus ? n-1 : n;
-    const stepA = Math.min(62, 230/(cats+(hasPlus?1:0)));
-    const pts = items.map((_,i)=>{ const a = (90 + (cats-1)/2*stepA - i*stepA) * Math.PI/180; return [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]; });
-    let step = 130; if(n>1){ let len = 0; for(let i=1;i<n;i++) len += Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); step = len/(n-1); }
+    /* the "+" holds the middle of the front row; cats take the spots either side, the ones with the lowest data-pr closest to it
+       (left, right, left...), so a new cat slides in next to the middle and older ones shift outward. A full room has no "+". */
+    const plus = items.find(li=>li.classList.contains('empty')), cs = items.filter(li=>li!==plus).sort((p,q)=>(+p.dataset.pr||0)-(+q.dataset.pr||0));
+    const left = cs.filter((_,k)=>k%2===0).reverse(), right = cs.filter((_,k)=>k%2===1);
+    const row = plus ? [...left, plus, ...right] : [...left, ...right];
+    const mid = plus ? left.length : (row.length-1)/2, stepA = Math.min(62, 100/Math.max(1, mid, row.length-1-mid));
+    const pos = new Map(); row.forEach((li,j)=>{ const a = (90 + (mid-j)*stepA)*Math.PI/180; pos.set(li, [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]); });
+    const pts = items.map(li=>pos.get(li));
+    let step = 130; if(n>1){ let len = 0; for(let i=1;i<n;i++){ const u = pos.get(row[i-1]), v = pos.get(row[i]); len += Math.hypot(v[0]-u[0], v[1]-u[1]); } step = len/(n-1); }
     const f = Math.max(.58, Math.min(1, step/122));
     items.forEach((li,i)=>{ li.style.left = pts[i][0]+'px'; li.style.top = pts[i][1]+'px'; li.style.setProperty('--nf', f.toFixed(3)); li.style.zIndex = 3 + Math.round(pts[i][1]/10); });
   });
@@ -3939,7 +3943,7 @@ function startScreen(){
         </div>
         <button class="room-prop" onclick="G.where('online')" data-tip="Play online instead" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""></button>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
-        <ul class="nooks ring" aria-label="Cats playing">${slotOrder(seats.length).map(i=>{ const s = seats[i]; return `<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
+        <ul class="nooks ring" aria-label="Cats playing">${seats.map((s,i)=>{ return `<li class="nook seat-nook" data-pr="${seats.length-1-i}" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
           <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
             ${n>2?`<button class="nook-x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}</span>
           <span class="pillow" aria-hidden="true"></span>
@@ -4064,10 +4068,8 @@ function lobbyScreen(){
   const mySeat = L.seats.find(s=>s.pid===ON.me);
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
   const away = s => !ON.online.includes(s.pid);
-  /* your own cat sits in the middle on your screen; everyone else shifts to the sides */
-  const myI = LS.findIndex(s=>s.pid===ON.me), others = slotOrder(LS.length).filter(i=>i!==myI);
-  const shown = myI<0 ? slotOrder(LS.length) : (others.splice(Math.floor(others.length/2), 0, myI), others);
-  const cats = shown.map(i=>{ const s = LS[i]; return `<li class="nook${s.pid===ON.me?' me':''}${away(s)?' away':''}${s.ready?' ready':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
+  /* your own cat sits closest to the middle on your screen (data-pr 0); the newest cats come next */
+  const cats = LS.map((s,i)=>{ return `<li data-pr="${s.pid===ON.me?0:LS.length-i}" class="nook${s.pid===ON.me?' me':''}${away(s)?' away':''}${s.ready?' ready':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
       ${s.pid===ON.me ? `<span class="nook-cat"><button class="nook-edit${s.ready?' locked':''}" onclick="G.editMine()" aria-label="${s.ready?'Customise your cat. Uncheck ready first':'Customise your cat'}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
