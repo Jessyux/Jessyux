@@ -467,6 +467,9 @@ img.pic{object-fit:contain}
 
 /* ---------- the cats on the map ---------- */
 .cat-hud{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:var(--room,70%);pointer-events:none}
+.cat-tools{position:absolute;z-index:17;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.cat-tools.fixed{position:fixed;left:50%!important;bottom:12px!important}
+.tool-row{display:flex;gap:10px;pointer-events:auto}
 .cat-row{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
 .cat-av{position:relative;width:62px;height:62px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
 .cat-av .portrait{width:62px;height:62px;border-width:3px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
@@ -2842,7 +2845,7 @@ function render(){
   }
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav"><div class="wi-left">${meLink()}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
-    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div></div>
+    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}${S.online ? bellBtn() : ''}`;
@@ -2877,7 +2880,8 @@ function renderCats(){
     return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span></button>`;
   }).join('');
   const ico = SND.muted ? '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
-  hud.innerHTML = `<div class="cat-row">${avs}<button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-haspopup="true" aria-expanded="${!!ui.musicMenu}" aria-label="${MUS.on?'Music: '+MUS_TR[MUS.track].name+'. Choose music':'Music is off. Choose music'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button></div>${ui.musicMenu ? musMenuHTML() : ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  hud.innerHTML = `<div class="cat-row">${avs}</div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  const tools = $('#cat-tools'); if(tools) tools.innerHTML = `${ui.musicMenu ? musMenuHTML() : ''}<div class="tool-row"><button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-haspopup="true" aria-expanded="${!!ui.musicMenu}" aria-label="${MUS.on?'Music: '+MUS_TR[MUS.track].name+'. Choose music':'Music is off. Choose music'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button></div>`;
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
 function placeCats(){
@@ -2886,8 +2890,9 @@ function placeCats(){
   const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2, lg = $('#map-logo'), lw = lg ? lg.getBoundingClientRect().width : 0;
   hud.style.left = (fl - wrap.left + 14) + 'px'; hud.style.top = (ft - wrap.top + 12) + 'px';
   hud.style.setProperty('--room', Math.max(110, fw - lw - 40) + 'px');
+  const tl = $('#cat-tools'); if(tl){ tl.classList.toggle('fixed', innerWidth<=920); tl.style.left = (fl - wrap.left + fw/2) + 'px'; tl.style.bottom = (wrap.bottom - (ft+fh) + 10) + 'px'; }
 }
-document.addEventListener('click', e=>{ if((ui.catPop!=null || ui.musicMenu) && S && e.target.isConnected && !(e.target.closest && e.target.closest('#cat-hud'))){ ui.catPop = null; ui.musicMenu = false; renderCats(); } });
+document.addEventListener('click', e=>{ if((ui.catPop!=null || ui.musicMenu) && S && e.target.isConnected && !(e.target.closest && e.target.closest('#cat-hud, #cat-tools'))){ ui.catPop = null; ui.musicMenu = false; renderCats(); } });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && ui.musicMenu && S){ ui.musicMenu = false; renderCats(); const m = document.querySelector('.cat-music'); if(m) m.focus(); }
   else if(e.key==='Escape' && ui.catPop!=null && S){ const i = ui.catPop; ui.catPop = null; renderCats(); const b = document.querySelector(`.cat-av[data-i="${i}"]`); if(b) b.focus(); } });
 /* when a bonus card changes hands, pop it up big, then fly it to that cat's row */
