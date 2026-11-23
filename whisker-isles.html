@@ -987,10 +987,13 @@ body{overflow-x:clip}
 /* the cats sit on the rug at the bottom of the room */
 .nooks{list-style:none;margin:auto 0 0;padding:26px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:16px 12px}
 .nook{display:grid;justify-items:center;text-align:center;gap:2px;width:112px}
-.nook-invite{display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
+.nook-invite{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
 .nook-invite:hover .ghost,.nook-invite:focus-visible .ghost{background:#FFF7DA;border-color:var(--plum)}
 .nook-invite:focus-visible{outline:3px solid var(--plum);outline-offset:3px;border-radius:50%}
 .nook-invite.copied .ghost{background:#BFEBB0;border-style:solid}
+.nook-invite::after{content:"Click to copy invite link";position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:128px;box-sizing:border-box;padding:5px 8px;border-radius:12px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;line-height:1.25;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3}
+.nook-invite:hover::after,.nook-invite:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.nook-invite.copied::after{opacity:0}
 .nook.empty .ghost{display:grid;place-items:center;font-family:var(--display);font-size:2rem;line-height:1;color:var(--plum-2)}
 .nook-cat{position:relative;z-index:1;margin-bottom:-22px}
 .nook .portrait{width:72px;height:72px}
@@ -3975,7 +3978,7 @@ function lobbyScreen(){
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
       <b>${esc(s.name)}</b><span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</span></li>`).join('');
-  const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>Invite</b></li>` : '';
+  const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
     <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
@@ -4124,7 +4127,8 @@ const G = {
   },
   copy(text, btn, done){
     /* the same yellow alert as the rest of the game; the button keeps its own look and just flashes green */
-    const said = () => { toast((done || 'Copied').replace(/ to clipboard$/,''), ''); btn.classList.add('copied'); setTimeout(()=>btn.classList.remove('copied'), 1400); };
+    const said = () => { toast((done || 'Copied').replace(/ to clipboard$/,''), ''); btn.classList.add('copied'); setTimeout(()=>btn.classList.remove('copied'), 1400);
+      const nk = btn.closest('.nook'), lb = nk && nk.querySelector('b'); if(lb){ lb.textContent = 'Link copied'; ui.invitePending = true; setTimeout(()=>{ if(lb.isConnected) lb.textContent = 'Pending'; }, 1800); } };
     const fallback = () => { const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); said(); }catch(e){} t.remove(); };
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
