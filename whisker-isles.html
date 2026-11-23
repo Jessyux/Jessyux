@@ -53,8 +53,8 @@ a.btn{color:var(--plum);text-decoration:none}
 .tools .jx-home span{font-size:11px;padding:2px 9px}
 .start-top,.tools{align-items:center}
 .lobby-top > span{display:flex;gap:8px}
-.cat-sheet{padding:0;display:flex;flex-direction:column;overflow:hidden;width:min(520px,100%)}
-.cs-preview{display:flex;align-items:center;gap:14px;padding:14px 18px 12px;background:linear-gradient(color-mix(in srgb, var(--pc,#eee) 18%, transparent),transparent),var(--milk);border-bottom:3px dashed var(--plum-2);flex:none}
+.cat-sheet{--hh:140px;--fh:72px;padding:0;position:relative;overflow:hidden;width:min(520px,100%);height:min(700px,calc(100dvh - 32px))}
+.cs-preview{position:absolute;top:0;left:0;right:0;z-index:3;height:var(--hh);box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:12px 18px;background:linear-gradient(color-mix(in srgb, var(--pc,#eee) 30%, rgba(255,251,240,.55)),rgba(255,251,240,.5));-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-bottom:1.5px solid rgba(58,35,65,.18)}
 .cs-preview .portrait{width:112px;height:112px;border-width:4px;border-radius:50%;background:color-mix(in srgb, var(--pc) 30%, #fff)}
 .cs-preview .portrait img{object-fit:contain;object-position:50% 50%;padding:4px;box-sizing:border-box}
 .cs-pv-text{min-width:0}
@@ -62,17 +62,18 @@ a.btn{color:var(--plum);text-decoration:none}
 .cat-maker{margin-top:0}
 .cs-sw{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.85rem;color:var(--plum-2)}
 .cs-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--plum);flex:none}
-.cs-body{padding:12px 18px;overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0}
+.cs-body{position:absolute;inset:0;padding:calc(var(--hh) + 10px) 18px calc(var(--fh) + 14px);overflow-y:auto;overflow-x:hidden}
 .cs-hint{margin:0 0 8px}
-.cs-foot{padding:10px 18px calc(12px + env(safe-area-inset-bottom));border-top:3px dashed var(--plum-2);display:flex;justify-content:center;flex:none;background:var(--milk)}
+.cs-foot{position:absolute;left:0;right:0;bottom:0;z-index:3;min-height:var(--fh);box-sizing:border-box;padding:10px 18px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;background:rgba(255,251,240,.5);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border-top:1.5px solid rgba(58,35,65,.18)}
 .cat-sheet .lc-name{display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap}
 .cat-sheet .lc-name label{flex:1;min-width:0}
 .cat-sheet .lc-name input{width:100%;min-width:0;box-sizing:border-box}
 @media (max-width:520px){
+  .cat-sheet{--hh:104px;--fh:68px}
   .cs-preview{padding:10px 14px;gap:12px}
   .cs-preview .portrait{width:84px;height:84px;border-width:3px}
   .cs-pv-text h2{font-size:1.1rem}
-  .cs-body{padding:10px 14px}
+  .cs-body{padding:calc(var(--hh) + 8px) 14px calc(var(--fh) + 12px)}
   .cat-sheet .swatches{grid-template-columns:repeat(5,1fr);gap:7px}
   .cat-sheet .swatches button.orig{grid-column:span 2;padding:0 .4em;aspect-ratio:auto;height:auto;min-height:100%;font-size:.7rem}
   .cat-sheet .breeds{grid-template-columns:repeat(5,1fr);gap:7px}
