@@ -371,6 +371,8 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .card-btn.wait .pcard{filter:saturate(.55)}
 /* card view */
 .card-view{text-align:center}
+.modal.card-view{position:relative}
+.modal.card-view .stage-x{right:12px;top:12px}
 /* a treat card out of the paw: just the card, big, over a light wash */
 .overlay:has(.card-stage){background:rgba(58,35,65,.28);padding:0}
 .card-stage{position:fixed;inset:0;display:grid;place-items:center;padding:16px;overflow:auto}
@@ -3029,7 +3031,7 @@ function modalHTML(){
   if(m.kind==='newgame') return S && S.online
     ? `<div class="modal"><h2>Leave this game?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
     : `<div class="modal"><h2>${S && S.phase==='over' ? 'Back to the start?' : 'Leave this game?'}</h2><p>${S && S.phase==='over' ? 'This finished game stays in your saved games until you delete it.' : 'It stays saved on this device. Pick it from Saved games to carry on, or start another one.'}</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`;
-  if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><div class="actions center"><button class="btn primary" onclick="G.close()">Got it</button></div></div>`;
+  if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><button class="stage-x" onclick="G.close()" aria-label="Close">×</button></div>`;
   if(m.kind==='treat'){
     const c = S.players[me()] && S.players[me()].cards[m.i]; if(!c || !TREATS[c.t]) return '';
     const why = treatWhy(c), nm = esc(TREATS[c.t].name);
