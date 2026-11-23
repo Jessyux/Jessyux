@@ -59,6 +59,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .cs-preview .portrait img{object-fit:contain;object-position:50% 50%;padding:4px;box-sizing:border-box}
 .cs-pv-text{min-width:0}
 .cs-pv-text h2{margin:0 0 4px;font-size:1.25rem;line-height:1.1;overflow-wrap:anywhere}
+.cat-maker{margin-top:0}
 .cs-sw{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.85rem;color:var(--plum-2)}
 .cs-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--plum);flex:none}
 .cs-body{padding:12px 18px;overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0}
@@ -73,9 +74,9 @@ a.btn{color:var(--plum);text-decoration:none}
   .cs-pv-text h2{font-size:1.1rem}
   .cs-body{padding:10px 14px}
   .cat-sheet .swatches{grid-template-columns:repeat(5,1fr);gap:7px}
-  .cat-sheet .swatches button.orig{grid-column:span 5;padding:.45em .7em;aspect-ratio:auto}
+  .cat-sheet .swatches button.orig{grid-column:span 2;padding:0 .4em;aspect-ratio:auto;height:auto;min-height:100%;font-size:.7rem}
   .cat-sheet .breeds{grid-template-columns:repeat(5,1fr);gap:7px}
-  .cat-sheet .cat-maker{padding:2px 10px 10px}
+  .cat-sheet .cat-maker{padding:0;border:0;background:none}
 }
 .make-own{margin-top:10px}
 .make-own[aria-expanded="true"]{background:var(--butter)}
@@ -3327,33 +3328,36 @@ const MARKS = [['#E58046','Orange'],['#9B6A2F','Caramel'],['#674D4B','Chocolate'
 const EYES = [['#5DBB4A','Green'],['#4C93DC','Blue'],['#E8A23A','Amber'],['#F2D23B','Yellow'],['#8A5A3C','Brown'],['#9B7FD1','Violet'],['#E0335A','Ruby']];
 function catMaker(i, s, fn){
   fn = fn || 'G.catSet';
-  const t = s.tint || {}, cfg = RECOLOUR[BREEDS[s.breed].id];
+  const online = fn==='G.lobbyTint', t = s.tint || {}, cfg = RECOLOUR[BREEDS[s.breed].id];
   const row = (k, list, label) => `<div class="field">${label}</div><div class="swatches" role="radiogroup" aria-label="${label}">
     <button role="radio" id="cm-${k}-orig" class="orig" aria-checked="${!t[k]}" aria-label="Original" title="Original" onclick="${fn}(${i},'${k}','')">Original</button>
     ${list.map(([v,n])=>`<button role="radio" id="cm-${k}-${v.slice(1)}" aria-checked="${t[k]===v}" aria-label="${n}" title="${n}" style="--sw:${v}" onclick="${fn}(${i},'${k}','${v}')"></button>`).join('')}</div>`;
+  /* the collar is also this cat's beds and yarn on the board, so it can't match another cat's */
+  const others = online ? fixColors(ON.lobby.seats).filter(x=>x.pid!==ON.me) : ui.seats.filter((x,j)=>j!==i);
+  const mine = pcol(s), setCol = k => online ? `G.lobbyColor(${k})` : `G.seatColor(${i},${k})`;
+  const collar = `<div class="field">Collar <small class="muted">(also your beds and yarn)</small></div><div class="swatches" role="radiogroup" aria-label="Collar colour">${COLORS.map((c,k)=>{ const o = others.find(x=>x.color===k);
+    return `<button role="radio" id="cm-collar-${k}" aria-checked="${mine===c}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="${setCol(k)}"></button>`; }).join('')}</div>`;
+  const hasArt = ART.has('cat-'+BREEDS[s.breed].id) && cfg;
   return `<div class="cat-maker">
-    ${cfg.coat.length ? row('coat', COATS, 'Coat') : '<p class="muted small">This cat\'s speckled coat keeps its colours. Its eyes can change.</p>'}
-    ${cfg.mark.length ? row('mark', MARKS, 'Markings') : ''}
-    ${row('iris', EYES, 'Eyes')}
-    <p class="center" style="margin:12px 0 0"><button class="btn small" onclick="${fn==='G.catSet'?`G.catReset(${i})`:'G.lobbyTintReset()'}">Back to the original colours</button></p>
+    ${hasArt ? (cfg.coat.length ? row('coat', COATS, 'Coat') : '<p class="muted small">This cat\'s speckled coat keeps its colours.</p>') : ''}
+    ${hasArt && cfg.mark.length ? row('mark', MARKS, 'Markings') : ''}
+    ${hasArt ? row('iris', EYES, 'Eyes') : ''}
+    ${collar}
+    ${hasArt ? `<p class="center" style="margin:12px 0 0"><button class="btn small" onclick="${online?'G.lobbyTintReset()':`G.catReset(${i})`}">Back to the original fur and eyes</button></p>` : ''}
   </div>`;
 }
 /* a cat preview that stays on screen while you pick: it updates with every colour you tap */
 function catPreview(x, name){
-  return `<div class="cs-preview">${portrait(x)}<div class="cs-pv-text"><h2>Customise ${esc(name)}</h2><div class="cs-sw"><span class="cs-dot" style="background:${pcol(x)}"></span><span>${COLOR_NAMES[COLORS.indexOf(pcol(x))] || ''} pieces and collar</span></div></div></div>`;
+  return `<div class="cs-preview">${portrait(x)}<div class="cs-pv-text"><h2>Customise ${esc(name)}</h2><div class="cs-sw"><span class="cs-dot" style="background:${pcol(x)}"></span><span>${COLOR_NAMES[COLORS.indexOf(pcol(x))] || ''} collar and pieces</span></div></div></div>`;
 }
 function catSheetHTML(i){
   const s = ui.seats[i]; if(!s) return '';
-  const owner = c => ui.seats.find((x,j)=>j!==i&&x.color===c);
   return `<div class="modal cat-sheet">${catPreview(s, s.name.trim()||BREEDS[s.breed].label)}
     <div class="cs-body">
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.seatPick.bind(null,'+i+')')}
-    <div class="field" style="margin-top:14px">Beds, yarn and collar colour</div>
-    <p class="muted small cs-hint">Cats can match. Colours can't, so everyone can spot their pieces. The collar matches.</p>
-    <div class="swatches" role="radiogroup" aria-label="Pick a colour">${COLORS.map((c,k)=>{ const o=owner(k);
-      return `<button role="radio" aria-checked="${s.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.seatColor(${i},${k})"></button>`; }).join('')}</div>
-    ${ART.has('cat-'+BREEDS[s.breed].id) ? `<button class="btn small make-own" id="cs-own" aria-expanded="${ui.tintOpen===i}" onclick="G.seatCustom(${i})">${ui.tintOpen===i?'Hide fur and eye colours':hasTint(s.tint)?'Fur and eye colours (changed)':'Fur and eye colours'}</button>
-    ${ui.tintOpen===i ? catMaker(i, s) : ''}` : ''}
+    <div class="field" style="margin-top:14px">Colours</div>
+    <p class="muted small cs-hint">Cats can match. Collar colours can't, so everyone can spot their pieces.</p>
+    ${catMaker(i, s)}
     </div>
     <div class="cs-foot"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
 }
@@ -3366,26 +3370,18 @@ function hostActs(s, onAvatar){
 const CROWN = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#FFD66B" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const HOST_BADGE = `<span class="host-badge" title="Host" role="img" aria-label="Host">${CROWN}</span>`;
 const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 3h6v8l6 3c1.5.8 2 2 2 3.5V20H4V3z" fill="#F7A6A0" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 16h17" stroke="currentColor" stroke-width="2"/></svg>';
-/* your colour for beds and yarn on the board; colours other cats have are greyed out */
-function lobbyColorHTML(){
-  const L = ON.lobby, F = fixColors(L.seats), me = F.find(x=>x.pid===ON.me); if(!me) return '';
-  const owner = c => F.find(x=>x.pid!==ON.me && x.color===c);
-  return `<div class="field" style="margin-top:14px">Beds, yarn and collar colour</div>
-    <p class="muted small cs-hint">Colours can't be shared, so everyone can spot their pieces. Your collar matches.</p>
-    <div class="swatches" role="radiogroup" aria-label="Pick your colour on the board">${COLORS.map((c,k)=>{ const o = owner(k);
-      return `<button role="radio" id="lc-col-${k}" aria-checked="${me.color===k}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="G.lobbyColor(${k})"></button>`; }).join('')}</div>`;
-}
 /* your own cat in the lobby: name, cat and colours */
 function lobbyCatHTML(){
   const s0 = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s0) return '';
-  const s = fixColors(ON.lobby.seats).find(x=>x.pid===ON.me) || s0, bid = BREEDS[s.breed].id;
+  const s = fixColors(ON.lobby.seats).find(x=>x.pid===ON.me) || s0;
   return `<div class="modal cat-sheet">${catPreview(s, s.name)}
     <div class="cs-body">
     <form class="lc-name" onsubmit="event.preventDefault();G.lobbyRename()"><label class="field">Your name<input id="lc-name" maxlength="14" value="${esc(s.name)}" autocomplete="off"></label><button class="btn small">Save</button></form>
     ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.lobbyBreed')}
-    ${lobbyColorHTML()}
-    ${ART.has('cat-'+bid) && RECOLOUR[bid] ? `<div class="field" style="margin-top:14px">Fur and eye colours</div>${catMaker(-1, s, 'G.lobbyTint')}` : ''}
+    <div class="field" style="margin-top:14px">Colours</div>
+    <p class="muted small cs-hint">Collar colours can't be shared, so everyone can spot their pieces.</p>
+    ${catMaker(-1, s, 'G.lobbyTint')}
     </div>
     <div class="cs-foot"><button class="btn primary" onclick="G.lobbyDone()">Done</button></div></div>`;
 }
@@ -3489,7 +3485,7 @@ const G = {
   seatCustom(i){ ui.tintOpen = ui.tintOpen===i ? null : i; ui.refocus='#cs-own'; render(); },
   catSet(i,k,v){ const s=ui.seats[i]; s.tint = s.tint || {coat:'',mark:'',iris:'',collar:''}; s.tint[k]=v; ui.refocus='#cm-'+k+'-'+(v?v.slice(1):'orig'); render(); },
   catReset(i){ const s=ui.seats[i]; s.tint={coat:'',mark:'',iris:'',collar:''}; ui.refocus='#cm-coat-orig'; render(); },
-  seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; ui.refocus='.swatches[aria-label="Pick a colour"] [aria-checked="true"]'; render(); },
+  seatColor(i,c){ if(ui.seats.some((x,j)=>j!==i&&x.color===c)) return; ui.seats[i].color=c; ui.refocus='#cm-collar-'+c; render(); },
   seatAdd(){ if(ui.seats.length>=MAX_CATS) return; const used=ui.seats.map(s=>s.breed), b=Math.max(0,BREEDS.findIndex((_,i)=>!used.includes(i))); const names=DEFAULT_NAMES.filter(n=>!ui.seats.some(s=>s.name===n)); ui.seats.push({name:'', breed:b}); ui.seats=fixColors(ui.seats); render(); },
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
   /* online setup */
@@ -3545,7 +3541,7 @@ const G = {
   lobbyColor(c){
     const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.me); if(!s) return;
     s.color = c; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', color:c}));
-    ui.refocus = '#lc-col-'+c; render();
+    ui.refocus = '#cm-collar-'+c; render();
   },
   lobbyTintReset(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s) return; s.tint=null; if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', tint:null})); render(); },
   lobbyRename(){ ON.note = null; const v = $('#lc-name').value.trim(); if(!v){ ON.note='Add a name so friends know who you are.'; render(); return; } if(ON.ws) ON.ws.send(JSON.stringify({type:'seat', name:v})); },
