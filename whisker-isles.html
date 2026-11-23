@@ -973,7 +973,7 @@ body{overflow-x:clip}
 .lobby h2{font-size:1.2rem}
 /* the lobby: a warm corner with a rug, cushions for every cat and one saved for each friend still to come */
 .cozy{position:relative;display:flex;flex-direction:column;border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 14px 16px;overflow:hidden;
-  background:#EDE3F7 var(--corner) center bottom/cover no-repeat;min-height:min(120vw,540px)}
+  background:#EDE3F7 var(--corner) center bottom/cover no-repeat;min-height:min(135vw,540px)}
 .cozy::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,250,240,.55) 0,rgba(255,250,240,0) 38%);pointer-events:none}
 .cozy > *{position:relative}
 .cozy > p.muted{background:rgba(255,252,244,.9);border-radius:12px;padding:4px 10px;color:var(--plum);max-width:52ch;margin:6px auto 0}
@@ -1000,6 +1000,8 @@ body{overflow-x:clip}
 /* the cats sit on the rug at the bottom of the room */
 .nooks{list-style:none;margin:auto 0 0;padding:26px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:16px 12px}
 .nook{display:grid;justify-items:center;text-align:center;gap:2px;width:112px}
+.nooks.ring{position:absolute!important;inset:0;margin:0!important;padding:0!important;pointer-events:none}
+.nooks.ring > .nook{position:absolute;transform:translate(-50%,-50%) scale(var(--nf,1));pointer-events:auto}
 .nook-invite{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
 .nook-invite:hover .ghost,.nook-invite:focus-visible .ghost{background:#FFF7DA;border-color:var(--plum)}
 .nook-invite:focus-visible{outline:3px solid var(--plum);outline-offset:3px;border-radius:50%}
@@ -1016,7 +1018,6 @@ body{overflow-x:clip}
 .pillow::before{left:14px}.pillow::after{right:14px}
 .nook b{font-size:.95rem;background:rgba(255,252,244,.94);border:2px solid var(--plum);border-radius:999px;padding:0 10px}
 .nook small{color:var(--plum);font-weight:800;font-size:.78rem;background:rgba(255,252,244,.88);border-radius:999px;padding:0 8px;margin-top:2px}
-.cozy-here{min-height:min(80vw,430px)}
 .seat-nook input{width:112px;box-sizing:border-box;font:inherit;font-weight:900;font-size:.95rem;text-align:center;color:var(--plum);background:rgba(255,252,244,.96);border:2px solid var(--plum);border-radius:999px;padding:1px 8px}
 .seat-nook input::placeholder{color:#A792AC}
 .seat-nook input[aria-invalid="true"]{border-color:var(--strawberry);box-shadow:0 0 0 3px #FFD0DA}
@@ -3339,8 +3340,22 @@ function placeRoomProps(){
     pr.style.bottom = Math.round(imgH*.455 - 70) + 'px';
   });
 }
+/* the cats sit in a curve round the front of the rug, so more of them circle the room and never pile up over the desk or table */
+function arrangeNooks(){
+  document.querySelectorAll('.cozy .nooks').forEach(ul=>{
+    const items = [...ul.children], n = items.length, box = ul.parentElement.getBoundingClientRect(); if(!n || !box.width) return;
+    ul.classList.add('ring');
+    const w = box.width, h = box.height, cx = w/2, rx = w*.40, ry = h*.22, cy = h - ry - 108;
+    const span = n===1 ? 0 : Math.min(250, 66*(n-1));
+    const pts = items.map((_,i)=>{ const a = (n===1 ? 90 : 90 + span/2 - i*span/(n-1)) * Math.PI/180; return [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]; });
+    let step = 130; if(n>1){ let len = 0; for(let i=1;i<n;i++) len += Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); step = len/(n-1); }
+    const f = Math.max(.58, Math.min(1, step/122));
+    items.forEach((li,i)=>{ li.style.left = pts[i][0]+'px'; li.style.top = pts[i][1]+'px'; li.style.setProperty('--nf', f.toFixed(3)); li.style.zIndex = 3 + Math.round(pts[i][1]); });
+  });
+}
+addEventListener('resize', arrangeNooks);
 addEventListener('resize', placeRoomProps);
-try{ new MutationObserver(placeRoomProps).observe(document.getElementById('root'), {childList:true, subtree:true}); }catch(e){}
+try{ new MutationObserver(()=>{ arrangeNooks(); placeRoomProps(); }).observe(document.getElementById('root'), {childList:true, subtree:true}); }catch(e){}
 addEventListener('scroll', placeDock, {passive:true});
 /* compare with what the paws held last time and react: new cards pop in and the paw squeezes,
    spent or stolen cards are tugged away, a new cat's paws slide up when the turn changes */
@@ -3881,7 +3896,7 @@ function startScreen(){
         </div>
         <button class="room-prop" onclick="G.where('online')" data-tip="Play online instead" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""></button>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
-        <ul class="nooks" aria-label="Cats playing">${seats.map((s,i)=>`<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
+        <ul class="nooks ring" aria-label="Cats playing">${seats.map((s,i)=>`<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
           <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
             ${n>2?`<button class="nook-x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}</span>
           <span class="pillow" aria-hidden="true"></span>
@@ -4024,7 +4039,7 @@ function lobbyScreen(){
       </button>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
       <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" data-tip="${isHost?'Play in person instead':'Only the host can change the game type'}" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""></button>
-      <ul class="nooks" aria-label="Cats in the lobby">${cats}${invite}</ul>
+      <ul class="nooks ring" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
     <div class="online-actions lobby-go">
       <button class="btn" onclick="G.toStart()">Leave</button>
