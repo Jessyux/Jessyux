@@ -991,7 +991,7 @@ body{overflow-x:clip}
 .nook-invite:hover .ghost,.nook-invite:focus-visible .ghost{background:#FFF7DA;border-color:var(--plum)}
 .nook-invite:focus-visible{outline:3px solid var(--plum);outline-offset:3px;border-radius:50%}
 .nook-invite.copied .ghost{background:#BFEBB0;border-style:solid}
-.nook-invite::after{content:"Click to copy invite link";position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:128px;box-sizing:border-box;padding:5px 8px;border-radius:12px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;line-height:1.25;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3}
+.nook-invite::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:128px;box-sizing:border-box;padding:5px 8px;border-radius:12px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;line-height:1.25;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3}
 .nook-invite:hover::after,.nook-invite:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 .nook-invite.copied::after{opacity:0}
 .nook.empty .ghost{display:grid;place-items:center;font-family:var(--display);font-size:2rem;line-height:1;color:var(--plum-2)}
@@ -1003,6 +1003,13 @@ body{overflow-x:clip}
 .pillow::before{left:14px}.pillow::after{right:14px}
 .nook b{font-size:.95rem;background:rgba(255,252,244,.94);border:2px solid var(--plum);border-radius:999px;padding:0 10px}
 .nook small{color:var(--plum);font-weight:800;font-size:.78rem;background:rgba(255,252,244,.88);border-radius:999px;padding:0 8px;margin-top:2px}
+.cozy-here{min-height:min(80vw,430px)}
+.seat-nook input{width:112px;box-sizing:border-box;font:inherit;font-weight:900;font-size:.95rem;text-align:center;color:var(--plum);background:rgba(255,252,244,.96);border:2px solid var(--plum);border-radius:999px;padding:1px 8px}
+.seat-nook input::placeholder{color:#A792AC}
+.seat-nook input[aria-invalid="true"]{border-color:var(--strawberry);box-shadow:0 0 0 3px #FFD0DA}
+.seat-nook .seat-note:empty{display:none}
+.nook-x{position:absolute;right:-10px;top:-6px;width:26px;height:26px;padding:0;border-radius:50%;border:2.5px solid var(--plum);background:#fff;color:var(--plum);font-weight:900;font-size:1rem;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum);z-index:2}
+.nook-x:hover{background:#FFD0DA}
 .nook.away .portrait{filter:saturate(.6);opacity:.75}
 .host-badge{position:absolute;left:-8px;top:-8px;width:30px;height:30px;border-radius:50%;background:#FFF3C4;border:2.5px solid var(--plum);display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum);color:var(--plum);z-index:2}
 .host-acts.on-av{position:absolute;inset:0;margin:0;display:block;pointer-events:none}
@@ -3844,19 +3851,21 @@ function startScreen(){
     <div class="raft">
       ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
       ${!where ? choose : ''}
-      ${where==='here' ? `<section class="card crew" aria-labelledby="crew-h">
-        <div class="crew-head">
-          <div><h2 id="crew-h">Who's playing?</h2><p class="muted">Pass one screen around. Everyone types their name, and tapping a cat changes its look and colour.</p></div>
-          <span class="isle-chip">${n>MAX_CLASSIC?'Big Island for 5 to 10 cats':'Classic island for 2 to 4 cats'}</span>
+      ${where==='here' ? `<section class="cozy cozy-here" style="--corner:url(${artSrc('lobby-corner')})" aria-labelledby="crew-h">
+        <div class="cozy-bar">
+          <h2 id="crew-h">Who's playing?</h2><span class="cat-count">${n} cats${n>MAX_CLASSIC?' · Big Island':''}</span>
         </div>
-        <div class="seats">${seats.map((s,i)=>`<div class="seat" style="--pc:${pcol(s)}">
-          <button class="portrait" style="--pc:${pcol(s)}" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}" title="Tap to customise">${playerArt(s)}</button>
+        <p class="muted">Pass one screen around. Type a name, tap a cat to change its look.</p>
+        ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
+        <ul class="nooks" aria-label="Cats playing">${seats.map((s,i)=>`<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
+          <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
+            ${n>2?`<button class="nook-x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}</span>
+          <span class="pillow" aria-hidden="true"></span>
           <input id="seat-name-${i}" value="${esc(s.name)}" maxlength="14" placeholder="Name" required list="wi-names" autocomplete="off" aria-label="Name for cat ${i+1}" aria-describedby="seat-note-${i}"${ui.badSeat===i?' aria-invalid="true"':''} oninput="G.seatName(${i},this.value)">
           <small class="seat-note" id="seat-note-${i}">${seatNote(s.name)}</small>
-          ${n>2?`<button class="x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}
-        </div>`).join('')}
-        ${n<MAX_CATS?`<button class="seat add" onclick="G.seatAdd()"><span>+</span>Add a cat${n===MAX_CLASSIC?'<small>A 5th cat makes it Big Island</small>':''}</button>`:''}</div>
-        ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
+        </li>`).join('')}${n<MAX_CATS?`<li class="nook empty" style="--pillow:#E6DAFF"><span class="nook-cat"><button class="nook-invite nook-add" data-tip="${n===MAX_CLASSIC?'A 5th cat makes it Big Island':'Add another cat'}" onclick="G.seatAdd()" aria-label="Add a cat${n===MAX_CLASSIC?'. A 5th cat makes it Big Island':''}"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>Add a cat</b></li>`:''}</ul>
+      </section>
+      <section class="card crew crew-rest" aria-label="Start the game">
         ${savedGamesHTML()}
         <div class="crew-go">
           <button class="btn primary big" onclick="G.start()">Start with ${n} cats</button>
@@ -3978,7 +3987,7 @@ function lobbyScreen(){
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
       <b>${esc(s.name)}</b><span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</span></li>`).join('');
-  const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
+  const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" data-tip="Click to copy invite link" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
     <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
