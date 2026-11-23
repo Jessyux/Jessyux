@@ -3335,28 +3335,27 @@ function catMaker(i, s, fn){
   /* the collar is also this cat's beds and yarn on the board, so it can't match another cat's */
   const others = online ? fixColors(ON.lobby.seats).filter(x=>x.pid!==ON.me) : ui.seats.filter((x,j)=>j!==i);
   const mine = pcol(s), setCol = k => online ? `G.lobbyColor(${k})` : `G.seatColor(${i},${k})`;
-  const collar = `<div class="field">Collar <small class="muted">(also your beds and yarn)</small></div><div class="swatches" role="radiogroup" aria-label="Collar colour">${COLORS.map((c,k)=>{ const o = others.find(x=>x.color===k);
+  const collar = `<div class="field">Pick your colour</div><div class="swatches" role="radiogroup" aria-label="Pick your colour">${COLORS.map((c,k)=>{ const o = others.find(x=>x.color===k);
     return `<button role="radio" id="cm-collar-${k}" aria-checked="${mine===c}" aria-label="${COLOR_NAMES[k]}${o?', taken by '+esc(o.name):''}" title="${COLOR_NAMES[k]}${o?' (taken by '+esc(o.name)+')':''}" ${o?'disabled':''} style="--sw:${c}" onclick="${setCol(k)}"></button>`; }).join('')}</div>`;
   const hasArt = ART.has('cat-'+BREEDS[s.breed].id) && cfg;
   return `<div class="cat-maker">
+    ${collar}
     ${hasArt ? (cfg.coat.length ? row('coat', COATS, 'Coat') : '<p class="muted small">This cat\'s speckled coat keeps its colours.</p>') : ''}
     ${hasArt && cfg.mark.length ? row('mark', MARKS, 'Markings') : ''}
     ${hasArt ? row('iris', EYES, 'Eyes') : ''}
-    ${collar}
     ${hasArt ? `<p class="center" style="margin:12px 0 0"><button class="btn small" onclick="${online?'G.lobbyTintReset()':`G.catReset(${i})`}">Back to the original fur and eyes</button></p>` : ''}
   </div>`;
 }
 /* a cat preview that stays on screen while you pick: it updates with every colour you tap */
 function catPreview(x, name){
-  return `<div class="cs-preview">${portrait(x)}<div class="cs-pv-text"><h2>Customise ${esc(name)}</h2><div class="cs-sw"><span class="cs-dot" style="background:${pcol(x)}"></span><span>${COLOR_NAMES[COLORS.indexOf(pcol(x))] || ''} collar and pieces</span></div></div></div>`;
+  return `<div class="cs-preview">${portrait(x)}<div class="cs-pv-text"><h2>Customise ${esc(name)}</h2><div class="cs-sw"><span class="cs-dot" style="background:${pcol(x)}"></span><span>${COLOR_NAMES[COLORS.indexOf(pcol(x))] || ''}</span></div></div></div>`;
 }
 function catSheetHTML(i){
   const s = ui.seats[i]; if(!s) return '';
   return `<div class="modal cat-sheet">${catPreview(s, s.name.trim()||BREEDS[s.breed].label)}
     <div class="cs-body">
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.seatPick.bind(null,'+i+')')}
-    <div class="field" style="margin-top:14px">Colours</div>
-    <p class="muted small cs-hint">Cats can match. Collar colours can't, so everyone can spot their pieces.</p>
+    <p class="muted small cs-hint" style="margin-top:12px">Cats can match. Colours can't, so everyone can spot their pieces.</p>
     ${catMaker(i, s)}
     </div>
     <div class="cs-foot"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
@@ -3379,8 +3378,7 @@ function lobbyCatHTML(){
     <form class="lc-name" onsubmit="event.preventDefault();G.lobbyRename()"><label class="field">Your name<input id="lc-name" maxlength="14" value="${esc(s.name)}" autocomplete="off"></label><button class="btn small">Save</button></form>
     ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.lobbyBreed')}
-    <div class="field" style="margin-top:14px">Colours</div>
-    <p class="muted small cs-hint">Collar colours can't be shared, so everyone can spot their pieces.</p>
+    <p class="muted small cs-hint" style="margin-top:12px">Colours can't be shared, so everyone can spot their pieces.</p>
     ${catMaker(-1, s, 'G.lobbyTint')}
     </div>
     <div class="cs-foot"><button class="btn primary" onclick="G.lobbyDone()">Done</button></div></div>`;
