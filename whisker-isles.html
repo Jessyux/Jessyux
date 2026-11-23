@@ -776,7 +776,7 @@ div.build{cursor:default}
 .online-actions .or{color:var(--plum-2);font-weight:700}
 .join{display:flex;gap:12px;flex:1;min-width:0}
 .join input{margin:0;flex:1;min-width:0}
-@media (max-width:440px){.online-actions{gap:8px;padding:6px 0 8px}.online-actions .btn{padding-left:.8em;padding-right:.8em}.join{gap:8px}}
+@media (max-width:440px){.cozy-bar h2{font-size:1.2rem}.nook{width:104px}.online-actions{gap:8px;padding:6px 0 8px}.online-actions .btn{padding-left:.8em;padding-right:.8em}.join{gap:8px}}
 /* ---------- start screen: the island floats in a full-width sea ---------- */
 body{overflow-x:clip}
 .start{max-width:none;padding:0 0 40px}
@@ -906,20 +906,21 @@ body{overflow-x:clip}
 .big-code{font-family:var(--display);font-size:clamp(1.8rem,6vw,2.8rem);margin:6px 0 12px;word-break:break-all}
 .lobby h2{font-size:1.2rem}
 /* the lobby: a warm corner with a rug, cushions for every cat and one saved for each friend still to come */
-.cozy{position:relative;border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:18px 16px 14px;overflow:hidden;
-  background:#EDE3F7 var(--corner) center bottom/cover no-repeat;min-height:min(62vw,520px)}
+.cozy{position:relative;display:flex;flex-direction:column;border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 14px 16px;overflow:hidden;
+  background:#EDE3F7 var(--corner) center bottom/cover no-repeat;min-height:min(120vw,540px)}
 .cozy::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,250,240,.55) 0,rgba(255,250,240,0) 38%);pointer-events:none}
 .cozy > *{position:relative}
 .cozy > p.muted{background:rgba(255,252,244,.9);border-radius:12px;padding:4px 10px;color:var(--plum);max-width:52ch;margin:6px auto 0}
-.cozy-head{text-align:center;background:rgba(255,252,244,.9);border:2.5px solid var(--plum);border-radius:18px;padding:8px 14px;max-width:520px;margin:0 auto 10px}
-.cozy-head h2{font-family:var(--display);font-size:1.6rem;margin:0}
-.cozy-head p{margin:4px auto 2px;max-width:42ch;font-weight:700;color:var(--plum-2)}
+.cozy-bar{display:flex;align-items:center;justify-content:space-between;gap:6px 10px;flex-wrap:wrap;background:rgba(255,252,244,.94);border:2.5px solid var(--plum);border-radius:18px;padding:6px 10px 6px 14px;margin:0 0 12px}
+.cozy-bar h2{font-family:var(--display);font-size:1.35rem;line-height:1.1;margin:0;flex:1 1 auto;white-space:nowrap}
+.cat-count{font-weight:900;font-size:.8rem;color:var(--plum);background:var(--butter);border:2px solid var(--plum);border-radius:999px;padding:1px 10px;white-space:nowrap}
+.cozy-bar .bell{margin:0}
 .code-pill{display:grid;justify-items:center;gap:2px;margin:0 auto 6px;padding:10px 22px;border:3px solid var(--plum);border-radius:22px;background:#fff;box-shadow:3px 3px 0 var(--plum);cursor:pointer;font:inherit;color:var(--plum)}
 .code-pill:hover,.code-pill:focus-visible{background:#FFF7DA}
 .code-pill.copied{background:#E3F7D9}
 .code-label{font-size:.75rem;font-weight:800;color:var(--plum-2)}
-.code-txt{font-family:var(--display);font-size:clamp(1.6rem,6vw,2.4rem);line-height:1.1;word-break:break-all}
-.code-row{display:flex;align-items:center;gap:12px}
+.code-txt{font-family:var(--display);font-size:clamp(1.15rem,5.4vw,2.2rem);line-height:1.1;white-space:nowrap}
+.code-row{display:flex;align-items:center;gap:10px}
 .copy-ic{flex:none;width:44px;height:44px;border-radius:12px;border:2.5px solid var(--plum);background:#FFF7DA;display:grid;place-items:center;box-shadow:2px 2px 0 var(--plum)}
 .copy-ic .ic-done{display:none}
 .code-pill.copied .copy-ic{background:#BFEBB0}
@@ -927,8 +928,15 @@ body{overflow-x:clip}
 .code-pill.copied .ic-done{display:block}
 .code-hint{font-size:.8rem;font-weight:800}
 .code-hint:empty{display:none}
-.nooks{list-style:none;margin:14px 0 8px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px 10px}
-.nook{display:grid;justify-items:center;text-align:center;gap:2px}
+.code-pill{width:min(100%,460px);padding:8px 14px}
+/* the cats sit on the rug at the bottom of the room */
+.nooks{list-style:none;margin:auto 0 0;padding:26px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:16px 12px}
+.nook{display:grid;justify-items:center;text-align:center;gap:2px;width:112px}
+.nook-invite{display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
+.nook-invite:hover .ghost,.nook-invite:focus-visible .ghost{background:#FFF7DA;border-color:var(--plum)}
+.nook-invite:focus-visible{outline:3px solid var(--plum);outline-offset:3px;border-radius:50%}
+.nook-invite.copied .ghost{background:#BFEBB0;border-style:solid}
+.nook.empty .ghost{display:grid;place-items:center;font-family:var(--display);font-size:2rem;line-height:1;color:var(--plum-2)}
 .nook-cat{position:relative;z-index:1;margin-bottom:-22px}
 .nook .portrait{width:72px;height:72px}
 .nook.me .portrait{box-shadow:0 0 0 4px var(--butter)}
@@ -944,7 +952,7 @@ body{overflow-x:clip}
 .host-acts.on-av .host-ic:first-child{left:-8px}
 .host-acts.on-av .host-ic.boot{right:-8px}
 .zzz{position:absolute;left:50%;transform:translateX(-50%);top:-22px;font-weight:900;font-size:.8rem;color:var(--plum-2);letter-spacing:.1em}
-.nook.empty .ghost{display:block;width:72px;height:72px;border-radius:50%;border:3px dashed var(--plum-2);background:rgba(255,255,255,.55)}
+.nook.empty .ghost{width:72px;height:72px;border-radius:50%;border:3px dashed var(--plum-2);background:rgba(255,255,255,.6)}
 .nook.empty b{color:var(--plum-2)}
 .lobby-go{justify-content:space-between}
 .nook-edit{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
@@ -3698,29 +3706,25 @@ function lobbyScreen(){
       ${s.pid===ON.me ? `<span class="nook-cat"><button class="nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
-      <b>${esc(s.name)}</b><small>${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</small></li>`).join('');
-  const spare = Math.max(0, Math.min(MAX_CATS, Math.max(4, n+1)) - n);
-  const empty = Array.from({length:spare}, (_,k)=>`<li class="nook empty" style="--pillow:${PILLOW[(n+k)%PILLOW.length]}"><span class="nook-cat"><span class="ghost" aria-hidden="true"></span></span><span class="pillow" aria-hidden="true"></span><b>Waiting…</b></li>`).join('');
+      <b>${esc(s.name)}</b><span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</span></li>`).join('');
+  const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>Invite</b></li>` : '';
   return `<main class="start lobby">
     <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
     <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
-      <div class="cozy-head">
-        <h2>The cat corner</h2>
-        <p>${n<2 ? 'Cushions are fluffed. Tap the code to copy an invite link for a friend.' : `${n} cats are curled up and waiting${isHost?'. Start when everyone is in.':' for the host to start.'}`}</p>
+      <div class="cozy-bar">
+        <h2>The cat corner</h2><span class="cat-count">${n} ${n===1?'cat':'cats'}${n>MAX_CLASSIC?' · Big Island':''}</span>
+        ${bellBtn()}
       </div>
       <button class="code-pill" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for game ${esc(L.code)} to the clipboard">
         <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
-      <ul class="nooks" aria-label="Cats in the lobby">${cats}${empty}</ul>
-      ${mySeat ? '<p class="cozy-tip">Tap the pencil on your cat to change your name, cat or colours.</p>' : ''}
-      <p class="center" style="margin:8px 0 0">${bellBtn()}</p>
-      <p class="muted center small">${n>MAX_CLASSIC?'Big Island':'Classic island'}, up to ${MAX_CATS} cats. The game is saved under this code, so you can come back to it any time.</p>
+      <ul class="nooks" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
     <div class="online-actions lobby-go">
       <button class="btn" onclick="G.toStart()">Leave</button>
-      ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Waiting for a friend to join'}</button>`
-        : `<span class="muted">Waiting for the host to start…</span>`}
+      ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Invite a friend to start'}</button>`
+        : `<span class="muted">Host starts soon…</span>`}
     </div>
     <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
   </main>`;
