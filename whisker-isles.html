@@ -503,6 +503,9 @@ img.pic{object-fit:contain}
 .music-menu{width:min(340px,calc(100vw - 32px));display:grid;grid-template-columns:1fr 1fr;gap:2px 6px}
 .music-menu .cp-head{grid-column:1/-1}
 .mm-title{font-weight:900}
+.mm-vol{grid-column:1/-1;display:grid;grid-template-columns:104px 1fr;align-items:center;gap:8px;padding:3px 8px;font-size:.85rem;font-weight:800}
+.mm-vol input{width:100%;margin:0;accent-color:var(--plum);height:24px}
+.mm-vol input:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
 .mm-row{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;margin:0;padding:5px 8px;font-size:.85rem;border:2px solid transparent;border-radius:12px;background:none;font:inherit;font-weight:800;color:var(--plum);text-align:left;cursor:pointer}
 .mm-row:hover{background:#fff}
 .mm-row:focus-visible{outline:3px solid var(--plum);outline-offset:1px}
@@ -2276,11 +2279,12 @@ function chime(){
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
     const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
     [[784,0],[1047,.16]].forEach(([f,t])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
-      const at=c.currentTime+t; g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(.18,at+.02); g.gain.exponentialRampToValueAtTime(.0001,at+.35); o.start(at); o.stop(at+.4); });
+      const at=c.currentTime+t; g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(Math.max(.0002,.18*SND.vol),at+.02); g.gain.exponentialRampToValueAtTime(.0001,at+.35); o.start(at); o.stop(at+.4); });
   }catch(e){}
 }
 /* ---------- sounds: little synthesised blips, one per kind of action. Everyone hears them, in person and online ---------- */
-const SND = {muted: !!store.get('whisker-isles-mute')};
+const volOf = (k, d) => { const v = parseFloat(store.get(k)); return isFinite(v) ? Math.max(0, Math.min(1, v)) : d; };
+const SND = {muted: !!store.get('whisker-isles-mute'), vol: volOf('whisker-isles-sfx-vol', 1)};
 function sfxCtx(){
   const C = window.AudioContext || window.webkitAudioContext; if(!C) return null;
   const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
@@ -2290,7 +2294,7 @@ function sfxCtx(){
 function nt(c, f, at, len, type, vol, to){
   const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
   o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if(to) o.frequency.exponentialRampToValueAtTime(to, t+len);
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol||.12, t+Math.min(.02, len/3)); g.gain.exponentialRampToValueAtTime(.0001, t+len);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(.0002, (vol||.12)*SND.vol), t+Math.min(.02, len/3)); g.gain.exponentialRampToValueAtTime(.0001, t+len);
   o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+len+.05);
 }
 const SFX = {
@@ -2345,7 +2349,7 @@ function playLogSounds(){
 }
 /* ---------- background music: a slow, soft lo-fi loop made live in the browser (no audio files).
    Warm electric-piano chords, a round bass, a lazy swung beat, vinyl crackle and a few echoing island notes. ---------- */
-const MUS = {on: !store.get('whisker-isles-music-off'), track: Math.max(0, Math.min(9, parseInt(store.get('whisker-isles-music-track'),10)||0)), bus:null, echo:null, lp:null, dl:null, timer:null, step:0, t0:0, noise:null, crackle:null, last:-1};
+const MUS = {on: !store.get('whisker-isles-music-off'), track: Math.max(0, Math.min(9, parseInt(store.get('whisker-isles-music-track'),10)||0)), bus:null, echo:null, lp:null, dl:null, timer:null, step:0, t0:0, noise:null, crackle:null, last:-1, vol: volOf('whisker-isles-music-vol', .6)};
 /* chords (bass note, then the voicing). Everything is in C major; a track moves the whole thing up or down with `k` */
 const MUS_CHS = {
   C:{bass:36, n:[48,52,55,59,62]}, Am:{bass:33, n:[45,48,52,55,59]}, F:{bass:41, n:[41,45,48,52,55]}, G:{bass:43, n:[43,47,50,52,57]},
@@ -2427,7 +2431,7 @@ function musStart(){
   try{
     const c = sfxCtx(); if(!c) return;
     musBus(c); const tr = MUS_TR[MUS.track]; MUS.lp.frequency.value = tr.lp; MUS.dl.delayTime.value = 60/tr.bpm*.75;
-    MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(.55, c.currentTime+2.5);
+    MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(MUS.vol*.92, c.currentTime+2.5);
     // vinyl crackle: sparse little clicks and a bed of hiss, very quiet
     const b = c.createBuffer(1, c.sampleRate*4, c.sampleRate), d = b.getChannelData(0);
     for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*.015 + (Math.random()<.0006 ? (Math.random()*2-1)*.9 : 0);
@@ -2450,7 +2454,7 @@ function musPick(i){   // -1 turns the music off, 0 to 9 choose a track
 }
 function musMenuHTML(){
   const row = (i, label) => { const on = i<0 ? !MUS.on : (MUS.on && MUS.track===i); return `<button class="mm-row${on?' on':''}" role="radio" aria-checked="${on}" onclick="G.musicPick(${i})"><span class="mm-dot" aria-hidden="true"></span>${esc(label)}</button>`; };
-  return `<div class="cat-pop music-menu" role="radiogroup" aria-label="Background music"><div class="cp-head"><b class="mm-title">Music</b><button class="cp-x" style="margin-left:auto" onclick="G.music()" aria-label="Close">\u00d7</button></div>${row(-1,'Off')}${MUS_TR.map((t,i)=>row(i,t.name)).join('')}</div>`;
+  return `<div class="cat-pop music-menu" role="radiogroup" aria-label="Sound and music"><div class="cp-head"><b class="mm-title">Sound and music</b><button class="cp-x" style="margin-left:auto" onclick="G.music()" aria-label="Close">\u00d7</button></div><label class="mm-vol"><span>Music volume</span><input type="range" min="0" max="100" value="${Math.round(MUS.vol*100)}" oninput="G.vol('mus',this.value)" aria-label="Music volume"></label><label class="mm-vol"><span>Sound effects</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" oninput="G.vol('sfx',this.value)" onchange="sfx('pop')" aria-label="Sound effects volume"></label>${row(-1,'Music off')}${MUS_TR.map((t,i)=>row(i,t.name)).join('')}</div>`;
 }
 function musSync(inGame){ if(inGame && MUS.on) musStart(); else if(!inGame) musStop(); }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) musStop(); else musSync(!!$('#cat-hud')); });
@@ -2565,7 +2569,7 @@ function slurp(){
     const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
     const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
     o.type = 'triangle'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(760, t+.55); o.frequency.exponentialRampToValueAtTime(110, t+.85);
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.08, t+.12); g.gain.exponentialRampToValueAtTime(.0001, t+.9);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(.0002,.08*SND.vol), t+.12); g.gain.exponentialRampToValueAtTime(.0001, t+.9);
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+.95);
   }catch(e){}
 }
@@ -4118,6 +4122,11 @@ const G = {
   /* turns */
   catInfo(i){ ui.musicMenu = false; ui.catPop = (i==null || ui.catPop===i) ? null : i; if(ui.catPop!=null) sfx('pop'); renderCats(); },
   music(){ ui.musicMenu = !ui.musicMenu; if(ui.musicMenu) ui.catPop = null; renderCats(); if(ui.musicMenu){ const b = document.querySelector('.mm-row.on'); if(b) b.focus(); } else { const m = document.querySelector('.cat-music'); if(m) m.focus(); } },
+  vol(k, v){   // sliders only change levels as they move, so the menu isn't redrawn under the finger
+    const x = Math.max(0, Math.min(1, (+v||0)/100));
+    if(k==='mus'){ MUS.vol = x; store.set('whisker-isles-music-vol', String(x)); const c = ALERT.ctx; if(c && MUS.bus && MUS.timer){ MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(x*.92, c.currentTime+.08); } }
+    else { SND.vol = x; store.set('whisker-isles-sfx-vol', String(x)); }
+  },
   musicPick(i){ musPick(i); renderCats(); },
   mute(){ SND.muted = !SND.muted; store.set('whisker-isles-mute', SND.muted ? '1' : ''); if(!SND.muted) sfx('pop'); renderCats(); },
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
