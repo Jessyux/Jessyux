@@ -659,6 +659,7 @@ div.build{cursor:default}
 .tp-dice{display:flex;justify-content:center;gap:10px;margin:8px 0 14px}
 .tp-dice .die{animation:tpWiggle 1.6s ease-in-out infinite}
 .tp-dice .die:nth-child(2){animation-delay:.25s}
+.turn-prompt.rolling .tp-acts{visibility:hidden}
 .tp-acts{display:flex;flex-direction:column;gap:8px;align-items:center}
 .tp-acts .big{font-size:1.15rem;padding:.6em 1.8em;width:100%}
 @keyframes tpWiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg) translateY(-3px)}}
@@ -1749,7 +1750,7 @@ function offerTo(o){ return !o ? [] : Array.isArray(o.to) ? o.to : [o.to]; }
 function describe(g){ return RES.filter(r=>g[r]).map(r=>`${g[r]} ${RINFO[r].name}`).join(', '); }
 function flash(g){ ui.flash = {}; RES.forEach(r=>{ if(g[r]) ui.flash[r]=true; }); setTimeout(()=>{ ui.flash={}; },700); }
 
-function roll(){
+function roll(opt){
   if(!myTurn() || S.rolled || S.sub || ui.rolling) return;
   const d = [1+rnd(6), 1+rnd(6)];
   const finish = () => {
@@ -1766,6 +1767,7 @@ function roll(){
     celebrateRoll();
   };
   if(reduceMotion){ finish(); return; }
+  if(opt && opt.inPopup){ opt.inPopup(d, finish); return; }
   spinDice(finish, d);
 }
 /* the cube turn that brings face n to the front (see .d3-face.f1 to .f6) */
@@ -2210,7 +2212,7 @@ function turnPromptWanted(){
 }
 function turnPromptSync(){
   const el = document.getElementById('turn-prompt');
-  if(!turnPromptWanted()){ if(el && !el.classList.contains('leaving')) el.remove(); return; }
+  if(!turnPromptWanted()){ if(el && !el.classList.contains('leaving') && !el.classList.contains('rolling')) el.remove(); return; }
   if(el) return;
   const cp = P(), root = document.createElement('div');
   root.id = 'turn-prompt'; root.className = 'turn-prompt'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Your turn');
@@ -2221,6 +2223,25 @@ function turnPromptSync(){
   document.body.appendChild(root);
   const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
   if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
+}
+/* Roll dice from the pop-up: the dice tumble inside it, settle on the roll, then the pop-up fades away and the roll plays out */
+function popupRoll(el, d, go){
+  const dice = [...el.querySelectorAll('.tp-dice .die')], sum = d[0]+d[1];
+  el.classList.add('rolling');
+  const face = (e,n)=>{ e.innerHTML = dieFace(n); };
+  const tick = setInterval(()=>dice.forEach(e=>face(e, 1+rnd(6))), 85);
+  dice.forEach((e,k)=>e.animate([{transform:'translate(0,0) rotate(0)'},{transform:'translate(-8px,-10px) rotate(-40deg)'},{transform:'translate(7px,-4px) rotate(35deg)'},{transform:'translate(-4px,5px) rotate(-20deg)'},{transform:'translate(0,0) rotate(0)'}],{duration:420,iterations:3,delay:k*60,easing:'ease-in-out'}));
+  setTimeout(()=>{
+    clearInterval(tick);
+    dice.forEach((e,k)=>{ face(e, d[k]); e.style.animation = 'none'; if(sum===7) e.classList.add('seven'); });
+    el.querySelector('h2').textContent = sum===7 ? 'You rolled 7!' : 'You rolled '+sum;
+    el.querySelector('.tp-card p').textContent = sum===7 ? 'The Vacuum switches on!' : '';
+    setTimeout(()=>{
+      const out = el.querySelector('.tp-card').animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.9)'}],{duration:260,fill:'forwards'});
+      el.animate([{opacity:1},{opacity:0}],{duration:260,fill:'forwards'});
+      out.onfinish = ()=>{ el.remove(); go(); };
+    }, 850);
+  }, 1300);
 }
 /* the pop-up shrinks and flies onto the dice in the turn card, then `after` runs */
 function turnPromptLeave(after){
@@ -3544,7 +3565,7 @@ const G = {
   /* turns */
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
   startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
-  turnRoll(){ turnPromptLeave(()=>{ roll(); }); },
+  turnRoll(){ const el = document.getElementById('turn-prompt'); if(!el || el.classList.contains('rolling')) return; ui.turnSeen = turnKey(); roll({inPopup:(d,go)=>popupRoll(el,d,go)}); if(!el.classList.contains('rolling')) el.remove(); },
   turnAway(){ turnPromptLeave(()=>{ const r = $('#rollbar'); if(r){ r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); } }); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
