@@ -860,14 +860,16 @@ body{overflow-x:clip}
 .where-ic.together img+img{margin-left:-22px}
 .where-ic.apart i{width:34px;border-top:3px dashed var(--plum-2);margin:0 6px 34px}
 .card .where-swap{margin:26px 0 6px;text-align:center}
-.room-prop{position:relative!important;align-self:center;margin:8px 0 0;z-index:2;width:clamp(110px,22%,160px);padding:0;border:0;background:none;cursor:pointer;border-radius:18px;transition:transform .18s}
+.room-prop{position:absolute!important;left:50%;bottom:34%;transform:translateX(-50%);z-index:2;width:clamp(96px,18%,130px);padding:0;border:0;background:none;cursor:pointer;border-radius:18px;transition:transform .18s}
 .room-prop img{display:block;width:100%;height:auto;filter:drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 1px 6px rgba(255,255,255,.7));animation:propGlow 2.2s ease-in-out infinite}
 .room-prop:hover img,.room-prop:focus-visible img{animation-duration:1.1s}
 @keyframes propGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(255,255,255,.9)) drop-shadow(0 1px 4px rgba(255,255,255,.55))}50%{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px rgba(255,255,255,.95))}}
 @media (prefers-reduced-motion:reduce){.room-prop img{animation:none}}
-.room-prop:hover,.room-prop:focus-visible{transform:translateY(-4px) rotate(-2deg) scale(1.05)}
+.room-prop:hover,.room-prop:focus-visible{transform:translateX(-50%) translateY(-4px) rotate(-2deg) scale(1.05)}
 .room-prop:focus-visible{outline:3px solid var(--plum);outline-offset:4px}
-.room-prop::after{content:attr(data-tip);position:absolute;left:50%;top:100%;transform:translate(-50%,-4px);margin-top:4px;white-space:nowrap;padding:3px 10px;border-radius:999px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;opacity:0;pointer-events:none;transition:opacity .15s}
+.room-prop.locked{cursor:not-allowed}
+.room-prop.locked img{animation:none;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+.room-prop::after{width:max-content;max-width:210px;white-space:normal;text-align:center;line-height:1.25;content:attr(data-tip);position:absolute;left:50%;top:100%;transform:translate(-50%,-4px);margin-top:4px;padding:3px 10px;border-radius:12px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;opacity:0;pointer-events:none;transition:opacity .15s}
 .room-prop:hover::after,.room-prop:focus-visible::after{opacity:1}
 @media (max-width:560px){.where-opts{grid-template-columns:1fr}}
 .raft .hint.alert{grid-column:1/-1;margin:0 0 12px}
@@ -976,6 +978,8 @@ body{overflow-x:clip}
 .cozy > *{position:relative}
 .cozy > p.muted{background:rgba(255,252,244,.9);border-radius:12px;padding:4px 10px;color:var(--plum);max-width:52ch;margin:6px auto 0}
 .cozy-bar{display:flex;align-items:center;justify-content:space-between;gap:6px 10px;flex-wrap:wrap;background:rgba(255,252,244,.94);border:2.5px solid var(--plum);border-radius:18px;padding:6px 10px 6px 14px;margin:0 0 12px}
+.bar-title{flex:1 1 auto;min-width:0}
+.bar-title p{margin:2px 0 0;font-size:.8rem;font-weight:700;color:var(--plum-2);line-height:1.25}
 .cozy-bar h2{font-family:var(--display);font-size:1.35rem;line-height:1.1;margin:0;flex:1 1 auto;white-space:nowrap}
 .cat-count{font-weight:900;font-size:.8rem;color:var(--plum);background:var(--butter);border:2px solid var(--plum);border-radius:999px;padding:1px 10px;white-space:nowrap}
 .cozy-bar .bell{margin:0}
@@ -3326,6 +3330,17 @@ function placeDock(){
 addEventListener('resize', placeDock);
 addEventListener('resize', placeLogo);
 addEventListener('resize', placeCats);
+/* the desk and the table stand on the floor of the room, just under the window: the room picture is cropped to fill the box,
+   so work out where its floor line lands and set the prop's feet a little below it */
+function placeRoomProps(){
+  document.querySelectorAll('.cozy .room-prop').forEach(pr=>{
+    const box = pr.parentElement.getBoundingClientRect(); if(!box.width) return;
+    const imgH = Math.max(box.height, box.width*714/1280);
+    pr.style.bottom = Math.round(imgH*.455 - 70) + 'px';
+  });
+}
+addEventListener('resize', placeRoomProps);
+try{ new MutationObserver(placeRoomProps).observe(document.getElementById('root'), {childList:true, subtree:true}); }catch(e){}
 addEventListener('scroll', placeDock, {passive:true});
 /* compare with what the paws held last time and react: new cards pop in and the paw squeezes,
    spent or stolen cards are tugged away, a new cat's paws slide up when the turn changes */
@@ -3862,10 +3877,9 @@ function startScreen(){
       ${!where ? choose : ''}
       ${where==='here' ? `<section class="cozy cozy-here" style="--corner:url(${artSrc('lobby-here')})" aria-labelledby="crew-h">
         <div class="cozy-bar">
-          <h2 id="crew-h">Who's playing?</h2><span class="cat-count">${n} cats${n>MAX_CLASSIC?' · Big Island':''}</span>
+          <div class="bar-title"><h2 id="crew-h">Who's playing?</h2><p>Pass one screen around. Type a name, tap a cat to change its look.</p></div><span class="cat-count">${n} cats${n>MAX_CLASSIC?' · Big Island':''}</span>
         </div>
         <button class="room-prop" onclick="G.where('online')" data-tip="Play online instead" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""></button>
-        <p class="muted">Pass one screen around. Type a name, tap a cat to change its look.</p>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
         <ul class="nooks" aria-label="Cats playing">${seats.map((s,i)=>`<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
           <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
@@ -4009,7 +4023,7 @@ function lobbyScreen(){
         <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
-      <button class="room-prop" onclick="G.lobbyToPerson()" data-tip="Play in person instead" aria-label="Leave this lobby and play in person instead"><img src="${artSrc('table-game')}" alt=""></button>
+      <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" data-tip="${isHost?'Play in person instead':'Only the host can change the game type'}" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""></button>
       <ul class="nooks" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
     <div class="online-actions lobby-go">
@@ -4088,6 +4102,7 @@ const G = {
   lobbyToPerson(){
     /* straight to the one-screen setup, no pop-up. The lobby isn't lost: it stays in Your online games to reopen */
     const code = ON.lobby && ON.lobby.code;
+    if(ON.lobby && ON.lobby.host!==ON.me){ toast('Only the host can change the game type', 'Ask the host to switch it.'); return; }
     G.toStart(); G.where('here');
     toast('Playing in person', code ? `Your online lobby ${code} is still in your online games.` : '');
   },
