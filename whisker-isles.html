@@ -465,6 +465,37 @@ img.pic{object-fit:contain}
 .pl .vp small{display:block;font-family:var(--body);font-size:.7rem;font-weight:700;color:var(--plum-2)}
 .badge{display:inline-block;font-size:.7rem;font-weight:900;border:2px solid var(--plum);border-radius:999px;padding:0 .5em;margin-left:4px;background:var(--mint)}
 
+/* ---------- the cats on the map ---------- */
+.cat-hud{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:var(--room,70%);pointer-events:none}
+.cat-row{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
+.cat-av{position:relative;width:42px;height:42px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
+.cat-av .portrait{width:42px;height:42px;border-width:2.5px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
+.cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
+.cat-av.cur .portrait{box-shadow:0 0 0 4px var(--butter),2px 2px 0 var(--plum)}
+.cat-av.open .portrait{box-shadow:0 0 0 4px #fff,2px 2px 0 var(--plum)}
+.cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+.cat-av.pending .portrait{filter:grayscale(.8) opacity(.65);border-style:dashed}
+.cat-av.away .portrait{opacity:.6}
+.av-vp{position:absolute;right:-6px;bottom:-6px;min-width:20px;height:20px;padding:0 4px;border-radius:999px;background:#fff;border:2px solid var(--plum);font-family:var(--display);font-size:.75rem;line-height:16px;text-align:center;box-sizing:border-box}
+.cat-av.no-trade::after{content:"";position:absolute;left:-5px;top:-5px;width:17px;height:17px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
+.cat-pop{pointer-events:auto;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:10px 12px 12px}
+.cp-head{display:flex;align-items:center;gap:10px}
+.cp-head .portrait{width:42px;height:42px;flex:none;border-width:2.5px}
+.cp-nm{flex:1;min-width:0;display:grid}
+.cp-nm b{font-weight:900;overflow-wrap:anywhere}
+.cp-nm small{font-weight:800;font-size:.72rem;color:var(--plum-2)}
+.cp-pts{font-family:var(--display);font-size:1.6rem;line-height:1;text-align:right}
+.cp-pts small{display:block;font:700 .66rem var(--body);color:var(--plum-2)}
+.cp-x{align-self:flex-start;border:0;background:none;font-size:1.3rem;line-height:1;font-weight:900;color:var(--plum-2);padding:0 2px;cursor:pointer}
+.cp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 0}
+.cp-stats div{background:#fff;border:2px solid #E9D8EC;border-radius:12px;text-align:center;padding:4px 2px 3px;display:flex;flex-direction:column-reverse}
+.cp-stats dd{margin:0;font-family:var(--display);font-size:1.2rem;line-height:1.1}
+.cp-stats dt{font-size:.66rem;font-weight:800;color:var(--plum-2)}
+.cp-hold{margin:8px 0 0;font-size:.8rem;font-weight:700;color:var(--plum-2)}
+.cp-extra{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.cp-extra .badge{border:0;padding:0;margin:0;background:none}
+@media (max-width:920px){ .cat-av,.cat-av .portrait{width:38px;height:38px} .cat-hud{gap:6px} .cat-row{gap:7px} }
+
 /* ---------- odds chart ---------- */
 .odds svg{width:100%;height:auto;display:block}
 .legend{display:flex;gap:14px;font-size:.78rem;color:var(--plum-2);margin-top:4px}
@@ -642,7 +673,7 @@ svg :focus{outline:none}
 @keyframes tokenPop{40%{transform:scale(1.35)}}
 .fly{position:fixed;width:36px;height:36px;z-index:30;pointer-events:none;filter:drop-shadow(2px 2px 0 rgba(58,35,65,.35))}
 .fly .ic,.fly svg{width:36px;height:36px}
-.pl.got .portrait{animation:gotIt .45s ease-out}
+.cat-av.got .portrait{animation:gotIt .45s ease-out}
 @keyframes gotIt{40%{transform:scale(1.18) rotate(-6deg)}}
 .split{display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:center}
 .split-pic img,.split-pic svg{width:110px;height:110px;object-fit:contain;display:block}
@@ -1986,7 +2017,7 @@ function celebrateRoll(){
   const ctm = svg.getScreenCTM(); if(!ctm) return;
   let k = 0;
   S.lastProd.forEach(g=>{
-    const target = (g.p===me() && document.querySelector('#dock:not(.gone) .res-hand .fan')) || document.querySelector(`.pl[data-i="${g.p}"] .portrait`);
+    const target = (g.p===me() && document.querySelector('#dock:not(.gone) .res-hand .fan')) || document.querySelector(`.cat-av[data-i="${g.p}"] .portrait`);
     if(!target) return;
     const pt = svg.createSVGPoint(); pt.x = HEX[g.h].x; pt.y = HEX[g.h].y;
     const a = pt.matrixTransform(ctm), tr = target.getBoundingClientRect();
@@ -2005,7 +2036,7 @@ function celebrateRoll(){
         {transform:`translate(${dx}px,${dy}px) scale(.5)`, opacity:.2}
       ], {duration:1100, delay, easing:'cubic-bezier(.45,0,.3,1)', fill:'both'}).onfinish = ()=>{
         el.remove();
-        const row = document.querySelector(`.pl[data-i="${g.p}"]`);
+        const row = document.querySelector(`.cat-av[data-i="${g.p}"]`);
         if(row){ row.classList.remove('got'); void row.offsetWidth; row.classList.add('got'); }
       };
     }
@@ -2378,7 +2409,7 @@ function suckFx(sw){
   const clampY = y => Math.max(24, Math.min(innerHeight-24, y)), clampX = x => Math.max(24, Math.min(innerWidth-24, x));
   const startFor = i => {
     if(ON.mine.includes(i)){ const f = document.querySelector('#dock .res-hand .fan'); if(f && !$('#dock').classList.contains('gone')){ const r = f.getBoundingClientRect(); return {x:r.left, y:r.top}; } return {x:innerWidth*.22, y:innerHeight-60}; }
-    const row = document.querySelector(`.players .pl[data-i="${i}"]`);
+    const row = document.querySelector(`.cat-av[data-i="${i}"]`);
     if(row){ const r = row.getBoundingClientRect(); return {x:r.left+r.width*.35, y:r.top+r.height/2}; }
     return {x:innerWidth*.2, y:innerHeight*.6};
   };
@@ -2445,7 +2476,7 @@ function swipeOut(sw, root, from, nOut, own, nTaken, ms, gap){
       ang = (parseFloat(fc && fc.style.getPropertyValue('--a'))||0) * (parseFloat(hand && getComputedStyle(hand).getPropertyValue('--sp'))||1);
     }
   } else {
-    const row = document.querySelector(`.players .pl[data-i="${sw.by}"]`);
+    const row = document.querySelector(`.cat-av[data-i="${sw.by}"]`);
     if(row){ const r = row.getBoundingClientRect(); tgt = {x:r.left+r.width*.3, y:r.top+r.height/2}; }
   }
   if(!tgt){ if(own) swipeLand(sw, nTaken); return; }
@@ -2621,17 +2652,52 @@ function render(){
   }
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav"><div class="wi-left">${meLink()}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
-    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
+    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}${S.online ? bellBtn() : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
-  renderBoard(); renderPanel(); renderRollbar(); renderOverlay(); turnPromptSync();
-  placeLogo();
+  renderBoard(); renderPanel(); renderRollbar(); renderCats(); renderOverlay(); turnPromptSync();
+  placeLogo(); placeCats();
   watchAwards();
 }
+/* ---------- the cats on the map: a little avatar for each, and tap one to see what it holds in public ---------- */
+function catPopHTML(i){
+  const q = S.players[i]; if(!q) return '';
+  const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
+  const you = S.online ? ON.mine.includes(i) : false;
+  const awards = (S.longest===i ? `<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',30)}</span>` : '') + (S.army===i ? `<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',30)}</span>` : '');
+  const note = pending ? 'Needs a phone' : away ? 'Away' : i===S.cur ? 'Their turn' : '';
+  const stat = (n, label) => `<div><dd>${n}</dd><dt>${label}</dt></div>`;
+  const ctl = noTradeCtl(q, i);
+  return `<div class="cat-pop" role="group" aria-label="${esc(q.name)}">
+    <div class="cp-head">${portrait(q)}<div class="cp-nm"><b>${esc(q.name)}${you?' (you)':''}</b>${note?`<small>${note}</small>`:''}</div>
+      <div class="cp-pts">${vp(i,false)}<small>of ${WIN_AT}</small></div><button class="cp-x" onclick="G.catInfo(null)" aria-label="Close">\u00d7</button></div>
+    ${pending ? '<p class="cp-hold">Holding its cards until it joins.</p>' : `<dl class="cp-stats">${stat(total(q.res),'cards')}${stat(q.cards.length,'treats')}${stat(roadLength(i),'yarn')}${stat(q.zoomies,'zoomies')}</dl>`}
+    ${awards || ctl ? `<div class="cp-extra">${awards}${ctl}</div>` : ''}</div>`;
+}
+function renderCats(){
+  const hud = $('#cat-hud'); if(!hud || !S) return;
+  if(ui.catPop!=null && !S.players[ui.catPop]) ui.catPop = null;
+  const avs = S.players.map((q,i)=>{
+    const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
+    const open = ui.catPop===i, cur = i===S.cur;
+    return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span></button>`;
+  }).join('');
+  hud.innerHTML = `<div class="cat-row">${avs}</div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+}
+/* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
+function placeCats(){
+  const hud = $('#cat-hud'), svg = $('#board'); if(!hud || !svg || !svg.viewBox || !svg.viewBox.baseVal || !svg.viewBox.baseVal.width) return;
+  const wrap = hud.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
+  const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2, lg = $('#map-logo'), lw = lg ? lg.getBoundingClientRect().width : 0;
+  hud.style.left = (fl - wrap.left + 14) + 'px'; hud.style.top = (ft - wrap.top + 12) + 'px';
+  hud.style.setProperty('--room', Math.max(110, fw - lw - 40) + 'px');
+}
+document.addEventListener('click', e=>{ if(ui.catPop!=null && S && e.target.isConnected && !(e.target.closest && e.target.closest('#cat-hud'))){ ui.catPop = null; renderCats(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && ui.catPop!=null && S){ const i = ui.catPop; ui.catPop = null; renderCats(); const b = document.querySelector(`.cat-av[data-i="${i}"]`); if(b) b.focus(); } });
 /* when a bonus card changes hands, pop it up big, then fly it to that cat's row */
 function watchAwards(){
   const key = (S.code||'hotseat') + ':' + S.board.tiles.map(t=>t.type[0]+(t.num||'')).join('');
@@ -2648,11 +2714,11 @@ function awardPop(kind, p){
   el.innerHTML = `<div class="ap-card ${kind==='longest'?'':'zoom'}">${awardSVG(kind,120)}<b>${title}</b><span>${esc(pname(p))} gets +2 points</span></div>`;
   document.body.appendChild(el);
   const card = el.firstElementChild;
-  const land = ()=>{ el.remove(); const row = document.querySelector(`.pl[data-i="${p}"]`); if(row){ row.classList.remove('got'); void row.offsetWidth; row.classList.add('got'); } };
+  const land = ()=>{ el.remove(); const row = document.querySelector(`.cat-av[data-i="${p}"]`); if(row){ row.classList.remove('got'); void row.offsetWidth; row.classList.add('got'); } };
   if(reduceMotion){ setTimeout(land, 1800); return; }
   card.animate([{transform:'scale(.2) rotate(-12deg)',opacity:0},{transform:'scale(1.12) rotate(3deg)',opacity:1,offset:.6},{transform:'scale(1) rotate(0)',opacity:1}],{duration:520,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'both'});
   setTimeout(()=>{
-    const target = document.querySelector(`.pl[data-i="${p}"] .badges`) || document.querySelector(`.pl[data-i="${p}"]`);
+    const target = document.querySelector(`.cat-av[data-i="${p}"]`);
     const cr = card.getBoundingClientRect();
     let dx = 0, dy = -200;
     if(target){ const tr = target.getBoundingClientRect(); dx = tr.left+tr.width/2-(cr.left+cr.width/2); dy = tr.top+tr.height/2-(cr.top+cr.height/2); }
@@ -2914,15 +2980,6 @@ function renderPanel(){
   let html = '';
 
   html += waitBanner();
-  html += `<section class="card cats-card">
-    <h3>Cats</h3>
-    <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}${S.online&&ON.lobby&&ON.lobby.seats[i]&&ON.lobby.seats[i].open?' pending':''}" data-i="${i}">
-      ${portrait(q)}
-      <div><div class="nm"><span class="dot" style="background:${pcol(q)}"></span>${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
-      <div class="meta">${S.online&&ON.lobby&&ON.lobby.seats[i]&&ON.lobby.seats[i].open?'Needs a phone. Holding its cards until it joins.':`${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}`}</div>${noTradeCtl(q,i)}</div>
-      <div class="badges">${S.longest===i?`<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',36)}</span>`:''}${S.army===i?`<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',36)}</span>`:''}</div>
-      <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
-  </section>`;
 
   if(mp && !dockOn()){
     const hidden = mp.cards.filter(c=>c.t==='trophy').length;
@@ -3043,6 +3100,7 @@ function placeDock(){
 }
 addEventListener('resize', placeDock);
 addEventListener('resize', placeLogo);
+addEventListener('resize', placeCats);
 addEventListener('scroll', placeDock, {passive:true});
 /* compare with what the paws held last time and react: new cards pop in and the paw squeezes,
    spent or stolen cards are tugged away, a new cat's paws slide up when the turn changes */
@@ -3861,6 +3919,7 @@ const G = {
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
   /* turns */
+  catInfo(i){ ui.catPop = (i==null || ui.catPop===i) ? null : i; renderCats(); },
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
   startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
   turnRoll(){ const el = document.getElementById('turn-prompt'); if(!el || el.classList.contains('leaving')) return;
