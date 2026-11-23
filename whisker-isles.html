@@ -479,6 +479,9 @@ img.pic{object-fit:contain}
 .cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
 .cat-av.pending .portrait{filter:grayscale(.8) opacity(.65);border-style:dashed}
 .cat-av.away .portrait{opacity:.6}
+.av-roll{position:absolute;left:50%;top:-12px;transform:translateX(-50%);min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:9px;background:var(--butter);border:2.5px solid var(--plum);box-shadow:1px 2px 0 var(--plum);font-family:var(--display);font-size:1.05rem;line-height:23px;text-align:center;color:var(--plum);z-index:2}
+.av-roll.wait{background:#fff;color:var(--plum-2)}
+.av-roll.out{opacity:.55}
 .av-vp{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:999px;background:#fff;border:2.5px solid var(--plum);font-family:var(--display);font-size:.95rem;line-height:21px;text-align:center;box-sizing:border-box}
 .cat-av.no-trade::after{content:"";position:absolute;left:-6px;top:-6px;width:21px;height:21px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
 .cat-pop{pointer-events:auto;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:10px 12px 12px}
@@ -972,7 +975,7 @@ body{overflow-x:clip}
 .big-code{font-family:var(--display);font-size:clamp(1.8rem,6vw,2.8rem);margin:6px 0 12px;word-break:break-all}
 .lobby h2{font-size:1.2rem}
 /* the lobby: a warm corner with a rug, cushions for every cat and one saved for each friend still to come */
-.cozy{position:relative;display:flex;flex-direction:column;border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 14px 16px;overflow:hidden;
+.cozy{isolation:isolate;position:relative;display:flex;flex-direction:column;border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 14px 16px;overflow:hidden;
   background:#EDE3F7 var(--corner) center bottom/cover no-repeat;min-height:min(135vw,540px)}
 .cozy::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,250,240,.55) 0,rgba(255,250,240,0) 38%);pointer-events:none}
 .cozy > *{position:relative}
@@ -1899,8 +1902,9 @@ function setupNext(){
   if(S.phase!=='setup' || S.setup.step!=='done' || !myTurn()) return;
   S.setup.i++;
   if(S.setup.i >= S.setup.order.length){
-    S.phase='play'; S.cur=0; S.rolled=false; S.handoff=!S.online;
-    log(`Setup done. ${pname(0)}, roll the dice to start.`);
+    const f0 = S.setup.first && S.setup.first.done!=null ? S.setup.first.done : 0;
+    S.phase='play'; S.cur=f0; S.rolled=false; S.handoff=!S.online;
+    log(`Setup done. ${pname(f0)}, roll the dice to start.`);
   } else { S.cur = S.setup.order[S.setup.i]; S.setup.step='bed'; S.setup.lastBed=null; if(!S.online && S.setup.order[S.setup.i-1]!==S.cur) S.handoff=true; }
   commit();
 }
@@ -2201,13 +2205,14 @@ function dropCat(k){
   else if(S.offer){ S.offer.from = re(S.offer.from); S.offer.to = offerTo(S.offer).map(re).filter(i=>i>=0); if(!S.offer.to.length) S.offer = null; }
   S.discardQ = (S.discardQ||[]).filter(i=>i!==k).map(re);
   const st = S.setup;
+  if(st.first && st.first.done!=null){ const d0 = st.first.done; st.first.done = d0===k ? k%n : re(d0); }
   if(S.phase==='setup' && st.step==='roll'){
     st.first = {rolls:Array(n).fill(null), live:[...Array(n).keys()]}; S.cur = 0;
   } else if(S.phase==='setup'){
     const before = st.order.slice(0, st.i).filter(x=>x===k).length;
     st.order = st.order.filter(x=>x!==k).map(re); st.i -= before;
     if(wasCur){ st.step = 'bed'; st.lastBed = null; }
-    if(st.i >= st.order.length){ S.phase = 'play'; S.cur = 0; S.rolled = false; }
+    if(st.i >= st.order.length){ S.phase = 'play'; S.cur = st.first && st.first.done!=null ? st.first.done : 0; S.rolled = false; }
     else S.cur = wasCur ? st.order[st.i] : re(S.cur);
   } else if(wasCur){
     S.cur = k % n; S.turn++; S.rolled = false; S.playedTreat = false; S.sub = null; S.subData = null;
@@ -2895,7 +2900,7 @@ function catPopHTML(i){
   const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
   const you = S.online ? ON.mine.includes(i) : false;
   const awards = (S.longest===i ? `<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',30)}</span>` : '') + (S.army===i ? `<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',30)}</span>` : '');
-  const note = pending ? 'Needs a phone' : away ? 'Away' : i===S.cur ? 'Their turn' : '';
+  const note = pending ? 'Needs a phone' : away ? 'Away' : rolling4First() && S.setup.first.rolls[i]!=null ? 'Rolled '+S.setup.first.rolls[i] : i===S.cur ? 'Their turn' : '';
   const stat = (n, label) => `<div><dd>${n}</dd><dt>${label}</dt></div>`;
   const ctl = noTradeCtl(q, i);
   return `<div class="cat-pop" role="group" aria-label="${esc(q.name)}">
@@ -2904,16 +2909,36 @@ function catPopHTML(i){
     ${pending ? '<p class="cp-hold">Holding its cards until it joins.</p>' : `<dl class="cp-stats">${stat(total(q.res),'cards')}${stat(q.cards.length,'treats')}${stat(roadLength(i),'yarn')}${stat(q.zoomies,'zoomies')}</dl>`}
     ${awards || ctl ? `<div class="cp-extra">${awards}${ctl}</div>` : ''}</div>`;
 }
+/* the order the cats are shown in. While they roll for first, the highest roll moves to the front as each roll lands;
+   once that's settled it stays in start order (first cat, then clockwise) for the rest of the game */
+function rolling4First(){ return !!(S && S.phase==='setup' && S.setup && S.setup.step==='roll' && S.setup.first); }
+function catOrder(){
+  const n = S.players.length, idx = [...Array(n).keys()];
+  if(rolling4First()){
+    const F = S.setup.first, key = i => F.rolls[i]!=null ? F.rolls[i] : (F.live.includes(i) && F.tie ? 100 : -1);
+    return idx.sort((a,b)=> key(b)-key(a) || a-b);
+  }
+  const f = S.setup && S.setup.first && S.setup.first.done;
+  return f!=null && f>=0 && f<n ? idx.map(k=>(f+k)%n) : idx;
+}
 function renderCats(){
   const hud = $('#cat-hud'); musSync(!!(hud && S)); if(!hud || !S) return;
   if(ui.catPop!=null && !S.players[ui.catPop]) ui.catPop = null;
-  const avs = S.players.map((q,i)=>{
+  const prevPos = {}; hud.querySelectorAll('.cat-av').forEach(b=>{ prevPos[b.dataset.i] = b.getBoundingClientRect(); });
+  const ord = rolling4First(), F4 = ord ? S.setup.first : null;
+  const avs = catOrder().map(i=>{
+    const q = S.players[i];
     const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
     const open = ui.catPop===i, cur = i===S.cur;
-    return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span></button>`;
+    return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}${ord && F4.rolls[i]!=null ? ', rolled '+F4.rolls[i] : ''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span>${ord ? `<span class="av-roll${F4.rolls[i]==null?' wait':''}${F4.live.includes(i)?'':' out'}" aria-hidden="true">${F4.rolls[i]==null ? (F4.live.includes(i)?'…':'') : F4.rolls[i]}</span>` : ''}</button>`;
   }).join('');
   const ico = SND.muted ? '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
   hud.innerHTML = `<div class="cat-row">${avs}</div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  if(!reduceMotion) hud.querySelectorAll('.cat-av').forEach(b=>{
+    const o = prevPos[b.dataset.i]; if(!o) return;
+    const r = b.getBoundingClientRect(), dx = o.left-r.left, dy = o.top-r.top;
+    if(Math.abs(dx)+Math.abs(dy) > 2) b.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}], {duration:650, easing:'cubic-bezier(.3,1.25,.5,1)'});
+  });
   const tools = $('#cat-tools'); if(tools) tools.innerHTML = `${ui.musicMenu ? musMenuHTML() : ''}<div class="tool-row"><button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-haspopup="true" aria-expanded="${!!ui.musicMenu}" aria-label="${MUS.on?'Music: '+MUS_TR[MUS.track].name+'. Choose music':'Music is off. Choose music'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button></div>`;
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
@@ -3346,11 +3371,11 @@ function arrangeNooks(){
     const items = [...ul.children], n = items.length, box = ul.parentElement.getBoundingClientRect(); if(!n || !box.width) return;
     ul.classList.add('ring');
     const w = box.width, h = box.height, cx = w/2, rx = w*.40, ry = h*.22, cy = h - ry - 108;
-    const span = n===1 ? 0 : Math.min(250, 66*(n-1));
+    const span = n===1 ? 0 : Math.min(200, 62*(n-1));
     const pts = items.map((_,i)=>{ const a = (n===1 ? 90 : 90 + span/2 - i*span/(n-1)) * Math.PI/180; return [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]; });
     let step = 130; if(n>1){ let len = 0; for(let i=1;i<n;i++) len += Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); step = len/(n-1); }
     const f = Math.max(.58, Math.min(1, step/122));
-    items.forEach((li,i)=>{ li.style.left = pts[i][0]+'px'; li.style.top = pts[i][1]+'px'; li.style.setProperty('--nf', f.toFixed(3)); li.style.zIndex = 3 + Math.round(pts[i][1]); });
+    items.forEach((li,i)=>{ li.style.left = pts[i][0]+'px'; li.style.top = pts[i][1]+'px'; li.style.setProperty('--nf', f.toFixed(3)); li.style.zIndex = 3 + Math.round(pts[i][1]/10); });
   });
 }
 addEventListener('resize', arrangeNooks);
