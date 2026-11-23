@@ -466,11 +466,11 @@ img.pic{object-fit:contain}
 .badge{display:inline-block;font-size:.7rem;font-weight:900;border:2px solid var(--plum);border-radius:999px;padding:0 .5em;margin-left:4px;background:var(--mint)}
 
 /* ---------- the cats on the map ---------- */
-.cat-hud{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:var(--room,70%);pointer-events:none}
+.cat-hud{position:static;display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0 4px}   /* below the map, so it never covers a port or a tile */
 .cat-tools{position:absolute;z-index:17;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
 .cat-tools.fixed{position:fixed;left:50%!important;bottom:12px!important}
 .tool-row{display:flex;gap:10px;pointer-events:auto}
-.cat-row{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
+.cat-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;pointer-events:auto}
 .cat-av{position:relative;width:62px;height:62px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
 .cat-av .portrait{width:62px;height:62px;border-width:3px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
 .cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
