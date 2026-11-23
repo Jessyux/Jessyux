@@ -450,6 +450,10 @@ body.has-dock .app{padding-bottom:calc(var(--dockv) + 12px)}
 .pl .portrait{width:44px;height:44px;border-width:2.5px}
 .pl .nm{font-weight:900}
 .pl .meta{font-size:.8rem;color:var(--plum-2)}
+.pl.pending .portrait{filter:grayscale(.8) opacity(.6);border-style:dashed}
+.pl.pending .nm::after{content:'Pending';margin-left:6px;padding:1px 8px;border:2px dashed var(--plum);border-radius:99px;background:#F3EEF5;font-size:.7rem;font-weight:900;color:var(--plum-2)}
+.wait-banner{border-style:dashed}
+.wait-banner .wb-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 0}
 .pl .vp{font-family:var(--display);font-size:1.4rem;text-align:right}
 .pl .vp small{display:block;font-family:var(--body);font-size:.7rem;font-weight:700;color:var(--plum-2)}
 .badge{display:inline-block;font-size:.7rem;font-weight:900;border:2px solid var(--plum);border-radius:999px;padding:0 .5em;margin-left:4px;background:var(--mint)}
@@ -2755,12 +2759,13 @@ function renderPanel(){
 
   let html = '';
 
+  html += waitBanner();
   html += `<section class="card cats-card">
     <h3>Cats</h3>
-    <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}" data-i="${i}">
+    <div class="players">${S.players.map((q,i)=>`<div class="pl${i===p?' cur':''}${S.online&&ON.lobby&&ON.lobby.seats[i]&&ON.lobby.seats[i].open?' pending':''}" data-i="${i}">
       ${portrait(q)}
       <div><div class="nm"><span class="dot" style="background:${pcol(q)}"></span>${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}${S.online&&ON.lobby&&!ON.online.includes(ON.lobby.seats[i]&&ON.lobby.seats[i].pid)?' <small class="muted">away</small>':''}</div>
-      <div class="meta">${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}</div>${noTradeCtl(q,i)}</div>
+      <div class="meta">${S.online&&ON.lobby&&ON.lobby.seats[i]&&ON.lobby.seats[i].open?'Needs a phone. Holding its cards until it joins.':`${total(q.res)} cards · ${q.cards.length} treats · yarn ${lens[i]} · zoomies ${q.zoomies}`}</div>${noTradeCtl(q,i)}</div>
       <div class="badges">${S.longest===i?`<span class="badge" role="img" aria-label="Longest yarn, plus 2 points" title="Longest yarn · +2 points">${awardSVG('longest',36)}</span>`:''}${S.army===i?`<span class="badge" role="img" aria-label="Zoomiest cat, plus 2 points" title="Zoomiest cat · +2 points">${awardSVG('zoomiest',36)}</span>`:''}</div>
       <div class="vp">${vp(i,false)}<small>of ${WIN_AT}</small></div></div>`).join('')}</div>
   </section>`;
@@ -2977,10 +2982,11 @@ let lastOverlay = '';
 function renderOverlay(){
   const o = $('#overlay');
   if(S && S.phase==='over') recordResult();
+  if(!openCats().length) ui.waitHidden = false;
   let html = '';
   if(S){
     if(S.phase==='over' && !ui.hideWin) html = winHTML();
-    else if(openCats().length) html = waitingHTML();
+    else if(openCats().length && !ui.waitHidden) html = waitingHTML();
     else if(S.handoff && !S.online) html = handoffHTML();
     else if(discardSeat()>=0) html = discardHTML();
     else if(S.sub==='steal' && myTurn()) html = stealHTML();
@@ -3049,7 +3055,15 @@ function waitingHTML(){
     <p>Every cat needs its own phone. Open the code on another device and pick a cat.</p>
     <p><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button></p>
     <ul class="wait-cats">${L.seats.map((x,i)=>`<li class="${x.open?'open':'here'}">${portrait(x)}<b>${esc(x.name)}</b><small>${x.open?'Needs a phone':ON.mine.includes(i)?'You':'Here'}</small></li>`).join('')}</ul>
-    <div class="actions center">${isHost ? `<button class="btn" onclick="G.goInPerson()">Back to one screen</button>` : `<button class="btn" onclick="G.toStart()">Leave game</button>`}</div></div>`;
+    <div class="actions center"><button class="btn primary" onclick="G.hideWait(true)">Wait in the game</button>${isHost ? `<button class="btn" onclick="G.goInPerson()">Back to one screen</button>` : `<button class="btn" onclick="G.toStart()">Leave game</button>`}</div></div>`;
+}
+/* while cats wait for a phone, the game stays open behind a banner: the code, who is missing, and a way back to the full card */
+function waitBanner(){
+  const open = openCats(); if(!open.length || !ON.lobby) return '';
+  const L = ON.lobby, link = inviteLink(L.code), names = open.map(i=>esc(L.seats[i].name)).join(', ');
+  return `<section class="card wait-banner" role="status"><h3>Waiting for ${open.length} ${open.length>1?'cats':'cat'}</h3>
+    <p class="small">The game is paused until every cat has a phone. Still to join: <b>${names}</b>.</p>
+    <p class="wb-acts"><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button><button class="btn small" onclick="G.hideWait(false)">Show invite</button></p></section>`;
 }
 function handoffHTML(){
   const pl = P(), rollNow = S.phase==='play' && !S.rolled;
@@ -3610,7 +3624,7 @@ const G = {
     if(!S || S.online || ON.status==='creating') return;
     const cur = S.players[S.cur];
     ui.form = ui.form || {}; ui.form.name = cur.name; ui.form.breed = cur.breed;
-    ON.err = null; ON.status = 'creating'; ON.convert = {you: S.cur, cats: S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint||null}))}; render();
+    ui.waitHidden = false; ON.err = null; ON.status = 'creating'; ON.convert = {you: S.cur, cats: S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint||null}))}; render();
     try{
       const r = await fetch(API+'/new', {method:'POST', headers:{'content-type':'application/json'}, body:'{}'});
       if(!r.ok) throw new Error('status '+r.status);
@@ -3618,6 +3632,7 @@ const G = {
       ui.modal = null; connect(code);
     }catch(e){ ON.status='idle'; ON.convert=null; ui.modal=null; render(); toast("Couldn't go online", 'Online games are not available right now. Your game is safe on this phone.'); }
   },
+  hideWait(h){ ui.waitHidden = !!h; render(); },
   goInPerson(){
     if(!S || !S.online || !ON.ws || ON.ws.readyState!==1) return;
     if(!confirm('Move back to one screen? Friends playing on their own devices will be disconnected, and every cat plays on this phone again.')) return;
