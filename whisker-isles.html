@@ -88,7 +88,18 @@ a.btn{color:var(--plum);text-decoration:none}
 .pills button[aria-checked="true"]{background:var(--butter);box-shadow:2px 2px 0 var(--plum)}
 .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,44px));gap:8px}
 .swatches button{aspect-ratio:1;border-radius:50%;border:2.5px solid var(--plum);background:var(--sw);padding:0}
-.swatches button[aria-checked="true"]{box-shadow:0 0 0 3px var(--butter),0 0 0 6px var(--plum)}
+.swatches button{position:relative}
+/* the picked colour wears a tick (no ring); it pops in when you tap it */
+.swatches button[aria-checked="true"]::after{content:"";position:absolute;inset:16%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.8l4.6 4.6L19.2 7.4' stroke='%233A2341' stroke-width='6.4'/%3E%3Cpath d='M5 12.8l4.6 4.6L19.2 7.4' stroke='%23fff' stroke-width='3.4'/%3E%3C/svg%3E") center/contain no-repeat}
+.swatches button.orig[aria-checked="true"]{background:#FFF4CF}
+.swatches button.orig[aria-checked="true"]::after{inset:auto auto auto 10px;top:50%;width:20px;height:20px;transform:translateY(-50%)}
+.swatches button.orig{display:flex;align-items:center;justify-content:center}
+.swatches button.orig[aria-checked="true"]{padding-left:1.6em}
+.swatches button[aria-checked="true"].just::after{animation:tickPop .5s cubic-bezier(.3,1.5,.5,1) both}
+.swatches button.orig[aria-checked="true"].just::after{animation-name:tickPopO}
+@keyframes tickPop{0%{transform:scale(.1) rotate(-50deg);opacity:0}55%{transform:scale(1.35) rotate(10deg);opacity:1}80%{transform:scale(.92) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes tickPopO{0%{transform:translateY(-50%) scale(.1) rotate(-50deg);opacity:0}55%{transform:translateY(-50%) scale(1.35) rotate(10deg);opacity:1}80%{transform:translateY(-50%) scale(.92) rotate(-4deg)}100%{transform:translateY(-50%) scale(1) rotate(0)}}
+@media (prefers-reduced-motion:reduce){.swatches button[aria-checked="true"].just::after{animation:none}}
 .swatches button:disabled{opacity:.28;background:repeating-linear-gradient(45deg,var(--sw) 0 5px,#fff 5px 9px)}
 .btn.primary{background:var(--butter)}
 .btn.hot{background:var(--strawberry);color:#fff}
@@ -2894,7 +2905,7 @@ function renderOverlay(){
   const keepScroll = sameKind && o.querySelector('.modal') ? o.querySelector('.modal').scrollTop : 0;
   o.innerHTML = full;
   if(keepScroll){ const m=o.querySelector('.modal'); if(m) m.scrollTop=keepScroll; }
-  if(ui.refocus){ const f=o.querySelector(ui.refocus); ui.refocus=null; if(f) f.focus({preventScroll:true}); }
+  if(ui.refocus){ const f=o.querySelector(ui.refocus); ui.refocus=null; if(f){ f.focus({preventScroll:true}); if(f.closest('.swatches')) f.classList.add('just'); } }
   if(!sameKind){ const f = o.querySelector('[autofocus], .modal button:not(:disabled), .modal input'); if(f) f.focus({preventScroll:true}); }
   if(S && S.phase==='over' && !ui.hideWin && ui.cheered!==S.log.length){ ui.cheered = S.log.length; confetti(); }
   if(S && S.phase==='over' && !ui.hideWin) playClimb();
