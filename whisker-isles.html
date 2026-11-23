@@ -649,6 +649,19 @@ div.build{cursor:default}
 .swipe-fx img{position:absolute;height:auto;transform:translate(-50%,-50%);opacity:0;will-change:transform,opacity}
 .sfx-card{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity}
 .sfx-card .pcard.rcard{--cw:64px;box-shadow:3px 3px 0 var(--plum)}
+.turn-prompt{position:fixed;inset:0;z-index:170;display:grid;place-items:center;padding:16px;background:rgba(58,35,65,.5)}
+.tp-card{background:#fff;border:3px solid var(--plum);border-radius:var(--r-lg,22px);box-shadow:6px 6px 0 var(--plum),0 0 0 6px var(--pc,#FFC85A);padding:20px 22px 18px;text-align:center;max-width:340px;width:100%}
+.tp-who .portrait{width:84px;height:84px;margin:-54px auto 6px;background:#fff}
+.tp-card h2{font-family:var(--display);font-weight:400;font-size:1.6rem;margin:0 0 2px}
+.tp-card p{margin:0 0 8px;color:var(--plum-2);font-weight:700}
+.tp-dice{display:flex;justify-content:center;gap:10px;margin:8px 0 14px}
+.tp-dice .die{animation:tpWiggle 1.6s ease-in-out infinite}
+.tp-dice .die:nth-child(2){animation-delay:.25s}
+.tp-acts{display:flex;flex-direction:column;gap:8px;align-items:center}
+.tp-acts .big{font-size:1.15rem;padding:.6em 1.8em;width:100%}
+@keyframes tpWiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg) translateY(-3px)}}
+#rollbar.nudge .dice-row{animation:tpWiggle .5s ease-in-out 3}
+@media (prefers-reduced-motion:reduce){.tp-dice .die,#rollbar.nudge .dice-row{animation:none}}
 #wi-toast{position:fixed;left:50%;top:14px;z-index:200;transform:translate(-50%,-140%);display:flex;flex-direction:column;gap:2px;max-width:min(92vw,420px);padding:10px 18px;border:3px solid var(--plum);border-radius:18px;background:var(--butter);color:var(--plum);box-shadow:3px 3px 0 var(--plum);text-align:center;pointer-events:none;opacity:0;transition:transform .35s cubic-bezier(.3,1.3,.5,1),opacity .2s}
 #wi-toast.show{transform:translate(-50%,0);opacity:1}
 #wi-toast b{font-family:var(--display);font-weight:400;font-size:1.05rem}
@@ -2186,6 +2199,45 @@ function suckFx(sw){
   });
   setTimeout(()=>root.remove(), T + idx*230 + 150);
 }
+/* ---------- online: when it's your turn a pop-up says so and offers Roll dice.
+   Tapping away (or Not yet) sends the pop-up shrinking down onto the dice in your turn card. ---------- */
+const dieFace = n => Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('');
+const turnKey = () => S.turn+':'+S.cur+':'+S.rollN;
+function turnPromptWanted(){
+  return !!(S && S.online && S.phase==='play' && myTurn() && !S.rolled && !S.sub && !ui.rolling && !ui.modal && !S.offer && ui.turnSeen!==turnKey());
+}
+function turnPromptSync(){
+  const el = document.getElementById('turn-prompt');
+  if(!turnPromptWanted()){ if(el && !el.classList.contains('leaving')) el.remove(); return; }
+  if(el) return;
+  const cp = P(), root = document.createElement('div');
+  root.id = 'turn-prompt'; root.className = 'turn-prompt'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Your turn');
+  root.innerHTML = `<div class="tp-card" style="--pc:${pcol(cp)}"><div class="tp-who">${portrait(cp)}</div><h2>Your turn, ${esc(cp.name)}!</h2><p>Roll the dice to start.</p>
+    <div class="tp-dice" aria-hidden="true"><span class="die">${dieFace(5)}</span><span class="die">${dieFace(2)}</span></div>
+    <div class="tp-acts"><button class="btn primary big" onclick="G.turnRoll()">Roll dice</button><button class="btn small" onclick="G.turnAway()">Not yet</button></div></div>`;
+  root.addEventListener('pointerdown', e=>{ if(e.target===root) G.turnAway(); });
+  document.body.appendChild(root);
+  const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
+  if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
+}
+/* the pop-up shrinks and flies onto the dice in the turn card, then `after` runs */
+function turnPromptLeave(after){
+  const el = document.getElementById('turn-prompt'); ui.turnSeen = turnKey();
+  const target = document.querySelector('#rollbar .dice-row') || document.getElementById('rollbar');
+  if(!el){ after && after(); return; }
+  el.classList.add('leaving');
+  if(target) target.scrollIntoView({behavior: reduceMotion?'auto':'smooth', block:'center'});
+  const card = el.querySelector('.tp-card');
+  const go = () => {
+    const done = () => { el.remove(); after && after(); };
+    if(reduceMotion || !target){ done(); return; }
+    const cr = card.getBoundingClientRect(), tr = target.getBoundingClientRect();
+    const dx = tr.left+tr.width/2-(cr.left+cr.width/2), dy = tr.top+tr.height/2-(cr.top+cr.height/2);
+    el.style.background = 'transparent';
+    card.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*.5}px,${dy*.5-40}px) scale(.55)`,opacity:1,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(.15)`,opacity:.2}],{duration:620,easing:'ease-in',fill:'forwards'}).onfinish = done;
+  };
+  setTimeout(go, reduceMotion ? 0 : 280);
+}
 function onMsg(m){
   ON.offline=false;
   /* the host moved the game back to one screen: it carries on here, on this phone */
@@ -2291,7 +2343,7 @@ function render(){
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
-  renderBoard(); renderPanel(); renderRollbar(); renderOverlay();
+  renderBoard(); renderPanel(); renderRollbar(); renderOverlay(); turnPromptSync();
   placeLogo();
   watchAwards();
 }
@@ -3490,6 +3542,8 @@ const G = {
   /* turns */
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
   startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
+  turnRoll(){ turnPromptLeave(()=>{ roll(); }); },
+  turnAway(){ turnPromptLeave(()=>{ const r = $('#rollbar'); if(r){ r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); } }); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){
