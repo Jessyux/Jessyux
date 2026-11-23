@@ -12,7 +12,8 @@ function grab(name) {
 function load() {
   const logs = [];
   const make = new Function('logs', `let S; const log = m => logs.push(m); const pname = i => S.players[i].name; const updateLongest = () => {};
-    ${html.match(/function offerTo\(o\)\{.*\}/)[0]}\n${grab('dropCat')}\n${grab('skipTurn')}\nreturn { set(s){ S = s; }, get(){ return S; }, dropCat, skipTurn };`);
+    ${html.match(/function offerTo\(o\)\{.*\}/)[0]}\n${html.match(/function nextCat\(c\)\{.*\}/)[0]}
+${grab('dropCat')}\n${grab('skipTurn')}\nreturn { set(s){ S = s; }, get(){ return S; }, dropCat, skipTurn };`);
   return Object.assign(make(logs), { logs });
 }
 const P = n => ({ name: n, res: {}, cards: [], zoomies: 0, pieces: {} });
