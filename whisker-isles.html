@@ -777,6 +777,10 @@ div.build{cursor:default}
 .thumbs-up{position:fixed;left:0;right:0;bottom:0;z-index:175;display:flex;justify-content:center;gap:clamp(40px,22vw,220px);pointer-events:none;overflow:hidden;height:min(46vh,300px);align-items:flex-end}
 .thumbs-up .paw{height:100%;width:auto;display:block}
 .thumbs-up .paw.l{scale:-1 1}
+.tu-roll{position:absolute;left:50%;top:6px;transform:translateX(-50%);display:grid;justify-items:center;background:var(--milk);border:3px solid var(--plum);border-radius:18px;box-shadow:3px 3px 0 var(--plum);padding:4px 16px 2px;color:var(--plum);animation:tuPop .45s cubic-bezier(.3,1.5,.5,1)}
+.tu-roll small{font-weight:800;font-size:.78rem}
+.tu-roll b{font-family:var(--display);font-weight:400;font-size:2.4rem;line-height:1}
+@keyframes tuPop{from{transform:translateX(-50%) scale(.4);opacity:0}}
 #rollbar.nudge .dice-row{animation:nudgeDice .5s ease-in-out 3}
 @keyframes nudgeDice{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(5deg) translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){#rollbar.nudge .dice-row{animation:none}}
@@ -1894,7 +1898,7 @@ function firstRoll(opt){
   const finish = () => {
     ui.rolling = false; S.dice = d; F.rolls[S.cur] = d[0]+d[1];
     log(`${pname(S.cur)} rolls ${d[0]+d[1]}.`);
-    thumbsUp(S.cur);
+    thumbsUp(S.cur, d[0]+d[1]);
     const next = F.live.find(i=>F.rolls[i]==null);
     if(next!=null){ S.cur = next; commit(); return; }
     const top = Math.max(...F.live.map(i=>F.rolls[i])), best = F.live.filter(i=>F.rolls[i]===top);
@@ -2805,7 +2809,7 @@ function turnPromptLeave(after){
 const setupKey = () => 'su:'+S.cur+':'+((S.setup && S.setup.first && S.setup.first.tie)||0);
 function setupPromptSync(){
   const el = document.getElementById('setup-prompt');
-  const want = !!(S && S.phase==='setup' && S.setup && S.setup.step==='roll' && S.setup.first && myTurn() && !ui.rolling && !ui.modal && ui.setupSeen!==setupKey());
+  const want = !!(S && S.phase==='setup' && S.setup && S.setup.step==='roll' && S.setup.first && myTurn() && !ui.rolling && !ui.modal && ui.setupSeen!==setupKey() && !(ui.setupHold>Date.now()));
   if(!want){ if(el && !el.classList.contains('leaving')) el.remove(); return; }
   if(el) return;
   const cp = P(), F = S.setup.first, root = document.createElement('div');
@@ -2821,16 +2825,18 @@ function setupPromptSync(){
   if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
 }
 /* a roll is done: both paws pop up from the bottom with a thumbs up, in the colour of the cat that rolled */
-function thumbsUp(i){
+function thumbsUp(i, sum){
   const q = S && S.players[i]; if(!q || !ART.has('paw-up')) return;
+  /* hold the next cat's pop-up back for 2 seconds so everyone sees this roll */
+  ui.setupHold = Date.now()+2000; setTimeout(()=>{ if(S) setupPromptSync(); }, 2050);
   document.querySelectorAll('.thumbs-up').forEach(e=>e.remove());
   const el = document.createElement('div'); el.className = 'thumbs-up'; el.setAttribute('aria-hidden','true');
-  el.innerHTML = pawImg(q,'l','paw-up') + pawImg(q,'r','paw-up');
+  el.innerHTML = pawImg(q,'l','paw-up') + pawImg(q,'r','paw-up') + `<div class="tu-roll"><small>${esc(q.name)} rolled</small><b>${sum}</b></div>`;
   document.body.appendChild(el);
   sfx('award');
-  if(reduceMotion){ setTimeout(()=>el.remove(), 1300); return; }
-  [...el.children].forEach((p,k)=>p.animate([{transform:`translateY(105%) rotate(${k?10:-10}deg)`},{transform:`translateY(-6%) rotate(${k?-4:4}deg)`,offset:.45},{transform:'translateY(2%) rotate(0deg)',offset:.55},{transform:'translateY(0) rotate(0deg)',offset:.8},{transform:`translateY(105%) rotate(${k?8:-8}deg)`}],{duration:1500,easing:'ease-in-out',delay:k*90,fill:'both'}));
-  setTimeout(()=>el.remove(), 1800);
+  if(reduceMotion){ setTimeout(()=>el.remove(), 2000); return; }
+  [...el.querySelectorAll('.paw')].forEach((p,k)=>p.animate([{transform:`translateY(105%) rotate(${k?10:-10}deg)`},{transform:`translateY(-6%) rotate(${k?-4:4}deg)`,offset:.45},{transform:'translateY(2%) rotate(0deg)',offset:.55},{transform:'translateY(0) rotate(0deg)',offset:.8},{transform:`translateY(105%) rotate(${k?8:-8}deg)`}],{duration:2000,easing:'ease-in-out',delay:k*90,fill:'both'}));
+  setTimeout(()=>el.remove(), 2250);
 }
 function onMsg(m){
   if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); setTimeout(maybeA2HS, 1800); }
