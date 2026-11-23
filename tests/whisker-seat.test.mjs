@@ -147,3 +147,23 @@ test('an unknown name, or an open seat, is not taken over', () => {
   assert.equal(takeOverByName(room, 'new', 'Nobody').ok, false);
   assert.equal(takeOverByName(room, 'new', 'Tofu').ok, false);
 });
+
+test('pickList shows every cat, which are free and which are on a device now, and never a device id', () => {
+  const room = { code: 'sleepy-tuna-42', started: true, seats: [
+    { pid: 'secret-a', sid: 'pa', name: 'Mochi', breed: 1, color: 2 },
+    { pid: 'secret-b', sid: 'pb', name: 'Bean', breed: 2, tint: { coat: '#ffffff' } },
+    { pid: null, sid: 'pc', name: 'Tofu', breed: 3, open: true }] };
+  const out = seat.pickList(room, ['secret-a']);
+  assert.ok(!JSON.stringify(out).includes('secret-'), 'no private id leaks');
+  assert.deepEqual(out.map(c => c.name), ['Mochi', 'Bean', 'Tofu']);
+  assert.deepEqual(out.map(c => c.open), [false, false, true]);
+  assert.deepEqual(out.map(c => c.online), [true, false, false]);
+  assert.equal(out[0].color, 2);
+});
+
+test('a cat picked from the list on a new device moves there by name', () => {
+  const room = { host: 'secret-a', seats: [{ pid: 'secret-a', name: 'Mochi', breed: 1 }, { pid: 'secret-b', name: 'Bean', breed: 2 }] };
+  const t = seat.takeOverByName(room, 'home-screen', 'mochi');
+  assert.equal(t.ok, true); assert.equal(t.oldPid, 'secret-a');
+  assert.equal(room.seats[0].pid, 'home-screen'); assert.equal(room.host, 'home-screen');
+});

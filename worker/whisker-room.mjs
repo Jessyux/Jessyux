@@ -25,7 +25,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
-import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat } from './whisker-seat.mjs';
+import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -174,20 +174,28 @@ export class WhiskerRoom extends DurableObject {
       let seat = room.seats.find(s => s.pid === pid);
       // a player on a new laptop or phone takes their seat back by typing the same name
       // a game moved online from one screen: a friend takes one of the cats still waiting for a device
+      // no name on this device (a Home Screen app keeps its own storage): show every cat to pick from, including
+      // ones playing on another device, so a player can carry their cat over to here
+      if (!seat && room.started && !name) return this.send(ws, { type: 'pick', code: room.code, cats: pickList(room, this.online()) });
       if (!seat && room.started && openSeats(room).length) {
-        if (!name) {
-          const free = openSeats(room).map(({ name, breed, color, tint }) => ({ name, breed, color, tint }));
-          return this.send(ws, { type: 'pick', code: room.code, cats: free });
-        }
         const claim = claimOpen(room, pid, name);
         if (claim.ok) seat = claim.seat;
         else if (!room.seats.some(s => key(s.name) === key(name))) return this.fail(ws, `There is no cat called ${name} in this game.`);
       }
       if (!seat && name) {
+        // a device this cat moved away from, reconnecting on its own (a tab waking up): it doesn't take the cat back.
+        // Tapping Join or picking the cat there does, on purpose
+        if (m.auto && (room.moved || []).includes(pid)) {
+          return this.send(ws, { type: 'error', replaced: true, message: `${name} is playing on another device now, so this one was signed out. Join again with the code to play here instead.` });
+        }
         // the same name from another browser takes the cat over; the old browser is signed out
         const t = takeOverByName(room, pid, name);
-        if (t.ok) { seat = t.seat; if (t.oldPid) this.signOut(t.oldPid, 'You joined from another browser, so this one was signed out.'); }
+        if (t.ok) {
+          seat = t.seat;
+          if (t.oldPid) { room.moved = [...(room.moved || []).filter(x => x !== t.oldPid), t.oldPid].slice(-40); this.signOut(t.oldPid, `${seat.name} moved to another device, so this one was signed out. Join again with the code to play here instead.`); }
+        }
       }
+      if (seat && room.moved && room.moved.includes(pid)) room.moved = room.moved.filter(x => x !== pid);
       if (!seat) {
         if (room.started) return this.fail(ws, 'This game has already started. Only the cats who started it can rejoin, using the same name.');
         if (!name) return this.fail(ws, 'Add your name so friends know who you are.');

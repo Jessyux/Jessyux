@@ -65,6 +65,16 @@ export function convertSeats(room, hostPid, cats, you) {
 /* the cats still waiting for a device */
 export const openSeats = room => room.seats.filter(s => s.open);
 
+/* every cat in a game that has started, for a device that joins without a name (a Home Screen app has none saved):
+   open cats are free to take, and a cat already on another device can be continued here, which signs that one out.
+   Device ids are never sent, only whether the cat is free and whether its device is connected right now */
+export const pickList = (room, onlinePids) => room.seats.map(({ name, breed, color, tint, open, pid }) => {
+  const c = { name, breed, open: !!open, online: !open && !!pid && onlinePids.includes(pid) };
+  if (color !== undefined) c.color = color;
+  if (tint) c.tint = tint;
+  return c;
+});
+
 /* a friend with this device id takes the open cat called `name` */
 export function claimOpen(room, pid, name) {
   const seat = openSeats(room).find(s => key(s.name) === key(name));
