@@ -212,15 +212,23 @@ export class WhiskerRoom extends DurableObject {
     }
     if (!me) return this.fail(ws, 'Say hello first.');
 
+    if (m.type === 'ready') {
+      if (room.started) return;
+      const seat = room.seats.find(s => s.pid === me); if (!seat || room.host === me) return;
+      seat.ready = !!m.ready;
+      await this.put(room); this.broadcast(room, false); return;
+    }
     if (m.type === 'breed') {
       if (room.started) return;
       const seat = room.seats.find(s => s.pid === me); if (!seat) return;
+      if (seat.ready) return this.send(ws, { type: 'oops', message: 'Uncheck ready before editing your cat.' });
       seat.breed = clampBreed(m.breed);
       await this.put(room); this.broadcast(room, false); return;
     }
     if (m.type === 'seat') {
       if (room.started) return;
       const seat = room.seats.find(s => s.pid === me); if (!seat) return;
+      if (seat.ready) return this.send(ws, { type: 'oops', message: 'Uncheck ready before editing your cat.' });
       if ('name' in m) { const r = renameSeat(room.seats, me, m.name); if (!r.ok) return this.send(ws, { type: 'oops', message: r.error }); seat.name = r.name; }
       if ('breed' in m) seat.breed = clampBreed(m.breed);
       if ('tint' in m) seat.tint = cleanTint(m.tint);
@@ -230,7 +238,7 @@ export class WhiskerRoom extends DurableObject {
     if (m.type === 'host') {
       const to = room.seats.find(s => s.sid === m.pid);
       if (room.host !== me || !to) return;
-      room.host = to.pid;
+      room.host = to.pid; to.ready = false;
       await this.put(room); this.broadcast(room, room.started); return;
     }
     if (m.type === 'kick') {

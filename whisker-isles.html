@@ -1040,6 +1040,13 @@ body{overflow-x:clip}
 .nook-edit{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--plum)}
 .nook-edit .pencil{position:absolute;right:-4px;bottom:2px;width:28px;height:28px;border-radius:50%;background:var(--butter);border:2.5px solid var(--plum);display:grid;place-items:center;box-shadow:1px 2px 0 var(--plum)}
 .nook-edit .tip{position:absolute;left:50%;top:-30px;transform:translateX(-50%);background:var(--plum);color:#fff;font-size:.75rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.nook-edit.locked .pencil{background:#E9E1EE}
+.nook-edit.locked .tip{display:none}
+.ready-btn{margin-top:4px;border:2.5px solid var(--plum);border-radius:999px;background:var(--butter);color:var(--plum);font:inherit;font-weight:900;font-size:.82rem;padding:3px 12px;cursor:pointer;box-shadow:2px 2px 0 var(--plum)}
+.ready-btn.on{background:#CFF0C4}
+.ready-btn:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
+.ready-chip{margin-top:4px;border:2px solid var(--plum);border-radius:999px;background:#CFF0C4;font-weight:900;font-size:.76rem;padding:1px 9px}
+.nook.ready .portrait{box-shadow:0 0 0 4px #8BD17C}
 .nook-edit:hover .tip,.nook-edit:focus-visible .tip{opacity:1}
 .nook-edit:focus-visible .portrait{outline:3px solid var(--plum);outline-offset:3px}
 .host-acts{display:flex;gap:6px;margin-top:4px;justify-content:center}
@@ -3366,13 +3373,17 @@ function placeRoomProps(){
   });
 }
 /* the cats sit in a curve round the front of the rug, so more of them circle the room and never pile up over the desk or table */
+/* left to right: each new cat takes the middle and nudges the others off to the sides */
+function slotOrder(n){ const o = []; for(let k=0;k<n;k++) o.splice(Math.floor(o.length/2), 0, k); return o; }
 function arrangeNooks(){
   document.querySelectorAll('.cozy .nooks').forEach(ul=>{
     const items = [...ul.children], n = items.length, box = ul.parentElement.getBoundingClientRect(); if(!n || !box.width) return;
     ul.classList.add('ring');
     const w = box.width, h = box.height, cx = w/2, rx = w*.40, ry = h*.22, cy = h - ry - 108;
-    const span = n===1 ? 0 : Math.min(200, 62*(n-1));
-    const pts = items.map((_,i)=>{ const a = (n===1 ? 90 : 90 + span/2 - i*span/(n-1)) * Math.PI/180; return [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]; });
+    /* the cats sit evenly either side of the middle; the "+" slot waits one step past the last cat */
+    const hasPlus = items[n-1].classList.contains('empty'), cats = hasPlus ? n-1 : n;
+    const stepA = Math.min(62, 230/(cats+(hasPlus?1:0)));
+    const pts = items.map((_,i)=>{ const a = (90 + (cats-1)/2*stepA - i*stepA) * Math.PI/180; return [cx + rx*Math.cos(a), cy + ry*Math.sin(a)]; });
     let step = 130; if(n>1){ let len = 0; for(let i=1;i<n;i++) len += Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]); step = len/(n-1); }
     const f = Math.max(.58, Math.min(1, step/122));
     items.forEach((li,i)=>{ li.style.left = pts[i][0]+'px'; li.style.top = pts[i][1]+'px'; li.style.setProperty('--nf', f.toFixed(3)); li.style.zIndex = 3 + Math.round(pts[i][1]/10); });
@@ -3921,13 +3932,13 @@ function startScreen(){
         </div>
         <button class="room-prop" onclick="G.where('online')" data-tip="Play online instead" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""></button>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
-        <ul class="nooks ring" aria-label="Cats playing">${seats.map((s,i)=>`<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
+        <ul class="nooks ring" aria-label="Cats playing">${slotOrder(seats.length).map(i=>{ const s = seats[i]; return `<li class="nook seat-nook" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
           <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
             ${n>2?`<button class="nook-x" aria-label="Remove ${esc(s.name)}" onclick="G.seatRemove(${i})">×</button>`:''}</span>
           <span class="pillow" aria-hidden="true"></span>
           <input id="seat-name-${i}" value="${esc(s.name)}" maxlength="14" placeholder="Name" required list="wi-names" autocomplete="off" aria-label="Name for cat ${i+1}" aria-describedby="seat-note-${i}"${ui.badSeat===i?' aria-invalid="true"':''} oninput="G.seatName(${i},this.value)">
           <small class="seat-note" id="seat-note-${i}">${seatNote(s.name)}</small>
-        </li>`).join('')}${n<MAX_CATS?`<li class="nook empty" style="--pillow:#E6DAFF"><span class="nook-cat"><button class="nook-invite nook-add" data-tip="${n===MAX_CLASSIC?'A 5th cat makes it Big Island':'Add another cat'}" onclick="G.seatAdd()" aria-label="Add a cat${n===MAX_CLASSIC?'. A 5th cat makes it Big Island':''}"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>Add a cat</b></li>`:''}</ul>
+        </li>`; }).join('')}${n<MAX_CATS?`<li class="nook empty" style="--pillow:#E6DAFF"><span class="nook-cat"><button class="nook-invite nook-add" data-tip="${n===MAX_CLASSIC?'A 5th cat makes it Big Island':'Add another cat'}" onclick="G.seatAdd()" aria-label="Add a cat${n===MAX_CLASSIC?'. A 5th cat makes it Big Island':''}"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>Add a cat</b></li>`:''}</ul>
       </section>
       <section class="card crew crew-rest" aria-label="Start the game">
         ${savedGamesHTML()}
@@ -4046,11 +4057,14 @@ function lobbyScreen(){
   const mySeat = L.seats.find(s=>s.pid===ON.me);
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
   const away = s => !ON.online.includes(s.pid);
-  const cats = LS.map((s,i)=>`<li class="nook${s.pid===ON.me?' me':''}${away(s)?' away':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
-      ${s.pid===ON.me ? `<span class="nook-cat"><button class="nook-edit" onclick="G.open('mycat')" aria-label="Customise your cat">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
+  /* your own cat sits in the middle on your screen; everyone else shifts to the sides */
+  const myI = LS.findIndex(s=>s.pid===ON.me), others = slotOrder(LS.length).filter(i=>i!==myI);
+  const shown = myI<0 ? slotOrder(LS.length) : (others.splice(Math.floor(others.length/2), 0, myI), others);
+  const cats = shown.map(i=>{ const s = LS[i]; return `<li class="nook${s.pid===ON.me?' me':''}${away(s)?' away':''}${s.ready?' ready':''}" style="--pillow:${PILLOW[i%PILLOW.length]}">
+      ${s.pid===ON.me ? `<span class="nook-cat"><button class="nook-edit${s.ready?' locked':''}" onclick="G.editMine()" aria-label="${s.ready?'Customise your cat. Uncheck ready first':'Customise your cat'}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>${s.pid===L.host?HOST_BADGE:''}</span>`
         : `<span class="nook-cat">${portrait(s)}${away(s)?'<span class="zzz" aria-hidden="true">z z z</span>':''}${s.pid===L.host?HOST_BADGE:''}${isHost ? hostActs(s, true) : ''}</span>`}
       <span class="pillow" aria-hidden="true"></span>
-      <b>${esc(s.name)}</b><span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'Ready'].filter(Boolean).join(', ')}</span></li>`).join('');
+      <b>${esc(s.name)}</b>${s.pid===L.host ? '' : s.pid===ON.me ? `<button class="ready-btn${s.ready?' on':''}" aria-pressed="${!!s.ready}" onclick="G.ready()">${s.ready?'✓ Ready · tap to undo':'Ready'}</button>` : s.ready ? '<span class="ready-chip">✓ Ready</span>' : ''}<span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'', s.ready?'Ready':'Not ready'].filter(Boolean).join(', ')}</span></li>`; }).join('');
   const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" data-tip="Click to copy invite link" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
     <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
@@ -4174,6 +4188,8 @@ const G = {
   forgetSave(id){ const g = savesIndex().find(x=>x.id===id); if(!g || !confirm(`Delete the saved game with ${listNames(g.cats)}? You can't get it back.`)) return; deleteSave(id); if(ui.openSave===id) ui.openSave=null; render(); },
   openSave(id, on){ ui.openSave = on ? id : (ui.openSave===id ? null : ui.openSave); },
   join(){ askNotify(); ON.status='connecting'; connect(ui.form.code); },
+  editMine(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(s && s.ready){ toast('Uncheck ready before editing', 'Tap Ready again to unlock your cat.'); return; } G.open('mycat'); },
+  ready(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s || !ON.ws) return; s.ready = !s.ready; if(s.ready && ui.modal) ui.modal=null; ON.ws.send(JSON.stringify({type:'ready', ready:s.ready})); ui.refocus='.ready-btn'; render(); },
   lobbyBreed(i){ ui.refocus='.breeds [aria-checked="true"]'; if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
   lobbyColor(c){
     const L = ON.lobby, s = L && L.seats.find(x=>x.pid===ON.me); if(!s) return;
