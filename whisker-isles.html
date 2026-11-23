@@ -468,16 +468,16 @@ img.pic{object-fit:contain}
 /* ---------- the cats on the map ---------- */
 .cat-hud{position:absolute;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:var(--room,70%);pointer-events:none}
 .cat-row{display:flex;flex-wrap:wrap;gap:8px;pointer-events:auto}
-.cat-av{position:relative;width:42px;height:42px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
-.cat-av .portrait{width:42px;height:42px;border-width:2.5px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
+.cat-av{position:relative;width:62px;height:62px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
+.cat-av .portrait{width:62px;height:62px;border-width:3px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
 .cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
 .cat-av.cur .portrait{box-shadow:0 0 0 4px var(--butter),2px 2px 0 var(--plum)}
 .cat-av.open .portrait{box-shadow:0 0 0 4px #fff,2px 2px 0 var(--plum)}
 .cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
 .cat-av.pending .portrait{filter:grayscale(.8) opacity(.65);border-style:dashed}
 .cat-av.away .portrait{opacity:.6}
-.av-vp{position:absolute;right:-6px;bottom:-6px;min-width:20px;height:20px;padding:0 4px;border-radius:999px;background:#fff;border:2px solid var(--plum);font-family:var(--display);font-size:.75rem;line-height:16px;text-align:center;box-sizing:border-box}
-.cat-av.no-trade::after{content:"";position:absolute;left:-5px;top:-5px;width:17px;height:17px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
+.av-vp{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:999px;background:#fff;border:2.5px solid var(--plum);font-family:var(--display);font-size:.95rem;line-height:21px;text-align:center;box-sizing:border-box}
+.cat-av.no-trade::after{content:"";position:absolute;left:-6px;top:-6px;width:21px;height:21px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
 .cat-pop{pointer-events:auto;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:10px 12px 12px}
 .cp-head{display:flex;align-items:center;gap:10px}
 .cp-head .portrait{width:42px;height:42px;flex:none;border-width:2.5px}
@@ -494,7 +494,10 @@ img.pic{object-fit:contain}
 .cp-hold{margin:8px 0 0;font-size:.8rem;font-weight:700;color:var(--plum-2)}
 .cp-extra{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
 .cp-extra .badge{border:0;padding:0;margin:0;background:none}
-@media (max-width:920px){ .cat-av,.cat-av .portrait{width:38px;height:38px} .cat-hud{gap:6px} .cat-row{gap:7px} }
+.cat-mute{align-self:center;width:34px;height:34px;padding:0;border-radius:50%;border:2.5px solid var(--plum);background:var(--milk);color:var(--plum);cursor:pointer;display:grid;place-items:center;box-shadow:2px 2px 0 var(--plum)}
+.cat-mute svg{width:18px;height:18px}
+.cat-mute:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+@media (max-width:920px){ .cat-av,.cat-av .portrait{width:50px;height:50px} .cat-hud{gap:6px} .cat-row{gap:9px} .cat-mute{width:30px;height:30px} }
 
 /* ---------- odds chart ---------- */
 .odds svg{width:100%;height:auto;display:block}
@@ -1723,7 +1726,7 @@ function loadSave(id){ try{ const g = JSON.parse(store.get(SAVES_PFX+id)); retur
 function setSaveCode(id, code){ const ix = savesIndex(), e = ix.find(x=>x.id===id); if(e){ if(code) e.code = code; else delete e.code; store.set(SAVES_INDEX, JSON.stringify(ix)); } }
 function deleteSave(id){ store.del(SAVES_PFX+id); store.set(SAVES_INDEX, JSON.stringify(savesIndex().filter(x=>x.id!==id))); }
 
-function log(msg){ S.log.unshift(msg); S.log.length = Math.min(S.log.length, 80); const l=$('#live'); if(l) l.textContent = msg.replace(/<[^>]+>/g,''); }
+function log(msg){ S.logN = (S.logN||0)+1; S.log.unshift(msg); S.log.length = Math.min(S.log.length, 80); const l=$('#live'); if(l) l.textContent = msg.replace(/<[^>]+>/g,''); }
 const P = () => S.players[S.cur];
 const pname = i => esc(S.players[i].name);
 
@@ -2262,6 +2265,68 @@ function chime(){
       const at=c.currentTime+t; g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(.18,at+.02); g.gain.exponentialRampToValueAtTime(.0001,at+.35); o.start(at); o.stop(at+.4); });
   }catch(e){}
 }
+/* ---------- sounds: little synthesised blips, one per kind of action. Everyone hears them, in person and online ---------- */
+const SND = {muted: !!store.get('whisker-isles-mute')};
+function sfxCtx(){
+  const C = window.AudioContext || window.webkitAudioContext; if(!C) return null;
+  const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
+  return c;
+}
+/* one note: frequency (optionally gliding to another), start offset, length, wave, loudness */
+function nt(c, f, at, len, type, vol, to){
+  const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
+  o.type = type||'sine'; o.frequency.setValueAtTime(f, t); if(to) o.frequency.exponentialRampToValueAtTime(to, t+len);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol||.12, t+Math.min(.02, len/3)); g.gain.exponentialRampToValueAtTime(.0001, t+len);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+len+.05);
+}
+const SFX = {
+  pop:   c=>{ nt(c,520,0,.09,'sine',.12,900); },
+  roll:  c=>{ for(let i=0;i<7;i++) nt(c, 180+Math.random()*420, i*.06+Math.random()*.02, .05, 'square', .05); nt(c,300,.46,.1,'triangle',.1); },
+  seven: c=>{ nt(c,150,0,.5,'sawtooth',.07,60); nt(c,110,.05,.55,'square',.05,50); },
+  bed:   c=>{ nt(c,200,0,.12,'triangle',.18,90); nt(c,523,.1,.14,'sine',.12); nt(c,784,.2,.2,'sine',.12); },
+  path:  c=>{ nt(c,330,0,.22,'triangle',.1,520); nt(c,440,.12,.14,'sine',.07); },
+  tower: c=>{ [392,494,587,784].forEach((f,i)=>nt(c,f,i*.1,.2,'triangle',.12)); },
+  treat: c=>{ [659,784,988,1319].forEach((f,i)=>nt(c,f,i*.07,.22,'sine',.09)); },
+  coin:  c=>{ nt(c,988,0,.08,'square',.05); nt(c,1319,.08,.28,'square',.05); },
+  trade: c=>{ nt(c,660,0,.12,'triangle',.1); nt(c,880,.1,.12,'triangle',.1); nt(c,1175,.2,.2,'triangle',.1); },
+  no:    c=>{ nt(c,330,0,.16,'triangle',.12); nt(c,220,.14,.28,'triangle',.12); },
+  swipe: c=>{ nt(c,900,0,.22,'sawtooth',.04,200); },
+  drop:  c=>{ nt(c,160,0,.18,'triangle',.16,70); },
+  turn:  c=>{ nt(c,880,0,.1,'sine',.08); nt(c,1175,.09,.16,'sine',.08); },
+  award: c=>{ [523,659,784,1047].forEach((f,i)=>nt(c,f,i*.12,.3,'triangle',.12)); },
+  win:   c=>{ [523,659,784,1047,784,1047,1319].forEach((f,i)=>nt(c,f,i*.14,.34,'triangle',.13)); },
+  start: c=>{ [392,523,659].forEach((f,i)=>nt(c,f,i*.12,.24,'sine',.1)); }
+};
+function sfx(k, delay){
+  if(SND.muted || document.hidden || !SFX[k]) return;
+  try{ const c = sfxCtx(); if(!c) return; if(delay) setTimeout(()=>{ if(!SND.muted){ try{ SFX[k](c); }catch(e){} } }, delay); else SFX[k](c); }catch(e){}
+}
+/* what just happened, read from the game log: each new entry makes its own sound */
+function sfxFor(text){
+  if(/wins with/.test(text)) return 'win';
+  if(/takes Longest yarn|is now the Zoomiest/.test(text)) return 'award';
+  if(/rolls 7|Vacuum switches on/.test(text)) return 'seven';
+  if(/rolls \d+/.test(text)) return 'roll';
+  if(/upgrades to a cat tower/.test(text)) return 'tower';
+  if(/builds a cat bed|places a cat bed|settles in/.test(text)) return 'bed';
+  if(/yarn path/.test(text) && !/takes back/.test(text)) return 'path';
+  if(/buys a treat card|plays /.test(text)) return 'treat';
+  if(/swipes a card|pounces on/.test(text)) return null;   // the Vacuum slurp already plays for these
+  if(/gift basket|collects/.test(text)) return 'coin';
+  if(/trades .* for|at the shop/.test(text)) return 'trade';
+  if(/turns down|withdraws|takes back|left the game|drops .* cards/.test(text)) return /drops/.test(text) ? 'drop' : 'no';
+  if(/A new game begins|Setup done|rolled highest/.test(text)) return 'start';
+  if(/'s turn\./.test(text)) return 'turn';
+  return null;
+}
+function playLogSounds(){
+  if(!S || !S.log) return;
+  const now = S.logN||0, was = ui.logN;
+  ui.logN = now;
+  if(was==null || now<=was) return;                 // first look at a game, or a different game: stay quiet
+  const fresh = S.log.slice(0, Math.min(now-was, S.log.length)).reverse().map(m=>sfxFor(String(m).replace(/<[^>]+>/g,''))).filter(Boolean);
+  fresh.slice(-3).forEach((k,i)=>sfx(k, i*380));
+}
 function toast(title, body){
   let el = $('#wi-toast');
   if(!el){ el = document.createElement('div'); el.id = 'wi-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
@@ -2659,7 +2724,7 @@ function render(){
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
-  renderBoard(); renderPanel(); renderRollbar(); renderCats(); renderOverlay(); turnPromptSync();
+  renderBoard(); renderPanel(); renderRollbar(); renderCats(); renderOverlay(); turnPromptSync(); playLogSounds();
   placeLogo(); placeCats();
   watchAwards();
 }
@@ -2686,7 +2751,8 @@ function renderCats(){
     const open = ui.catPop===i, cur = i===S.cur;
     return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span></button>`;
   }).join('');
-  hud.innerHTML = `<div class="cat-row">${avs}</div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  const ico = SND.muted ? '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
+  hud.innerHTML = `<div class="cat-row">${avs}<button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button></div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
 function placeCats(){
@@ -3919,7 +3985,8 @@ const G = {
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
   },
   /* turns */
-  catInfo(i){ ui.catPop = (i==null || ui.catPop===i) ? null : i; renderCats(); },
+  catInfo(i){ ui.catPop = (i==null || ui.catPop===i) ? null : i; if(ui.catPop!=null) sfx('pop'); renderCats(); },
+  mute(){ SND.muted = !SND.muted; store.set('whisker-isles-mute', SND.muted ? '1' : ''); if(!SND.muted) sfx('pop'); renderCats(); },
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
   startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
   turnRoll(){ const el = document.getElementById('turn-prompt'); if(!el || el.classList.contains('leaving')) return;
