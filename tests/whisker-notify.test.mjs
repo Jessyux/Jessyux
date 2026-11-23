@@ -34,6 +34,15 @@ test('a new trade offer notifies the cats it is offered to, once', () => {
   assert.deepEqual(moveAlerts(next, st({ offer: { from: 0, to: [1, 2] }, rollN: 5 }), seats, 'x-y-11'), []);
 });
 
+test('a counter-offer tells the cat it goes back to, once', () => {
+  const prev = st({ offer: { from: 0, to: [1], round: 0 } }), next = st({ offer: { from: 1, to: [0], round: 1 } });
+  const r = moveAlerts(prev, next, seats, 'x-y-11');
+  assert.deepEqual(r.map((x) => x.pid), ['a']);
+  assert.equal(r[0].payload.title, 'Trade offer');
+  assert.equal(r[0].payload.body, 'Tofu countered your offer');
+  assert.deepEqual(moveAlerts(next, st({ offer: { from: 1, to: [0], round: 1 } }), seats, 'x-y-11'), []);
+});
+
 test('an offer to a single cat given as a number works', () => {
   const r = moveAlerts(st(), st({ offer: { from: 2, to: 0 } }), seats, 'x-y-11');
   assert.deepEqual(r.map((x) => x.pid), ['a']);

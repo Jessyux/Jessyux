@@ -18,11 +18,14 @@ export function moveAlerts(prev, next, seats, code) {
       url, tag: 'turn-' + code,
     } });
   }
-  if (next.offer && !(prev && prev.offer)) {
+  /* a new offer, or a counter-offer (its round goes up) */
+  const round = (o) => (o && o.round) || 0;
+  if (next.offer && (!(prev && prev.offer) || round(next.offer) > round(prev.offer))) {
     const from = name(next.players[next.offer.from]);
+    const body = round(next.offer) > 0 ? `${from} countered your offer` : `${from} wants to trade with you.`;
     for (const i of offerTo(next.offer)) {
       if (i === next.offer.from || !seats[i] || !seats[i].pid) continue;
-      out.push({ pid: seats[i].pid, payload: { title: 'Trade offer', body: `${from} wants to trade with you.`, url, tag: 'offer-' + code } });
+      out.push({ pid: seats[i].pid, payload: { title: 'Trade offer', body, url, tag: 'offer-' + code } });
     }
   }
   return out;
