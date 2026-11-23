@@ -699,6 +699,8 @@ div.build{cursor:default}
 #wi-toast b{font-family:var(--display);font-weight:400;font-size:1.05rem}
 #wi-toast span{font-size:.85rem;font-weight:700}
 @media (prefers-reduced-motion:reduce){#wi-toast{transition:opacity .2s;transform:translate(-50%,0)}}
+.bell{display:inline-flex;align-items:center;gap:5px}
+.bell.on{background:#E3F6DD}
 .code-chip{border:2.5px dashed var(--plum);border-radius:999px;padding:.25em .8em;font-size:.88rem;background:#fff;align-self:center}
 .code-chip b{font-family:var(--display);font-weight:400}
 .turn-card{background:linear-gradient(color-mix(in srgb, var(--pc) 14%, transparent),color-mix(in srgb, var(--pc) 14%, transparent)),#fff}
@@ -2097,7 +2099,7 @@ function connect(code){
   code = normCode(code);
   if(!CODE_RE.test(code)){ ON.status='idle'; ON.err = 'Game codes look like sleepy-tuna-42. Check the code and try again.'; render(); return; }
   if(ON.ws){ try{ ON.ws.onclose=null; ON.ws.close(); }catch(e){} }
-  ON.code=code; ON.pid=pidFor(code); ON.err=null;
+  ON.code=code; ON.pid=pidFor(code); ON.err=null; ON.pushSent=false;
   if(ON.status!=='playing') ON.status='connecting';
   markGame(code, 'pending');
   history.replaceState(null,'','/'+code);
@@ -2147,7 +2149,7 @@ function alertMe(title, body){
   stopFlash(); let on = false; document.title = '● '+title;
   ALERT.flash = setInterval(()=>{ on = !on; document.title = on ? ALERT.base : '● '+title; }, 1100);
   try{
-    if('Notification' in window && Notification.permission==='granted'){
+    if(!pushOn() && 'Notification' in window && Notification.permission==='granted'){
       const n = new Notification(title, {body: body||'', tag:'whisker-isles', icon:'/favicon.svg'});
       n.onclick = () => { window.focus(); n.close(); };
     }
@@ -2155,6 +2157,46 @@ function alertMe(title, body){
 }
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) stopFlash(); });
 addEventListener('focus', stopFlash);
+/* ---------- push notifications: "it's your turn" reaches a phone even when the browser is closed ----------
+   The page subscribes with the browser's push service and hands the subscription to the game room, which sends a message
+   when the turn moves to this cat. Android works as is; iPhone needs the game added to the Home Screen first. */
+const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const IS_STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const BELL = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6z" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const pushOn = () => { try{ return PUSH_OK && store.get('whisker-isles-push')==='1' && Notification.permission==='granted'; }catch(e){ return false; } };
+function bellBtn(){
+  if(!PUSH_OK && !IS_IOS) return '';
+  const on = pushOn();
+  return `<button class="btn small bell${on?' on':''}" aria-pressed="${on}" onclick="G.pushToggle()" title="${on?'Turn notifications off':'Get a notification when it is your turn, even with the browser closed'}">${BELL} ${on?'Alerts on':'Notify me'}</button>`;
+}
+const urlB64 = k => Uint8Array.from(atob(k.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(k.length/4)*4,'=')), c=>c.charCodeAt(0));
+function sendSub(sub){ if(ON.ws && ON.ws.readyState===1) ON.ws.send(JSON.stringify({type:'push', sub: sub ? sub.toJSON() : null})); }
+/* each time we join a game room, hand it this device's subscription so it can reach us */
+async function syncPush(){
+  if(!pushOn()) return;
+  try{ const reg = await navigator.serviceWorker.getRegistration('/'); const sub = reg && await reg.pushManager.getSubscription(); if(sub) sendSub(sub); }catch(e){}
+}
+async function enablePush(){
+  if(IS_IOS && !IS_STANDALONE){ toast('Add the game to your Home Screen first', 'Tap Share, then Add to Home Screen. Open it from there and tap Notify me again.'); return; }
+  if(!PUSH_OK){ toast('Notifications are not available here', 'Try Chrome on Android, or add the game to your iPhone Home Screen.'); return; }
+  try{
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){ toast('Notifications are blocked', 'Allow notifications for this site in your browser settings, then try again.'); render(); return; }
+    const reg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+    const key = (await (await fetch(API+'/push-key')).json()).key; if(!key) throw new Error('no key');
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64(key)});
+    store.set('whisker-isles-push','1'); sendSub(sub);
+    toast('Alerts are on', "We'll tell you when it's your turn, even with the browser closed.");
+  }catch(e){ toast("Couldn't turn on alerts", 'Give it a moment and try again.'); }
+  render();
+}
+async function disablePush(){
+  store.set('whisker-isles-push','0'); sendSub(null);
+  try{ const reg = await navigator.serviceWorker.getRegistration('/'); const sub = reg && await reg.pushManager.getSubscription(); if(sub) await sub.unsubscribe(); }catch(e){}
+  toast('Alerts are off', ''); render();
+}
 /* turn-taking, for the page: a pulse on the roll card while it's your go */
 function syncTurnGlow(){ document.body.classList.toggle('my-turn', !!(S && S.online && S.phase!=='over' && ON.mine.includes(S.cur))); }
 /* ---------- a card gets swiped: tell the cat it was taken from, and show the Vacuum slurping it up ----------
@@ -2286,6 +2328,7 @@ function turnPromptLeave(after){
   setTimeout(go, reduceMotion ? 0 : 280);
 }
 function onMsg(m){
+  if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); }
   ON.offline=false;
   /* the host moved the game back to one screen: it carries on here, on this phone */
   if(m.type==='detached'){
@@ -2386,7 +2429,7 @@ function render(){
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
-  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}`;
+  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}${S.online ? bellBtn() : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
@@ -3456,6 +3499,7 @@ function lobbyScreen(){
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
       <ul class="nooks" aria-label="Cats in the lobby">${cats}${empty}</ul>
       ${mySeat ? '<p class="cozy-tip">Tap the pencil on your cat to change your name, cat or colours.</p>' : ''}
+      <p class="center" style="margin:8px 0 0">${bellBtn()}</p>
       <p class="muted center small">${n>MAX_CLASSIC?'Big Island':'Classic island'}, up to ${MAX_CATS} cats. The game is saved under this code, so you can come back to it any time.</p>
     </section>
     <div class="online-actions lobby-go">
@@ -3602,6 +3646,7 @@ const G = {
     el.animate([{opacity:1},{opacity:0}],{duration:200,fill:'forwards'}).onfinish = ()=>el.remove();
     roll({from}); },
   turnAway(){ turnPromptLeave(()=>{ const r = $('#rollbar'); if(r){ r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); } }); },
+  pushToggle(){ if(pushOn()) disablePush(); else enablePush(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
   open(kind){

@@ -21,6 +21,8 @@ function copy(from, to = from) {
 copy('whisker-isles.html', 'index.html');
 // the shared Home floatie's styles and picture, and Jessy's photo in the top bar
 ['a11y/home-float.css', 'img/floaties/home.webp', 'img/jessy-avatar.webp', 'favicon.svg'].forEach((f) => copy(f));
+// the service worker that shows push notifications has to sit at the site root
+copy('whisker-sw.js', 'sw.js');
 
 // most art is inlined in ART_DATA; anything the page would fetch from assets/ instead is copied if it exists
 const html = readFileSync(resolve(ROOT, 'whisker-isles.html'), 'utf8');

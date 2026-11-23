@@ -23,6 +23,8 @@
 //   error {message, kicked?}   the connection ends
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
+import { sendPush, cleanSub } from './webpush.mjs';
+import { moveAlerts, startAlerts } from './whisker-notify.mjs';
 import { cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
@@ -49,6 +51,7 @@ export async function whiskerIsles(request, env, pathname) {
     }
     return json(503, { error: 'Could not make a code. Try again.' });
   }
+  if (pathname === '/api/whisker-isles/push-key') return json(200, { key: env.VAPID_PUBLIC || null });
   const m = pathname.match(/^\/api\/whisker-isles\/ws\/([a-z0-9-]{1,40})$/);
   if (m) {
     if (!CODE_RE.test(m[1])) return json(400, { error: 'Game codes look like sleepy-tuna-42.' });
@@ -116,6 +119,30 @@ export class WhiskerRoom extends DurableObject {
   }
   fail(ws, message) { this.send(ws, { type: 'error', message }); try { ws.close(1000, 'error'); } catch (e) { /* closed */ } }
 
+  /* push notifications: a phone with the browser closed still hears it is its turn. Subscriptions are kept per device, never sent to other players. */
+  vapid() {
+    if (this._vapid === undefined) {
+      try { this._vapid = this.env.VAPID_PRIVATE && this.env.VAPID_PUBLIC ? { publicKey: this.env.VAPID_PUBLIC, privateJwk: JSON.parse(this.env.VAPID_PRIVATE), subject: 'https://whisker.jessyux.com' } : null; } catch (e) { this._vapid = null; }
+    }
+    return this._vapid;
+  }
+  notify(room, alerts) {
+    if (!alerts.length) return;
+    const v = this.vapid();
+    if (!v) { console.log('push skipped: no VAPID keys'); return; }
+    if (!room.push) return;
+    this.ctx.waitUntil((async () => { try {
+      let dead = false;
+      for (const a of alerts) {
+        const sub = room.push[a.pid]; if (!sub) continue;
+        const r = await sendPush(sub, a.payload, v);
+        console.log(`push ${a.payload.tag} ${r}`);
+        if (r === 'gone') { delete room.push[a.pid]; dead = true; }
+      }
+      if (dead) await this.put(room);
+    } catch (e) { console.log('push error', String(e && e.stack || e)); } })());
+  }
+
   async webSocketMessage(ws, data) {
     if (typeof data !== 'string' || data.length > MAX_STATE) return this.fail(ws, 'That move was too big to send.');
     let m; try { m = JSON.parse(data); } catch (e) { return; }
@@ -124,6 +151,14 @@ export class WhiskerRoom extends DurableObject {
     const me = (ws.deserializeAttachment() || {}).pid;
     ensureSids(room.seats);
 
+    if (m.type === 'push') {
+      if (!room.seats.some(s => s.pid === me)) return;
+      room.push = room.push || {};
+      // null turns notifications off; a malformed subscription is ignored and changes nothing
+      if (m.sub === null) delete room.push[me];
+      else { const sub = cleanSub(m.sub); if (!sub) return; room.push[me] = sub; }
+      await this.put(room); return;
+    }
     if (m.type === 'hello') {
       const pid = String(m.pid || '').slice(0, 64), name = String(m.name || '').trim().slice(0, MAX_NAME);
       if (!pid) return this.fail(ws, 'Something went wrong joining. Reload and try again.');
@@ -226,15 +261,18 @@ export class WhiskerRoom extends DurableObject {
     if (m.type === 'start') {
       if (room.started || room.host !== me || room.seats.length < 2 || !validState(m.state, room.seats.length)) return;
       room.started = true; room.state = m.state; room.ver = 1;
-      await this.put(room); this.broadcast(room, true); return;
+      await this.put(room); this.broadcast(room, true);
+      this.notify(room, startAlerts(room.seats, me, room.code)); return;
     }
     if (m.type === 'state') {
       if (!room.started || !room.seats.some(s => s.pid === me)) return;
       // nobody moves until every cat has a device
       if (openSeats(room).length) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
       if (m.base !== room.ver || !validState(m.state, room.seats.length)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
+      const prev = room.state;
       room.state = m.state; room.ver++;
-      await this.put(room); this.broadcast(room, true, ws); return;
+      await this.put(room); this.broadcast(room, true, ws);
+      this.notify(room, moveAlerts(prev, m.state, room.seats, room.code)); return;
     }
   }
 

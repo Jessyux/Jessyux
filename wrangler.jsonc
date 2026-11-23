@@ -10,6 +10,8 @@
   "routes": [
     { "pattern": "whisker.jessyux.com", "zone_name": "jessyux.com", "custom_domain": true }
   ],
+  // the public half of the push notification key (the private half is the VAPID_PRIVATE secret)
+  "vars": { "VAPID_PUBLIC": "BIGGdRx2WP4SwG2qYLJnR2Hto_hMv3uXPS5AvBgKPLZabdRVV3uth79c5H4ytyIqCfrbvOL9fNyW9myRZMvxfHU" },
   "assets": {
     "directory": "./dist-game",
     "binding": "ASSETS",
@@ -33,6 +35,7 @@
     "local": {
       "durable_objects": { "bindings": [ { "name": "ROOMS", "class_name": "WhiskerRoom" } ] },
       "migrations": [ { "tag": "v1", "new_sqlite_classes": ["WhiskerRoom"] } ],
+      "vars": { "VAPID_PUBLIC": "BIGGdRx2WP4SwG2qYLJnR2Hto_hMv3uXPS5AvBgKPLZabdRVV3uth79c5H4ytyIqCfrbvOL9fNyW9myRZMvxfHU" },
       "d1_databases": [
         { "binding": "WHISKER_DB", "database_name": "jessyux-whisker", "database_id": "8157c43e-c010-4a1e-ab9b-b0eedef75425" }
       ]
