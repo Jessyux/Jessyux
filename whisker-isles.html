@@ -2173,8 +2173,14 @@ addEventListener('focus', stopFlash);
    The page subscribes with the browser's push service and hands the subscription to the game room, which sends a message
    when the turn moves to this cat. Android works as is; iPhone needs the game added to the Home Screen first. */
 const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-const IS_CHROME_IOS = /CriOS/.test(navigator.userAgent);
+/* the Home Screen guide is only for iPhones and iPads; Android phones never see it (Chrome there asks for notification permission directly) */
+function isIOSDevice(ua, platform, touchPoints){
+  if(/Android/i.test(ua)) return false;
+  return /iPad|iPhone|iPod/.test(ua) || (platform==='MacIntel' && touchPoints>1);   // iPadOS pretends to be a Mac, but a Mac has no touch screen
+}
+const IS_IOS = isIOSDevice(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+const IS_CHROME_IOS = IS_IOS && /CriOS/.test(navigator.userAgent);
 const IS_STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 const BELL = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6z" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 const pushOn = () => { try{ return PUSH_OK && store.get('whisker-isles-push')==='1' && Notification.permission==='granted'; }catch(e){ return false; } };
