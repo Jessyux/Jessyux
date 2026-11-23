@@ -537,6 +537,12 @@ svg :focus{outline:none}
 .award-card .plus{display:inline-block;font-weight:900;font-size:.78rem;border:2px solid var(--plum);border-radius:999px;padding:0 .6em;background:#fff;margin:3px 0 4px}
 .award-card small{display:block}
 .award-card .award{animation:awardBob 3s ease-in-out infinite;transform-origin:50% 40%}
+.award-card>div{min-width:0}
+.award-card b,.award-card small{overflow-wrap:anywhere}
+@media (max-width:640px){
+  .award-card{grid-template-columns:1fr;justify-items:center;text-align:center;gap:6px;padding:12px 10px}
+  .award-card .award{width:64px;height:64px}
+}
 @keyframes awardBob{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-2px)}}
 .award .shine{animation:shine 2.8s ease-in-out infinite}
 @keyframes shine{0%,55%{transform:skewX(-20deg) translateX(0)}85%,100%{transform:skewX(-20deg) translateX(64px)}}
@@ -1711,14 +1717,8 @@ function buyTreat(){
   pay(pl.res,COST.treat);
   const t = S.deck.pop();
   log(`${pname(S.cur)} buys a treat card.`);
-  if(S.online){
-    // online, the deck stays on the server: ask for a card and show it when it arrives
-    pl.cards.push({t:'new', turn:S.turn});
-    ui.pendingBuy = pl.cards.length-1;
-  } else {
-    pl.cards.push({t, turn:S.turn});
-    ui.modal = {kind:'bought', t};
-  }
+  pl.cards.push({t, turn:S.turn});
+  ui.modal = {kind:'bought', t};
   commit();
 }
 /* a cat can say No trades: then nobody can offer them a trade until they switch it off.
@@ -2251,9 +2251,11 @@ function applyRemote(state, ver){
   syncTurnGlow();
   if(ON.code) markGame(ON.code, S.phase==='over' ? 'over' : 'playing');
   buildGeo(S.board.radius);
-  if(ui.pendingBuy!=null && me()>=0){
-    const c = S.players[me()].cards[ui.pendingBuy];
-    if(c && TREATS[c.t]){ ui.modal = {kind:'bought', t:c.t}; ui.pendingBuy = null; }
+  /* a card stuck as "Unwrapping" (older games bought it before the deal was fixed): deal it now from the jar */
+  if(S.online && ON.mine.length && S.deck.length){
+    let fixed = false;
+    ON.mine.forEach(i=>{ const pl = S.players[i]; pl && pl.cards.forEach(c=>{ if(!TREATS[c.t] && S.deck.length){ c.t = S.deck.pop(); fixed = true; } }); });
+    if(fixed) setTimeout(pushState, 0);
   }
   if(ui.modal && ['trade','bank','gift','pounce'].includes(ui.modal.kind) && !myTurn()) ui.modal=null;
   if(prevRoll!==null && S.rollN!==prevRoll && !reduceMotion){ const d=S.dice; spinDice(()=>{ ui.rolling=false; render(); celebrateRoll(); }, d); return; }
