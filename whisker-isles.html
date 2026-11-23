@@ -158,31 +158,25 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 .d3-shadow{position:absolute;left:8%;right:8%;bottom:-16px;height:16px;border-radius:50%;background:radial-gradient(closest-side,rgba(58,35,65,.38),rgba(58,35,65,0));will-change:transform,opacity}
 .d3-hop{position:absolute;inset:0;perspective:520px;will-change:transform}
 .d3-cube{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
-.d3-face,.d3-core{position:absolute;inset:0;backface-visibility:hidden}
-.d3-face{inset:-2.5px;background:radial-gradient(circle at 32% 26%,#fff 0,#FFF8F0 55%,#FFEBDD 100%);border:3.5px solid var(--plum);border-radius:17px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px;box-shadow:inset -4px -5px 0 rgba(242,96,127,.12)}
-.d3-face::before,.d3-face::after{content:"";position:absolute;bottom:11%;width:13px;height:8px;border-radius:50%;background:rgba(255,143,177,.55);pointer-events:none}
-.d3-face::before{left:9%}.d3-face::after{right:9%}
-.d3-face i{width:13px;height:13px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden;position:relative;z-index:1}
-.d3-face i.on{visibility:visible}
-.d3-face i.on::after{content:"";position:absolute;left:2.5px;top:2px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.75)}
-/* the one is a paw print */
-.d3-face.f1 i.on{width:30px;height:28px;border-radius:0;background:
-  radial-gradient(ellipse 9px 8px at 50% 68%,#FF8FB1 0 98%,transparent 100%),
-  radial-gradient(circle 4.2px at 18% 38%,#FF8FB1 0 98%,transparent 100%),
-  radial-gradient(circle 4.2px at 38% 16%,#FF8FB1 0 98%,transparent 100%),
-  radial-gradient(circle 4.2px at 62% 16%,#FF8FB1 0 98%,transparent 100%),
-  radial-gradient(circle 4.2px at 82% 38%,#FF8FB1 0 98%,transparent 100%)}
-.d3-face.f1 i.on::after{display:none}
+:root{--pawm:radial-gradient(ellipse 9px 8px at 50% 68%,#000 0 98%,transparent 100%),radial-gradient(circle 4.2px at 18% 38%,#000 0 98%,transparent 100%),radial-gradient(circle 4.2px at 38% 16%,#000 0 98%,transparent 100%),radial-gradient(circle 4.2px at 62% 16%,#000 0 98%,transparent 100%),radial-gradient(circle 4.2px at 82% 38%,#000 0 98%,transparent 100%)}
+.d3-face{position:absolute;inset:-1px;background:var(--plum);border-radius:10px;backface-visibility:hidden}
+/* the cube is six solid plum faces (so corners and edges can never show a gap) with a soft cream pad on each */
+.d3-in{position:absolute;inset:4px;background:radial-gradient(circle at 32% 26%,#fff 0,#FFF8F0 55%,#FFEBDD 100%);border-radius:13px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:6px;box-shadow:inset -4px -5px 0 rgba(242,96,127,.12)}
+.d3-in::before,.d3-in::after{content:"";position:absolute;bottom:9%;width:13px;height:8px;border-radius:50%;background:rgba(255,143,177,.55);pointer-events:none}
+.d3-in::before{left:8%}.d3-in::after{right:8%}
+.d3-in i{width:13px;height:13px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden;position:relative;z-index:1}
+.d3-in i.on{visibility:visible}
+.d3-in i.on::after{content:"";position:absolute;left:2.5px;top:2px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.75)}
+.d3-face.f1 .d3-in i.on{width:28px;height:26px;border-radius:0;background:var(--paw,#FF8FB1);-webkit-mask:var(--pawm);mask:var(--pawm)}
+.d3-face.f1 .d3-in i.on::after{display:none}
 .d3-face.f1{transform:translateZ(36px)}
 .d3-face.f6{transform:rotateY(180deg) translateZ(36px)}
 .d3-face.f3{transform:rotateY(90deg) translateZ(36px)}
 .d3-face.f4{transform:rotateY(-90deg) translateZ(36px)}
 .d3-face.f5{transform:rotateX(90deg) translateZ(36px)}
 .d3-face.f2{transform:rotateX(-90deg) translateZ(36px)}
-.d3-core{background:var(--plum);border-radius:18px;inset:3px;backface-visibility:visible}
-.d3-core.cx{transform:rotateX(90deg)}.d3-core.cy{transform:rotateY(90deg)}
-.d3-seven .d3-face i{background:var(--strawberry)}
-.d3-seven .d3-face.f1 i.on{background:radial-gradient(ellipse 9px 8px at 50% 68%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 18% 38%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 38% 16%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 62% 16%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 82% 38%,#F2607F 0 98%,transparent 100%)}
+.d3-seven .d3-in i{background:var(--strawberry)}
+.d3-seven .d3-face.f1 .d3-in i.on{background:#F2607F}
 @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg) translateY(-4px)}50%{transform:rotate(12deg)}80%{transform:rotate(-6deg)}}
 .sum{font-family:var(--display);font-size:1.8rem;min-width:2ch}
 .dice-row .btn{margin-left:auto}
@@ -1787,7 +1781,7 @@ const FACE_TURN = {1:[0,0], 2:[90,0], 3:[0,-90], 4:[0,90], 5:[-90,0], 6:[0,180]}
 const D3 = 72;
 function cubeHTML(){
   const pips = n => Array.from({length:9},(_,i)=>`<i class="${FACES[n].includes(i)?'on':''}"></i>`).join('');
-  return `<div class="d3-cube"><span class="d3-core"></span><span class="d3-core cx"></span><span class="d3-core cy"></span>${[1,2,3,4,5,6].map(n=>`<span class="d3-face f${n}">${pips(n)}</span>`).join('')}</div>`;
+  return `<div class="d3-cube">${[1,2,3,4,5,6].map(n=>`<span class="d3-face f${n}"><span class="d3-in">${pips(n)}</span></span>`).join('')}</div>`;
 }
 /* The two dice leave the tray, tumble onto the middle of the island, settle on the roll,
    then fly back into the tray. done() runs once they are home. */
