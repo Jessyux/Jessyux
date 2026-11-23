@@ -711,6 +711,7 @@ div.build{cursor:default}
 .a2-steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-weight:700;line-height:1.35}
 .a2-steps .n{width:28px;height:28px;border-radius:50%;background:var(--butter);border:2.5px solid var(--plum);display:grid;place-items:center;font-family:var(--display);font-size:.95rem}
 .a2-ic{vertical-align:-5px;margin:0 2px;color:#2E7BF6}
+.chrome-dot{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:-3px;margin-right:4px;background:radial-gradient(circle,#4285F4 0 28%,#fff 29% 38%,transparent 39%),conic-gradient(from 30deg,#EA4335 0 120deg,#34A853 0 240deg,#FBBC05 0);border:1.5px solid var(--plum)}
 .bell.on{background:#E3F6DD}
 .code-chip{border:2.5px dashed var(--plum);border-radius:999px;padding:.25em .8em;font-size:.88rem;background:#fff;align-self:center}
 .code-chip b{font-family:var(--display);font-weight:400}
@@ -2173,6 +2174,7 @@ addEventListener('focus', stopFlash);
    when the turn moves to this cat. Android works as is; iPhone needs the game added to the Home Screen first. */
 const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const IS_CHROME_IOS = /CriOS/.test(navigator.userAgent);
 const IS_STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 const BELL = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6z" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 const pushOn = () => { try{ return PUSH_OK && store.get('whisker-isles-push')==='1' && Notification.permission==='granted'; }catch(e){ return false; } };
@@ -2194,14 +2196,14 @@ const PLUS_IC = '<svg class="a2-ic" viewBox="0 0 24 24" width="22" height="22" a
 function a2hsHTML(){
   const code = ON.code || (S && S.code) || '';
   return `<div class="modal a2hs"><div class="rules-head"><h2>Get turn alerts on iPhone</h2><button class="btn small" onclick="G.close()">Close</button></div>
-    <p>iPhone only sends alerts to apps on your Home Screen. It takes four taps:</p>
+    <p><span class="chrome-dot" aria-hidden="true"></span> Best in <b>Chrome</b>. iPhone only sends alerts to apps on your Home Screen, which takes four taps:</p>
     <ol class="a2-steps">
-      <li><span class="n">1</span><span>Tap <b>Share</b> ${SHARE_IC} at the bottom of Safari.</span></li>
+      <li><span class="n">1</span><span>In Chrome, tap <b>Share</b> ${SHARE_IC} in the address bar at the top right.</span></li>
       <li><span class="n">2</span><span>Scroll down and tap <b>Add to Home Screen</b> ${PLUS_IC}, then <b>Add</b>.</span></li>
       <li><span class="n">3</span><span>Open <b>Whisker Isles</b> from your Home Screen${code?` and join with the code <b>${esc(code)}</b>`:''}. Use the same name and you get your cat back.</span></li>
       <li><span class="n">4</span><span>Tap <b>Notify me</b> and allow notifications.</span></li>
     </ol>
-    <p class="muted small">After that, every Whisker Isles game on this phone can tell you when it's your turn, even with Safari closed.</p>
+    <p class="muted small">${IS_CHROME_IOS ? '' : 'In Safari instead? Tap Share at the bottom of the screen. '}After that, every Whisker Isles game on this phone can tell you when it's your turn, even with the browser closed.</p>
     ${code?`<p class="center"><button class="code-chip" onclick="G.copy('${esc(code)}', this, 'Game code copied')">Copy game code <b>${esc(code)}</b></button></p>`:''}
   </div>`;
 }
