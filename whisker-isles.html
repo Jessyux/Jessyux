@@ -699,6 +699,13 @@ div.build{cursor:default}
 .swipe-fx img{position:absolute;height:auto;transform:translate(-50%,-50%);opacity:0;will-change:transform,opacity}
 .sfx-card{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity}
 .sfx-card .pcard.rcard{--cw:64px;box-shadow:3px 3px 0 var(--plum)}
+/* the swiped card, waiting out of sight while it flies in, then lifted out of the fan for a moment */
+.paw-hand .rc.swipe-wait{visibility:hidden}
+.paw-hand.up .fc.swipe-new{transform:translateX(-50%) rotate(calc(var(--a) * var(--sp))) translateY(-26px) scale(1.14);z-index:20}
+.paw-hand .fc.swipe-new .pcard{box-shadow:var(--sticker),0 0 0 4px var(--butter),0 0 20px 7px rgba(255,200,90,.8);animation:swipeGlow 1.1s ease-in-out infinite}
+.rc-new{position:absolute;left:50%;top:-30px;transform:translateX(-50%);z-index:4;white-space:nowrap;padding:1px 9px;border-radius:999px;background:var(--butter);color:var(--plum);border:2.5px solid var(--plum);font-weight:900;font-size:12px;line-height:1.35;box-shadow:2px 2px 0 var(--plum)}
+@keyframes swipeGlow{0%,100%{box-shadow:var(--sticker),0 0 0 4px var(--butter),0 0 12px 3px rgba(255,200,90,.55)}50%{box-shadow:var(--sticker),0 0 0 4px var(--butter),0 0 24px 9px rgba(255,200,90,.95)}}
+@media (prefers-reduced-motion:reduce){.paw-hand .fc.swipe-new .pcard{animation:none}}
 .turn-prompt{position:fixed;inset:0;z-index:170;display:grid;place-items:center;padding:16px;background:rgba(58,35,65,.55)}
 .tp-card{width:min(380px,100%);position:relative;overflow:visible}
 .tp-card .portrait{width:120px;height:120px;margin:-70px auto 10px;background:var(--milk)}
@@ -2055,8 +2062,8 @@ function steal(v){
   const r = pool[rnd(pool.length)];
   S.players[v].res[r]--; P().res[r]++;
   S.swipe = {id:newSwipeId(), by:S.cur, from:[v], r, hits:[{from:v, n:1}], via:'vacuum'};
+  swipeHold(S.swipe, 1);
   log(`${pname(S.cur)} swipes a card from ${pname(v)}.`);
-  ui.modal = {kind:'stolen', r, from:v};
   endVacuum();
 }
 function endVacuum(){ S.sub=null; S.subData=null; ui.mode=null; commit(); }
@@ -2325,7 +2332,7 @@ function slurp(){
 }
 function playSwipe(sw){
   const by = S.players[sw.by], rn = RINFO[sw.r].name, victims = sw.from.filter(i=>S.players[i]);
-  if(!by || !victims.length) return;
+  if(!by || !victims.length){ swipeRelease(sw.id); return; }
   const iAmVictim = victims.some(i=>ON.mine.includes(i)), iAmThief = ON.mine.includes(sw.by);
   if(iAmVictim){
     const hit = (sw.hits||[]).find(h=>ON.mine.includes(h.from)), n = hit ? hit.n : 1;
@@ -2334,20 +2341,25 @@ function playSwipe(sw){
   } else if(!iAmThief){
     toast(sw.via==='pounce' ? `${by.name} pounced!` : `${by.name} swiped a card`, `from ${victims.map(i=>S.players[i].name).join(' and ')}`);
   }
-  const svg = $('#board'); if(!svg) return;
+  const svg = $('#board'); if(!svg){ swipeRelease(sw.id); return; }
   const b = svg.getBoundingClientRect();
   if(b.bottom<80 || b.top>innerHeight-80){ toMap(); setTimeout(()=>suckFx(sw), 550); } else suckFx(sw);
 }
 /* the card leaves the hand it was taken from and spirals into the Vacuum on the map, which opens wide and gulps it */
 function suckFx(sw){
-  const svg = $('#board'), hx = S && HEX[S.vac]; if(!svg || !hx || !svg.getScreenCTM) return;
+  const svg = $('#board'), hx = S && HEX[S.vac]; if(!svg || !hx || !svg.getScreenCTM){ swipeRelease(sw.id); return; }
   const m = svg.getScreenCTM(), pt = svg.createSVGPoint(); pt.x = hx.x; pt.y = hx.y;
   const c = pt.matrixTransform(m), k = m.a, base = 64*k;
   const root = document.createElement('div'); root.className = 'swipe-fx'; root.setAttribute('aria-hidden','true');
   root.innerHTML = `<img class="sfx-swirl" alt="" src="${artSrc('swirl')}" style="left:${c.x}px;top:${c.y}px;width:${base*2.2}px"><img class="sfx-vac" alt="" src="${artSrc('vacuum-suck')}" style="left:${c.x}px;top:${c.y}px;width:${base*1.5}px">`;
   document.body.appendChild(root);
   slurp();
-  if(reduceMotion){ setTimeout(()=>root.remove(), 1100); return; }
+  const nTaken = (sw.hits||[{n:1}]).reduce((t,h)=>t+h.n, 0), own = !!(ui.swipeHold && ui.swipeHold.id===sw.id);
+  if(reduceMotion){
+    setTimeout(()=>root.remove(), 1100);
+    if(own) setTimeout(()=>{ swipeLift(); swipeLand(sw, nTaken); }, 500);
+    return;
+  }
   const clampY = y => Math.max(24, Math.min(innerHeight-24, y)), clampX = x => Math.max(24, Math.min(innerWidth-24, x));
   const startFor = i => {
     if(ON.mine.includes(i)){ const f = document.querySelector('#dock .res-hand .fan'); if(f && !$('#dock').classList.contains('gone')){ const r = f.getBoundingClientRect(); return {x:r.left, y:r.top}; } return {x:innerWidth*.22, y:innerHeight-60}; }
@@ -2390,7 +2402,69 @@ function suckFx(sw){
       idx++;
     }
   });
-  setTimeout(()=>root.remove(), T + idx*230 + 150);
+  /* then the Vacuum gives the card back: it pops out and flies into the cat's hand, which lifts to meet it */
+  const nOut = Math.min(3, nTaken), OUT_AT = 2150, OUT_MS = 700, OUT_GAP = 150;
+  if(own) setTimeout(swipeLift, 1650);
+  setTimeout(()=>swipeOut(sw, root, c, nOut, own, nTaken, OUT_MS, OUT_GAP), OUT_AT);
+  setTimeout(()=>root.remove(), Math.max(T + idx*230 + 150, OUT_AT + OUT_MS + nOut*OUT_GAP + 300));
+}
+/* the swiping cat's own hand keeps the new card out of sight until it has flown in from the Vacuum */
+function swipeHold(sw, n){
+  const seat = me(); if(seat<0 || !dockOn()) return;
+  ui.swipeHold = {id:sw.id, seat, r:sw.r, n, until:Date.now()+7000};
+  clearTimeout(ui.swipeHoldT); ui.swipeHoldT = setTimeout(()=>swipeRelease(sw.id), 7200);
+}
+function swipeHeld(){ const h = ui.swipeHold; return h && h.until>Date.now() ? h : null; }
+function swipeRelease(id){
+  if(!ui.swipeHold || (id && ui.swipeHold.id!==id)) return;
+  ui.swipeHold = null; ui.dockPrev = null; renderDock();
+}
+function swipeLift(){ const was = ui.handUp || {}; ui.swipeWas = !!was.res; if(!was.res) setHand('res', true); }
+function swipeOut(sw, root, from, nOut, own, nTaken, ms, gap){
+  let tgt = null, w = 64, ang = 0;
+  if(own){
+    const rc = document.querySelector(`#dock .res-hand .rc[data-r="${sw.r}"]`);
+    if(rc){
+      const r = rc.getBoundingClientRect(), pc = rc.querySelector('.pcard'), fc = rc.closest('.fc'), hand = rc.closest('.paw-hand');
+      tgt = {x:r.left+r.width/2, y:r.top+r.height/2}; w = pc ? pc.offsetWidth : 64;
+      ang = (parseFloat(fc && fc.style.getPropertyValue('--a'))||0) * (parseFloat(hand && getComputedStyle(hand).getPropertyValue('--sp'))||1);
+    }
+  } else {
+    const row = document.querySelector(`.players .pl[data-i="${sw.by}"]`);
+    if(row){ const r = row.getBoundingClientRect(); tgt = {x:r.left+r.width*.3, y:r.top+r.height/2}; }
+  }
+  if(!tgt){ if(own) swipeLand(sw, nTaken); return; }
+  const anims = [];
+  for(let q=0; q<nOut; q++){
+    const el = document.createElement('div'); el.className = 'sfx-card'; el.innerHTML = resCard(sw.r, null, 'sm');
+    if(own) el.firstElementChild.style.setProperty('--cw', w+'px');
+    root.appendChild(el);
+    const dx = tgt.x-from.x, dy = tgt.y-from.y, N = 12, frames = [];
+    for(let i=0; i<=N; i++){
+      const t = i/N, e = 1-Math.pow(1-t, 2.2), lift = Math.sin(t*Math.PI)*Math.min(90, Math.hypot(dx,dy)*.25);
+      const sc = t<.3 ? .3+.85*(t/.3) : 1.15-.15*((t-.3)/.7);
+      frames.push({transform:`translate(${from.x+dx*e}px,${from.y+dy*e-lift}px) translate(-50%,-50%) scale(${sc.toFixed(3)}) rotate(${(-40+(40+ang)*e).toFixed(1)}deg)`, opacity: t<.08 ? t/.08 : (!own && t>.9 ? (1-t)*10 : 1), offset:t});
+    }
+    const an = el.animate(frames, {duration:ms, delay:q*gap, easing:'linear', fill:'both'});
+    an.finished.then(()=>el.remove(), ()=>el.remove());
+    anims.push(an);
+  }
+  if(own) Promise.all(anims.map(a=>a.finished)).then(()=>swipeLand(sw, nTaken), ()=>swipeLand(sw, nTaken));
+}
+/* the card is in the hand: show it lifted out of the fan for a moment so the cat sees exactly what it got */
+function swipeLand(sw, n){
+  const h = ui.swipeHold; if(!h || h.id!==sw.id) return;
+  ui.swipeHold = null; ui.dockPrev = null;
+  ui.swipeNew = {id:sw.id, seat:h.seat, r:sw.r, n, until:Date.now()+2600};
+  renderDock();
+  document.querySelectorAll('#dock .res-hand .paw').forEach(p=>{ const m = p.classList.contains('r') ? 'scaleX(-1) ' : ''; if(!reduceMotion) p.animate([{transform:m+'none'},{transform:m+'scale(1.06,.92)'},{transform:m+'none'}],{duration:420,easing:'ease-out',transformOrigin:'50% 100%'}); });
+  const l = $('#live'); if(l) l.textContent = `${S.online?'You':pname(sw.by)} swiped ${n>1?n+' ':''}${RINFO[sw.r].name} from ${sw.from.map(pname).join(' and ')}.`;
+  clearTimeout(ui.swipeNewT);
+  ui.swipeNewT = setTimeout(()=>{
+    if(!ui.swipeNew || ui.swipeNew.id!==sw.id) return;
+    ui.swipeNew = null;
+    if(!ui.swipeWas) setHand('res', false); else renderDock();
+  }, 2600);
 }
 /* ---------- online: when it's your turn a pop-up says so and offers Roll dice.
    Tapping away (or Not yet) sends the pop-up shrinking down onto the dice in your turn card. ---------- */
@@ -2909,24 +2983,28 @@ function renderDock(){
   const u = ui.handUp || {}, who = S.online ? 'Your' : esc(mp.name)+"'s";
   el.classList.toggle('one-up', !!u.res !== !!u.treat);
   const trophies = mp.cards.filter(c=>c.t==='trophy').length;
-  const res = RES.filter(r=>mp.res[r]>0).map(r=>`<span class="rc" data-r="${r}" role="listitem" aria-label="${RINFO[r].name}: ${mp.res[r]}">${resCard(r, null)}<span class="rc-n" aria-hidden="true">×${mp.res[r]}</span></span>`);
+  const hold = swipeHeld(), hn = hold && hold.seat===mine ? hold : null;
+  const have = r => Math.max(0, (mp.res[r]||0) - (hn && hn.r===r ? hn.n : 0));
+  const res = RES.filter(r=>mp.res[r]>0).map(r=>`<span class="rc${have(r)?'':' swipe-wait'}" data-r="${r}" role="listitem" aria-label="${RINFO[r].name}: ${have(r)}">${resCard(r, null)}<span class="rc-n" aria-hidden="true">×${have(r)}</span></span>`);
   const piles = mp.cards.length ? treatPiles(mp) : [];
   const coat = pawCoat(mp);
-  const total = {res: RES.reduce((t,r)=>t+(mp.res[r]||0),0), treat: mp.cards.length};
+  const total = {res: RES.reduce((t,r)=>t+have(r),0), treat: mp.cards.length}, any = {res: RES.reduce((t,r)=>t+(mp.res[r]||0),0), treat: mp.cards.length};
   [['res','Resources', res.length ? pawFan(res, 11) : '<p class="dock-empty">No resources yet</p>', who+' resources', ' r'],
    ['treat','Treats', piles.length ? pawFan(piles, 13) : '<p class="dock-empty">No treats yet</p>', 'Treat cards'+(trophies?', '+trophies+' secret point'+(trophies>1?'s':''):''), '']].forEach(([k,label,fan,aria,side])=>{
     const h = el.querySelector(`.paw-hand[data-hand="${k}"]`), tab = h.querySelector('.dock-tab'), f = h.querySelector('.fan');
-    h.classList.toggle('up', !!u[k]); h.classList.toggle('empty', !total[k]);
+    h.classList.toggle('up', !!u[k]); h.classList.toggle('empty', !any[k]);
     tab.setAttribute('aria-expanded', String(!!u[k]));
     tab.setAttribute('aria-label', (u[k]?'Lower ':'Lift ')+label.toLowerCase()+(u[k]?', '+total[k]+' card'+(total[k]===1?'':'s'):''));
     tab.innerHTML = `${label}${u[k]?`<span class="tab-n" aria-hidden="true">${total[k]}</span>`:''}<span class="chev" aria-hidden="true"></span>`;
     f.innerHTML = fan; f.setAttribute('aria-label', aria);
+    const sn = k==='res' && ui.swipeNew && ui.swipeNew.until>Date.now() && ui.swipeNew.seat===mine ? ui.swipeNew : null, snc = sn && f.querySelector(`.rc[data-r="${sn.r}"]`);
+    if(snc){ snc.closest('.fc').classList.add('swipe-new'); snc.insertAdjacentHTML('beforeend', `<span class="rc-new" aria-hidden="true">Swiped${sn.n>1?' +'+sn.n:''}</span>`); }
     if(k==='treat' && ui.modal && ui.modal.kind==='treat'){ const out = f.querySelector(`.card-btn[data-ci="${ui.modal.i}"]`); if(out) out.classList.add('out'); }
     if(h.dataset.pc!==coat){ h.dataset.pc = coat; h.querySelector('.pb').innerHTML = pawImg(mp,'back'+side,'paw-back'); h.querySelector('.pt').innerHTML = pawImg(mp,'thumb'+side,'paw-thumb'); h.querySelector('.po').innerHTML = pawImg(mp,'back'+side,'paw-open') + pawImg(mp,'sign',k==='res'?'paw-sign':'paw-sign-treat'); }
   });
   el.querySelector('.dock-secret').textContent = trophies ? '+'+trophies+' secret' : '';
   placeDock();
-  dockReact(mine, mp);
+  dockReact(mine, hn ? Object.assign({}, mp, {res: Object.fromEntries(RES.map(r=>[r, have(r)]))}) : mp);
 }
 /* on a wide screen the paws rise from the bottom edge of the map: match the dock to the map's drawn frame,
    which is letterboxed inside the svg */
@@ -3256,7 +3334,6 @@ function modalHTML(){
       <div class="stage-card" id="stage-card">${treatCard(c.t,'lg',{why})}${play}
         <button class="stage-x" onclick="G.putBack()" aria-label="Put ${nm} back in your paw">\u00d7</button></div></div>`;
   }
-  if(m.kind==='stolen') return `<div class="modal handoff"><div class="big-ic">${resIcon(m.r,90)}</div><h2>You swiped ${RINFO[m.r].name}</h2><p>Taken from ${pname(m.from)}.</p><div class="actions center"><button class="btn primary" onclick="G.close()">Nice</button></div></div>`;
   if(m.kind==='gift'){
     return `<div class="modal"><h2>Gift basket</h2><p>Pick 2 resources. You can pick the same one twice.</p>
       <div class="pick">${RES.map(r=>`<button style="--tile:${RINFO[r].fill}" onclick="G.giftPick('${r}')">${resIcon(r)}${RINFO[r].name}</button>`).join('')}</div>
@@ -3368,7 +3445,7 @@ function rulesHTML(){
   </div></section>
 
   <section class="rule-block split"><div class="split-pic">${ART.has('vacuum')?`<img src="${artSrc('vacuum')}" alt="">`:`<svg viewBox="-30 -30 60 60">${vacuumSVG()}</svg>`}</div><div><h3>The Vacuum</h3>
-  <ul><li>Rolling a <b>7</b> switches it on. Anyone holding more than 7 cards drops half.</li><li>The roller moves the Vacuum to any tile. That tile stops making cards until it moves.</li><li>The roller swipes a random card from a cat with a bed on that tile.</li></ul></div></section>
+  <ul><li>Rolling a <b>7</b> switches it on. Anyone holding more than 7 cards drops half.</li><li>The roller moves the Vacuum to any tile. That tile stops making cards until it moves.</li><li>The roller swipes a random card from a cat with a bed on that tile. The Vacuum slurps it up, then it flies into the roller's paw, which lifts to show exactly what was taken.</li></ul></div></section>
 
   <section class="rule-block"><h3>Trading</h3>
   <div class="trade-row">
@@ -3798,7 +3875,7 @@ const G = {
   giftReset(){ ui.modal.pick=[]; renderOverlay(); },
   giftTake(){ const pk=ui.modal.pick; pk.forEach(r=>P().res[r]++); log(`${pname(S.cur)} unpacks ${pk.map(r=>RINFO[r].name).join(' and ')} from a gift basket.`); ui.modal=null; commit(); },
   pouncePick(r){ ui.modal.pick=r; renderOverlay(); },
-  pounceGo(){ const r=ui.modal.pick; let n=0; const hits=[]; S.players.forEach((q,i)=>{ if(i!==S.cur){ if(q.res[r]>0) hits.push({from:i, n:q.res[r]}); n+=q.res[r]; q.res[r]=0; } }); P().res[r]+=n; if(n>0) S.swipe = {id:newSwipeId(), by:S.cur, from:hits.map(h=>h.from), r, hits, via:'pounce'}; log(`${pname(S.cur)} pounces on ${n} ${RINFO[r].name}.`); ui.modal=null; commit(); },
+  pounceGo(){ const r=ui.modal.pick; let n=0; const hits=[]; S.players.forEach((q,i)=>{ if(i!==S.cur){ if(q.res[r]>0) hits.push({from:i, n:q.res[r]}); n+=q.res[r]; q.res[r]=0; } }); P().res[r]+=n; if(n>0){ S.swipe = {id:newSwipeId(), by:S.cur, from:hits.map(h=>h.from), r, hits, via:'pounce'}; swipeHold(S.swipe, n); } log(`${pname(S.cur)} pounces on ${n} ${RINFO[r].name}.`); ui.modal=null; commit(); },
   bankGive(r){ ui.modal.give=r; if(ui.modal.get===r) ui.modal.get=null; renderOverlay(); },
   bankGet(r){ ui.modal.get=r; renderOverlay(); },
   bankGo(){ const m=ui.modal, rt=rate(S.cur,m.give), pl=P(); if(pl.res[m.give]<rt) return; pl.res[m.give]-=rt; pl.res[m.get]++; log(`${pname(S.cur)} trades ${rt} ${RINFO[m.give].name} at the shop for 1 ${RINFO[m.get].name}.`); m.give=null; m.get=null; commit(); },
