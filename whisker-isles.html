@@ -517,6 +517,11 @@ img.pic{object-fit:contain}
 
 /* ---------- odds chart ---------- */
 .odds svg{width:100%;height:auto;display:block}
+.odds-col{cursor:pointer;outline:none}
+.odds-col:hover .odds-hit{fill:#F6F0FF}
+.odds-col.sel:hover .odds-hit{fill:#FFF1B8}
+.odds-col:focus-visible .odds-hit{stroke:var(--plum);stroke-width:2}
+.odds-read{margin:4px 0 0;font-size:.82rem;font-weight:700;color:var(--plum)}
 .legend{display:flex;gap:14px;font-size:.78rem;color:var(--plum-2);margin-top:4px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1.5px solid var(--plum)}
 
@@ -3386,11 +3391,15 @@ function oddsChart(){
   for(let s=2;s<=12;s++){
     const x = gap+(s-2)*(bw+gap), exp = rolls*pips(s)/36, act = S.hist[s];
     const he = rolls? exp/max*(H-30):pips(s)/6*(H-30), ha = act/max*(H-30);
-    bars += `<rect x="${x}" y="${H-18-he}" width="${bw}" height="${he}" rx="4" fill="#EBE5FF" stroke="#3A2341" stroke-width="1.5" stroke-dasharray="3 2"/>
+    const sel = ui.oddsSel===s, times = `${act} time${act===1?'':'s'}`;
+    bars += `<g class="odds-col${sel?' sel':''}" role="button" tabindex="0" aria-pressed="${sel}" aria-label="${s}: rolled ${times}" onclick="G.oddsPick(${s})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();G.oddsPick(${s})}">
+      <rect class="odds-hit" x="${x-gap/2}" y="0" width="${bw+gap}" height="${H}" fill="${sel?'#FFF1B8':'transparent'}" rx="5"/>
+      <rect x="${x}" y="${H-18-he}" width="${bw}" height="${he}" rx="4" fill="#EBE5FF" stroke="#3A2341" stroke-width="1.5" stroke-dasharray="3 2"/>
       <rect x="${x+4}" y="${H-18-ha}" width="${bw-8}" height="${ha}" rx="3" fill="${s===7?'#F2607F':'#8EDFC0'}" stroke="#3A2341" stroke-width="1.5"/>
-      <text x="${x+bw/2}" y="${H-4}" text-anchor="middle" font-size="11" font-weight="700" fill="#3A2341">${s}</text>`;
+      <text x="${x+bw/2}" y="${H-4}" text-anchor="middle" font-size="11" font-weight="700" fill="#3A2341">${s}</text></g>`;
   }
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dice results compared with expected odds after ${rolls} rolls">${bars}</svg>
+  <p class="odds-read" role="status">${ui.oddsSel ? `<b>${ui.oddsSel}</b> has been rolled <b>${S.hist[ui.oddsSel]}</b> time${S.hist[ui.oddsSel]===1?'':'s'}${rolls?`, about ${(rolls*pips(ui.oddsSel)/36).toFixed(1)} expected`:''}.` : 'Tap a number to see how often it has been rolled.'}</p>
   <div class="legend"><span><i style="background:#EBE5FF;border-style:dashed"></i>Expected</span><span><i style="background:#8EDFC0"></i>Rolled</span><span>${rolls} roll${rolls===1?'':'s'} so far</span></div>`;
 }
 
@@ -4122,6 +4131,7 @@ const G = {
   /* turns */
   catInfo(i){ ui.musicMenu = false; ui.catPop = (i==null || ui.catPop===i) ? null : i; if(ui.catPop!=null) sfx('pop'); renderCats(); },
   music(){ ui.musicMenu = !ui.musicMenu; if(ui.musicMenu) ui.catPop = null; renderCats(); if(ui.musicMenu){ const b = document.querySelector('.mm-row.on'); if(b) b.focus(); } else { const m = document.querySelector('.cat-music'); if(m) m.focus(); } },
+  oddsPick(n){ ui.oddsSel = ui.oddsSel===n ? null : n; renderRollbar(); const c = document.querySelector(`.odds-col[aria-label^="${n}:"]`); if(c) c.focus(); },
   vol(k, v){   // sliders only change levels as they move, so the menu isn't redrawn under the finger
     const x = Math.max(0, Math.min(1, (+v||0)/100));
     if(k==='mus'){ MUS.vol = x; store.set('whisker-isles-music-vol', String(x)); const c = ALERT.ctx; if(c && MUS.bus && MUS.timer){ MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(x*.92, c.currentTime+.08); } }
