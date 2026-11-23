@@ -1016,6 +1016,10 @@ function importCarry(hash, st){
   }
   return n;
 }
+/* an invite link is whisker.jessyux.com/cosy-bean-62 (the older ?game=cosy-bean-62 still works) */
+const CODE_PATH = /^\/([a-z]+-[a-z]+-\d{2})\/?$/i;
+function linkCode(){ const m = location.pathname.match(CODE_PATH); return m ? m[1].toLowerCase() : new URLSearchParams(location.search).get('game'); }
+const inviteLink = code => location.origin + '/' + code;
 if(location.hash.indexOf('#carry=')===0){
   importCarry(location.hash, store);
   /* drop the carried data from the address bar, keep ?game= */
@@ -2049,7 +2053,7 @@ function connect(code){
   ON.code=code; ON.pid=pidFor(code); ON.err=null;
   if(ON.status!=='playing') ON.status='connecting';
   markGame(code, 'pending');
-  history.replaceState(null,'','?game='+code);
+  history.replaceState(null,'','/'+code);
   render();
   const proto = location.protocol==='https:'?'wss':'ws';
   let ws;
@@ -2248,7 +2252,7 @@ function onMsg(m){
   if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
   if(m.type==='error'){ ON.convert = null; }
   if(m.type==='error' && (m.kicked || m.deleted || m.detached)){ S = null; ui.modal = null; if((m.deleted || m.detached) && ON.code) forgetGame(ON.code); }
-  if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'',location.pathname); if(ON.ws) ON.ws.close(); render(); return; }
+  if(m.type==='error'){ ON.status='error'; ON.err=m.message; ON.code=null; history.replaceState(null,'','/'); if(ON.ws) ON.ws.close(); render(); return; }
   if(m.type==='lobby'){
     const wasLobby = ON.status==='lobby', prevPids = ON.lobby ? ON.lobby.seats.map(x=>x.pid) : null, prevOpen = ON.lobby ? ON.lobby.seats.filter(x=>x.open).map(x=>x.name) : null;
     ON.lobby=m.lobby; ON.online=m.online||[]; ON.me=m.you||null;
@@ -2318,7 +2322,7 @@ function leaveOnline(){
   const ws = ON.ws; ON.ws=null; ON.code=null; ON.status='idle'; ON.lobby=null; ON.seat=-1; ON.mine=[]; ON.convert=null; ON.pick=null;
   document.body.classList.remove('my-turn'); stopFlash();
   if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
-  history.replaceState(null,'',location.pathname);
+  history.replaceState(null,'','/');
 }
 
 /* =====================================================================
@@ -2335,7 +2339,7 @@ function render(){
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
-  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(location.origin + location.pathname + '?game=${esc(S.code)}', this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}`;
+  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
@@ -2902,7 +2906,7 @@ function confetti(){
 /* a game moved online from one screen: nobody plays until every cat has its own device */
 function openCats(){ return S && S.online && ON.lobby ? ON.lobby.seats.map((x,i)=>x.open?i:-1).filter(i=>i>=0) : []; }
 function waitingHTML(){
-  const L = ON.lobby, open = openCats(), isHost = L.host===ON.me, link = location.origin + location.pathname + '?game=' + L.code;
+  const L = ON.lobby, open = openCats(), isHost = L.host===ON.me, link = inviteLink(L.code);
   return `<div class="modal handoff waiting"><h2>Waiting for ${open.length>1 ? open.length+' cats' : esc(L.seats[open[0]].name)}</h2>
     <p>Every cat needs its own phone. Open the code on another device and pick a cat.</p>
     <p><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button></p>
@@ -3209,14 +3213,14 @@ function startScreen(){
   if(!ui.seats) ui.seats = [0,1].map(i=>({name:'', breed:i, color:i}));
   const rows = boardRows(), lbShown = ui.lbAll ? rows : rows.slice(0,5);
   if(!ui.form){
-    const q = new URLSearchParams(location.search).get('game');
+    const q = linkCode();
     ui.form = {name: store.get('whisker-isles-name') || '', breed: +(store.get('whisker-isles-breed')||0) || 0, code: q ? normCode(q) : ''};
   }
   const seats = ui.seats, n = seats.length;
   const busy = ['creating','connecting'].includes(ON.status);
   const games = myGamesList(busy);
   if(window.WI_OFFLINE) ui.where = 'here';
-  else if(!ui.where && (new URLSearchParams(location.search).get('game') || ON.err)) ui.where = 'online';
+  else if(!ui.where && (linkCode() || ON.err)) ui.where = 'online';
   const where = ui.where;
   const swap = where==='here' ? (window.WI_OFFLINE ? '' : `<button class="btn small" onclick="G.where('online')">Play online instead</button>`)
     : `<button class="btn small" onclick="G.where('here')">Play in person instead</button>`;
@@ -3374,7 +3378,7 @@ function pickScreen(){
 }
 function lobbyScreen(){
   const L = ON.lobby, isHost = L.host===ON.me, n = L.seats.length;
-  const link = location.origin + location.pathname + '?game=' + L.code;
+  const link = inviteLink(L.code);
   const LS = fixColors(L.seats);
   const mySeat = L.seats.find(s=>s.pid===ON.me);
   const PILLOW = ['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'];
@@ -3620,7 +3624,7 @@ document.addEventListener('keydown', e=>{
 /* boot: rejoin an online game from the link, or show the start screen */
 (function boot(){
   fetchBoard();
-  const q = new URLSearchParams(location.search).get('game');
+  const q = linkCode();
   render();
   if(q && ui.form.name.trim()){ ON.status='connecting'; connect(q); }
 })();

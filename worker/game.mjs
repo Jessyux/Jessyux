@@ -48,7 +48,11 @@ async function leaderboard(request, env) {
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
-    if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (!pathname.startsWith('/api/')) {
+      // an invite link is whisker.jessyux.com/<code>: the game page opens and reads the code from the address
+      if (/^\/[a-z]+-[a-z]+-\d{2}\/?$/i.test(pathname)) return env.ASSETS.fetch(new Request(new URL('/', request.url), request));
+      return env.ASSETS.fetch(request);
+    }
     if (pathname.startsWith('/api/whisker-isles/')) {
       try { return await whiskerIsles(request, env, pathname); } catch (e) { console.error(e); return fail(503, 'Online games can\'t be reached right now.'); }
     }
