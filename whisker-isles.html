@@ -496,6 +496,7 @@ img.pic{object-fit:contain}
 .cp-extra .badge{border:0;padding:0;margin:0;background:none}
 .cat-mute{align-self:center;width:34px;height:34px;padding:0;border-radius:50%;border:2.5px solid var(--plum);background:var(--milk);color:var(--plum);cursor:pointer;display:grid;place-items:center;box-shadow:2px 2px 0 var(--plum)}
 .cat-mute svg{width:18px;height:18px}
+.cat-music.off{opacity:.75;background:#F3EEF5}
 .cat-mute:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
 @media (max-width:920px){ .cat-av,.cat-av .portrait{width:50px;height:50px} .cat-hud{gap:6px} .cat-row{gap:9px} .cat-mute{width:30px;height:30px} }
 
@@ -2330,6 +2331,96 @@ function playLogSounds(){
   const fresh = S.log.slice(0, Math.min(now-was, S.log.length)).reverse().map(m=>sfxFor(String(m).replace(/<[^>]+>/g,''))).filter(k=>k && !(k==='roll' && !reduceMotion));   // the dice squish plays as they tumble
   fresh.slice(-3).forEach((k,i)=>sfx(k, i*380));
 }
+/* ---------- background music: a slow, soft lo-fi loop made live in the browser (no audio files).
+   Warm electric-piano chords, a round bass, a lazy swung beat, vinyl crackle and a few echoing island notes. ---------- */
+const MUS = {on: !store.get('whisker-isles-music-off'), bus:null, echo:null, timer:null, step:0, t0:0, noise:null, crackle:null, last:-1};
+const MUS_BPM = 72, MUS_CH = [   // Cmaj9, Am9, Fmaj9, G6/9: every note sits in C major, so the little melody can't clash
+  {bass:36, n:[48,52,55,59,62]}, {bass:33, n:[45,48,52,55,59]}, {bass:41, n:[41,45,48,52,55]}, {bass:43, n:[43,47,50,52,57]}];
+const MUS_PENT = [72,74,76,79,81,84];
+const mtof = m => 440*Math.pow(2, (m-69)/12);
+function musNoise(c){
+  if(MUS.noise) return MUS.noise;
+  const b = c.createBuffer(1, c.sampleRate*2, c.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  return MUS.noise = b;
+}
+function musBus(c){
+  if(MUS.bus) return;
+  const bus = c.createGain(), lp = c.createBiquadFilter(), echo = c.createGain(), dl = c.createDelay(1), fb = c.createGain(), dlp = c.createBiquadFilter();
+  bus.gain.value = 0; lp.type = 'lowpass'; lp.frequency.value = 2300; lp.Q.value = .4;
+  dl.delayTime.value = 60/MUS_BPM*.75; fb.gain.value = .38; dlp.type = 'lowpass'; dlp.frequency.value = 1500; echo.gain.value = .55;
+  bus.connect(lp); lp.connect(c.destination);
+  echo.connect(dl); dl.connect(dlp); dlp.connect(fb); fb.connect(dl); dlp.connect(lp);
+  MUS.bus = bus; MUS.echo = echo;
+}
+function musKeys(c, f, t, dur, vol, wet){
+  const g = c.createGain(), dt = (Math.random()-.5)*8;
+  [[1,'sine',1],[2,'triangle',.22],[4,'sine',.05]].forEach(([m,type,v],i)=>{
+    const o = c.createOscillator(), og = c.createGain(); o.type = type; o.frequency.value = f*m; o.detune.value = dt;
+    og.gain.value = v; o.connect(og); og.connect(g); o.start(t); o.stop(t+dur+.1);
+  });
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+.01); g.gain.exponentialRampToValueAtTime(vol*.35, t+.35); g.gain.exponentialRampToValueAtTime(.0001, t+dur);
+  g.connect(MUS.bus); if(wet) g.connect(MUS.echo);
+}
+function musHit(c, t, kind){
+  const bus = MUS.bus;
+  if(kind==='kick'){
+    const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(125, t); o.frequency.exponentialRampToValueAtTime(42, t+.16);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.34, t+.006); g.gain.exponentialRampToValueAtTime(.0001, t+.24); o.connect(g); g.connect(bus); o.start(t); o.stop(t+.3); return;
+  }
+  const n = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); n.buffer = musNoise(c);
+  if(kind==='snare'){ f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = .7; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.11, t+.004); g.gain.exponentialRampToValueAtTime(.0001, t+.2); }
+  else { f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(kind==='hat2'?.03:.05, t+.003); g.gain.exponentialRampToValueAtTime(.0001, t+.05); }
+  n.connect(f); f.connect(g); g.connect(bus); n.start(t, Math.random()); n.stop(t+.25);
+}
+function musStep(c, i, t){
+  const bar = Math.floor(i/8)%4, s = i%8, ch = MUS_CH[bar];
+  if(s===0){ ch.n.forEach((m,k)=>musKeys(c, mtof(m), t+k*.028, 3.0, .085, false)); musKeys(c, mtof(ch.bass), t, 1.5, .26, false); musHit(c, t, 'kick'); }
+  if(s===3) musKeys(c, mtof(ch.bass+7), t, .7, .15, false);
+  if(s===5){ ch.n.slice(2).forEach((m,k)=>musKeys(c, mtof(m), t+k*.02, 1.1, .05, false)); musHit(c, t, 'kick'); }
+  if(s===2 || s===6) musHit(c, t, 'snare');
+  musHit(c, t, s%2 ? 'hat2' : 'hat');
+  if(s%2===0 && Math.random()<.34){
+    let m; do{ m = MUS_PENT[Math.floor(Math.random()*MUS_PENT.length)]; }while(m===MUS.last); MUS.last = m;
+    musKeys(c, mtof(m), t+.01, 1.6, .06, true);
+  }
+}
+function musTick(){
+  const c = ALERT.ctx; if(!c || c.state!=='running') return;
+  const d = 60/MUS_BPM/2;
+  if(MUS.t0 + MUS.step*d < c.currentTime - .5){ MUS.t0 = c.currentTime; MUS.step = Math.ceil(MUS.step/8)*8; }
+  for(;;){
+    const i = MUS.step, t = MUS.t0 + i*d + (i%2 ? d*.2 : 0);
+    if(t > c.currentTime + .7) break;
+    try{ musStep(c, i, Math.max(t, c.currentTime)); }catch(e){}
+    MUS.step++;
+  }
+}
+function musStart(){
+  if(!MUS.on || MUS.timer || document.hidden) return;
+  try{
+    const c = sfxCtx(); if(!c) return;
+    musBus(c);
+    MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(.55, c.currentTime+2.5);
+    // vinyl crackle: sparse little clicks and a bed of hiss, very quiet
+    const b = c.createBuffer(1, c.sampleRate*4, c.sampleRate), d = b.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*.015 + (Math.random()<.0006 ? (Math.random()*2-1)*.9 : 0);
+    const cr = c.createBufferSource(), cf = c.createBiquadFilter(), cg = c.createGain(); cr.buffer = b; cr.loop = true; cf.type = 'bandpass'; cf.frequency.value = 3200; cf.Q.value = .5; cg.gain.value = .22;
+    cr.connect(cf); cf.connect(cg); cg.connect(MUS.bus); cr.start(); MUS.crackle = cr;
+    MUS.t0 = c.currentTime + .25; MUS.step = 0; MUS.timer = setInterval(musTick, 120);
+  }catch(e){}
+}
+function musStop(){
+  if(MUS.timer){ clearInterval(MUS.timer); MUS.timer = null; }
+  try{
+    const c = ALERT.ctx;
+    if(c && MUS.bus){ MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(0, c.currentTime+.6); }
+    const cr = MUS.crackle; MUS.crackle = null; if(cr) setTimeout(()=>{ try{ cr.stop(); }catch(e){} }, 800);
+  }catch(e){}
+}
+function musSync(inGame){ if(inGame && MUS.on) musStart(); else if(!inGame) musStop(); }
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) musStop(); else musSync(!!$('#cat-hud')); });
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev, ()=>{ if(MUS.timer && ALERT.ctx && ALERT.ctx.state==='suspended') ALERT.ctx.resume(); }, {passive:true}));
 function toast(title, body){
   let el = $('#wi-toast');
   if(!el){ el = document.createElement('div'); el.id = 'wi-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
@@ -2747,7 +2838,7 @@ function catPopHTML(i){
     ${awards || ctl ? `<div class="cp-extra">${awards}${ctl}</div>` : ''}</div>`;
 }
 function renderCats(){
-  const hud = $('#cat-hud'); if(!hud || !S) return;
+  const hud = $('#cat-hud'); musSync(!!(hud && S)); if(!hud || !S) return;
   if(ui.catPop!=null && !S.players[ui.catPop]) ui.catPop = null;
   const avs = S.players.map((q,i)=>{
     const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
@@ -2755,7 +2846,7 @@ function renderCats(){
     return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span></button>`;
   }).join('');
   const ico = SND.muted ? '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
-  hud.innerHTML = `<div class="cat-row">${avs}<button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button></div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  hud.innerHTML = `<div class="cat-row">${avs}<button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-pressed="${MUS.on}" aria-label="${MUS.on?'Music is on. Turn music off':'Music is off. Turn music on'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button></div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
 function placeCats(){
@@ -3989,6 +4080,7 @@ const G = {
   },
   /* turns */
   catInfo(i){ ui.catPop = (i==null || ui.catPop===i) ? null : i; if(ui.catPop!=null) sfx('pop'); renderCats(); },
+  music(){ MUS.on = !MUS.on; store.set('whisker-isles-music-off', MUS.on ? '' : '1'); if(MUS.on) musStart(); else musStop(); renderCats(); },
   mute(){ SND.muted = !SND.muted; store.set('whisker-isles-mute', SND.muted ? '1' : ''); if(!SND.muted) sfx('pop'); renderCats(); },
   startTurn(){ S.handoff=false; save(); render(); toMap(); },
   startRoll(){ S.handoff=false; save(); render(); toMap(); roll(); },
