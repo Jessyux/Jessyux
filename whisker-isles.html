@@ -145,11 +145,13 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 
 /* ---------- dice ---------- */
 .dice-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.die{width:52px;height:52px;background:var(--milk);border:3px solid var(--plum);border-radius:14px;box-shadow:var(--sticker);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:6px}
+.die{position:relative;width:52px;height:52px;background:radial-gradient(circle at 32% 26%,#fff 0,#FFF8F0 55%,#FFEBDD 100%);border:3px solid var(--plum);border-radius:16px;box-shadow:var(--sticker);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:6px}
 .die i{width:9px;height:9px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden}
 .die i.on{visibility:visible}
 .die.seven i.on{background:var(--strawberry)}
 .die.rolling{opacity:0}
+.die::before,.die::after{content:"";position:absolute;bottom:9%;width:9px;height:6px;border-radius:50%;background:rgba(255,143,177,.55)}
+.die::before{left:8%}.die::after{right:8%}
 /* 3D dice that tumble over the island; faces sit on a 72px cube, opposite faces add up to 7 */
 .dice3d{position:fixed;inset:0;pointer-events:none;z-index:35}
 .d3-move{position:absolute;left:0;top:0;width:72px;height:72px;transform-origin:0 0;will-change:transform}
@@ -157,18 +159,30 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 .d3-hop{position:absolute;inset:0;perspective:520px;will-change:transform}
 .d3-cube{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
 .d3-face,.d3-core{position:absolute;inset:0;backface-visibility:hidden}
-.d3-face{inset:-1.5px;background:#fff;border:3px solid var(--plum);border-radius:12px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:9px;box-shadow:inset -5px -6px 0 rgba(58,35,65,.10)}
-.d3-face i{width:12px;height:12px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden}
+.d3-face{inset:-2.5px;background:radial-gradient(circle at 32% 26%,#fff 0,#FFF8F0 55%,#FFEBDD 100%);border:3.5px solid var(--plum);border-radius:17px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px;box-shadow:inset -4px -5px 0 rgba(242,96,127,.12)}
+.d3-face::before,.d3-face::after{content:"";position:absolute;bottom:11%;width:13px;height:8px;border-radius:50%;background:rgba(255,143,177,.55);pointer-events:none}
+.d3-face::before{left:9%}.d3-face::after{right:9%}
+.d3-face i{width:13px;height:13px;border-radius:50%;background:var(--plum);place-self:center;visibility:hidden;position:relative;z-index:1}
 .d3-face i.on{visibility:visible}
+.d3-face i.on::after{content:"";position:absolute;left:2.5px;top:2px;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.75)}
+/* the one is a paw print */
+.d3-face.f1 i.on{width:30px;height:28px;border-radius:0;background:
+  radial-gradient(ellipse 9px 8px at 50% 68%,#FF8FB1 0 98%,transparent 100%),
+  radial-gradient(circle 4.2px at 18% 38%,#FF8FB1 0 98%,transparent 100%),
+  radial-gradient(circle 4.2px at 38% 16%,#FF8FB1 0 98%,transparent 100%),
+  radial-gradient(circle 4.2px at 62% 16%,#FF8FB1 0 98%,transparent 100%),
+  radial-gradient(circle 4.2px at 82% 38%,#FF8FB1 0 98%,transparent 100%)}
+.d3-face.f1 i.on::after{display:none}
 .d3-face.f1{transform:translateZ(36px)}
 .d3-face.f6{transform:rotateY(180deg) translateZ(36px)}
 .d3-face.f3{transform:rotateY(90deg) translateZ(36px)}
 .d3-face.f4{transform:rotateY(-90deg) translateZ(36px)}
 .d3-face.f5{transform:rotateX(90deg) translateZ(36px)}
 .d3-face.f2{transform:rotateX(-90deg) translateZ(36px)}
-.d3-core{background:var(--plum);border-radius:14px;inset:3px;backface-visibility:visible}
+.d3-core{background:var(--plum);border-radius:18px;inset:3px;backface-visibility:visible}
 .d3-core.cx{transform:rotateX(90deg)}.d3-core.cy{transform:rotateY(90deg)}
 .d3-seven .d3-face i{background:var(--strawberry)}
+.d3-seven .d3-face.f1 i.on{background:radial-gradient(ellipse 9px 8px at 50% 68%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 18% 38%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 38% 16%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 62% 16%,#F2607F 0 98%,transparent 100%),radial-gradient(circle 4.2px at 82% 38%,#F2607F 0 98%,transparent 100%)}
 @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg) translateY(-4px)}50%{transform:rotate(12deg)}80%{transform:rotate(-6deg)}}
 .sum{font-family:var(--display);font-size:1.8rem;min-width:2ch}
 .dice-row .btn{margin-left:auto}
