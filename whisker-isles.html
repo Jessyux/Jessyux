@@ -2119,7 +2119,7 @@ function skipTurn(){
   S.cur = (S.cur+1) % S.players.length; S.turn++; S.rolled = false; S.playedTreat = false;
   log(`The host skipped ${pname(who)}'s turn. It's ${pname(S.cur)}'s turn.`);
 }
-function commit(){ if(!placing) S.undo = []; placing = false; checkWin(); save(); pushState(); render(); if(S.online) setTimeout(swipeCheck, 120); }
+function commit(){ if(!placing) S.undo = []; placing = false; checkWin(); save(); pushState(); render(); setTimeout(swipeCheck, 120); }
 
 /* =====================================================================
    Online play
@@ -2307,7 +2307,7 @@ const newSwipeId = () => Date.now().toString(36)+Math.random().toString(36).slic
 function swipeCheck(){
   const sw = S && S.swipe; if(!sw || ui.lastSwipe===sw.id) return;
   ui.lastSwipe = sw.id;
-  if(S.online) playSwipe(sw);
+  playSwipe(sw);   // in person too: everyone is at the one screen, so they all watch the Vacuum gulp it
 }
 function slurp(){
   try{
@@ -3646,7 +3646,7 @@ const G = {
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); S.sid = newSid(); S.created = Date.now(); S.playedMs = 0; S.lastAt = S.created; save(); render(); window.scrollTo(0,0);
   },
-  resume(id){ S = loadSave(id); if(!S){ render(); return; } S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
+  resume(id){ S = loadSave(id); if(!S){ render(); return; } ui.lastSwipe = S.swipe ? S.swipe.id : null; S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
   toStart(){
     fetchBoard();
     if(S && S.online) leaveOnline(); else if(S) save();
