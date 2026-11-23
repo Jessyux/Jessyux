@@ -1881,6 +1881,8 @@ function undoPlace(){
   placing = true; commit();
 }
 /* who goes first: each cat still in the running rolls two dice; the highest goes first, a tie rolls again */
+/* whose turn comes after this cat: the order they ranked in when rolling for first (clockwise if there isn't one) */
+function nextCat(c){ const n = S.players.length, o = S.turnOrder; if(o && o.length===n && o.includes(c)) return o[(o.indexOf(c)+1)%n]; return (c+1)%n; }
 function firstRoll(){
   if(!S || S.phase!=='setup' || S.setup.step!=='roll' || !myTurn() || ui.rolling) return;
   const d = [1+rnd(6), 1+rnd(6)], F = S.setup.first;
@@ -1893,9 +1895,10 @@ function firstRoll(){
     if(best.length>1){
       const names = best.map(pname);
       log(`${names.slice(0,-1).join(', ')} and ${names[names.length-1]} tie on ${top} and roll again.`);
-      F.live = best; F.tie = (F.tie||0)+1; best.forEach(i=>F.rolls[i]=null); S.cur = best[0]; commit(); return;
+      (F.out = F.out||[]).push(F.live.filter(i=>!best.includes(i)).sort((a,b)=>F.rolls[b]-F.rolls[a]||a-b)); F.live = best; F.tie = (F.tie||0)+1; best.forEach(i=>F.rolls[i]=null); S.cur = best[0]; commit(); return;
     }
-    const n = S.players.length, first = best[0], round = [...Array(n).keys()].map(k=>(first+k)%n);
+    const n = S.players.length, first = best[0], round = [...F.live].sort((a,b)=>F.rolls[b]-F.rolls[a]||a-b).concat((F.out||[]).slice().reverse().flat());   // highest roll first, lowest last
+    S.turnOrder = round.slice();
     S.setup.order = [...round, ...round.slice().reverse()];
     S.setup.i = 0; S.setup.step = 'bed'; S.cur = first; F.done = first;
     log(`${pname(first)} rolled highest and places first.`);
@@ -2188,7 +2191,7 @@ function playTreat(idx){
 function endTurn(){
   if(!myTurn() || !S.rolled || S.sub || S.offer) return;
   ui.mode=null;
-  S.cur = (S.cur+1)%S.players.length; S.turn++; S.rolled=false; S.playedTreat=false; S.handoff=!S.online;
+  S.cur = nextCat(S.cur); S.turn++; S.rolled=false; S.playedTreat=false; S.handoff=!S.online;
   log(`${pname(S.cur)}'s turn.`);
   commit();
   if(!S.online) toMap();
@@ -2211,6 +2214,7 @@ function dropCat(k){
   if(S.offer && S.offer.from===k) S.offer = null;
   else if(S.offer){ S.offer.from = re(S.offer.from); S.offer.to = offerTo(S.offer).map(re).filter(i=>i>=0); if(!S.offer.to.length) S.offer = null; }
   S.discardQ = (S.discardQ||[]).filter(i=>i!==k).map(re);
+  if(S.turnOrder) S.turnOrder = S.turnOrder.filter(x=>x!==k).map(re);
   const st = S.setup;
   if(st.first && st.first.done!=null){ const d0 = st.first.done; st.first.done = d0===k ? k%n : re(d0); }
   if(S.phase==='setup' && st.step==='roll'){
@@ -2232,7 +2236,7 @@ function skipTurn(){
   if(S.phase!=='play') return;
   const who = S.cur;
   S.sub = null; S.subData = null; S.offer = null;
-  S.cur = (S.cur+1) % S.players.length; S.turn++; S.rolled = false; S.playedTreat = false;
+  S.cur = nextCat(S.cur); S.turn++; S.rolled = false; S.playedTreat = false;
   log(`The host skipped ${pname(who)}'s turn. It's ${pname(S.cur)}'s turn.`);
 }
 function commit(){ if(!placing) S.undo = []; placing = false; checkWin(); save(); pushState(); render(); setTimeout(swipeCheck, 120); }
@@ -2922,9 +2926,10 @@ function rolling4First(){ return !!(S && S.phase==='setup' && S.setup && S.setup
 function catOrder(){
   const n = S.players.length, idx = [...Array(n).keys()];
   if(rolling4First()){
-    const F = S.setup.first, key = i => F.rolls[i]!=null ? F.rolls[i] : (F.live.includes(i) && F.tie ? 100 : -1);
+    const F = S.setup.first, key = i => F.tie && F.live.includes(i) ? 100 + (F.rolls[i]!=null ? F.rolls[i] : 13) : F.rolls[i]!=null ? F.rolls[i] : -1;   // in a tie-break the tied cats stay in front, highest first
     return idx.sort((a,b)=> key(b)-key(a) || a-b);
   }
+  if(S.turnOrder && S.turnOrder.length===n) return S.turnOrder.slice();
   const f = S.setup && S.setup.first && S.setup.first.done;
   return f!=null && f>=0 && f<n ? idx.map(k=>(f+k)%n) : idx;
 }
