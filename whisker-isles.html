@@ -1953,6 +1953,7 @@ const dieSprite = n => `<span class="sprite-spin"><img class="sprite-die" alt=""
 /* The two dice leave the tray, tumble onto the middle of the island, settle on the roll,
    then fly back into the tray. done() runs once they are home. */
 function spinDice(done, final, startFrom){
+  sfx('roll');
   const from = startFrom || [...document.querySelectorAll('#dice .die')].map(e=>e.getBoundingClientRect());
   ui.rolling = true; render();
   const finish = ()=>{ layer.remove(); if(done) done(); else { ui.rolling=false; render(); } };
@@ -2281,7 +2282,9 @@ function nt(c, f, at, len, type, vol, to){
 }
 const SFX = {
   pop:   c=>{ nt(c,520,0,.09,'sine',.12,900); },
-  roll:  c=>{ for(let i=0;i<7;i++) nt(c, 180+Math.random()*420, i*.06+Math.random()*.02, .05, 'square', .05); nt(c,300,.46,.1,'triangle',.1); },
+  /* plush dice: soft squishy blorps while they tumble, then a gentle pat as they land */
+  roll:  c=>{ [[0,230,430,.2],[.17,190,360,.19],[.34,260,470,.17],[.5,170,300,.15],[.66,210,330,.12]].forEach(([at,a,b,v])=>{ nt(c,a,at,.13,'sine',v,b); nt(c,b,at+.1,.14,'sine',v*.8,a*.7); nt(c,a*2,at+.02,.08,'sine',v*.25,b*2); });
+           nt(c,190,.88,.2,'triangle',.2,80); nt(c,420,.9,.1,'sine',.08,250); },
   seven: c=>{ nt(c,150,0,.5,'sawtooth',.07,60); nt(c,110,.05,.55,'square',.05,50); },
   bed:   c=>{ nt(c,200,0,.12,'triangle',.18,90); nt(c,523,.1,.14,'sine',.12); nt(c,784,.2,.2,'sine',.12); },
   path:  c=>{ nt(c,330,0,.22,'triangle',.1,520); nt(c,440,.12,.14,'sine',.07); },
@@ -2324,7 +2327,7 @@ function playLogSounds(){
   const now = S.logN||0, was = ui.logN;
   ui.logN = now;
   if(was==null || now<=was) return;                 // first look at a game, or a different game: stay quiet
-  const fresh = S.log.slice(0, Math.min(now-was, S.log.length)).reverse().map(m=>sfxFor(String(m).replace(/<[^>]+>/g,''))).filter(Boolean);
+  const fresh = S.log.slice(0, Math.min(now-was, S.log.length)).reverse().map(m=>sfxFor(String(m).replace(/<[^>]+>/g,''))).filter(k=>k && !(k==='roll' && !reduceMotion));   // the dice squish plays as they tumble
   fresh.slice(-3).forEach((k,i)=>sfx(k, i*380));
 }
 function toast(title, body){
