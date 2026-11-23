@@ -1,6 +1,12 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Whisker Isles</title>
 <link rel="stylesheet" href="/a11y/home-float.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Whisker Isles">
+<meta name="theme-color" content="#3A2341">
 <meta name="description" content="A cosy cat board game for 2 to 10 players. Build cat beds, roll out yarn paths and keep away from the Vacuum.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M18 44 26 8 48 28Z M82 44 74 8 52 28Z' fill='%23FF8A3D' stroke='%233A2341' stroke-width='5' stroke-linejoin='round'/%3E%3Cellipse cx='50' cy='60' rx='40' ry='33' fill='%23FFB067' stroke='%233A2341' stroke-width='5'/%3E%3Ccircle cx='35' cy='60' r='7' fill='%233A2341'/%3E%3Ccircle cx='65' cy='60' r='7' fill='%233A2341'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -700,6 +706,11 @@ div.build{cursor:default}
 #wi-toast span{font-size:.85rem;font-weight:700}
 @media (prefers-reduced-motion:reduce){#wi-toast{transition:opacity .2s;transform:translate(-50%,0)}}
 .bell{display:inline-flex;align-items:center;gap:5px}
+.a2hs h2{font-size:1.3rem;margin:0}
+.a2-steps{list-style:none;margin:12px 0;padding:0;display:grid;gap:10px}
+.a2-steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-weight:700;line-height:1.35}
+.a2-steps .n{width:28px;height:28px;border-radius:50%;background:var(--butter);border:2.5px solid var(--plum);display:grid;place-items:center;font-family:var(--display);font-size:.95rem}
+.a2-ic{vertical-align:-5px;margin:0 2px;color:#2E7BF6}
 .bell.on{background:#E3F6DD}
 .code-chip{border:2.5px dashed var(--plum);border-radius:999px;padding:.25em .8em;font-size:.88rem;background:#fff;align-self:center}
 .code-chip b{font-family:var(--display);font-weight:400}
@@ -2177,8 +2188,30 @@ async function syncPush(){
   if(!pushOn()) return;
   try{ const reg = await navigator.serviceWorker.getRegistration('/'); const sub = reg && await reg.pushManager.getSubscription(); if(sub) sendSub(sub); }catch(e){}
 }
+/* iPhone only sends alerts to apps on the Home Screen, and a website can't pop up the install prompt itself, so this card shows the steps */
+const SHARE_IC = '<svg class="a2-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11H5v10h14V11h-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const PLUS_IC = '<svg class="a2-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+function a2hsHTML(){
+  const code = ON.code || (S && S.code) || '';
+  return `<div class="modal a2hs"><div class="rules-head"><h2>Get turn alerts on iPhone</h2><button class="btn small" onclick="G.close()">Close</button></div>
+    <p>iPhone only sends alerts to apps on your Home Screen. It takes four taps:</p>
+    <ol class="a2-steps">
+      <li><span class="n">1</span><span>Tap <b>Share</b> ${SHARE_IC} at the bottom of Safari.</span></li>
+      <li><span class="n">2</span><span>Scroll down and tap <b>Add to Home Screen</b> ${PLUS_IC}, then <b>Add</b>.</span></li>
+      <li><span class="n">3</span><span>Open <b>Whisker Isles</b> from your Home Screen${code?` and join with the code <b>${esc(code)}</b>`:''}. Use the same name and you get your cat back.</span></li>
+      <li><span class="n">4</span><span>Tap <b>Notify me</b> and allow notifications.</span></li>
+    </ol>
+    <p class="muted small">After that, every Whisker Isles game on this phone can tell you when it's your turn, even with Safari closed.</p>
+    ${code?`<p class="center"><button class="code-chip" onclick="G.copy('${esc(code)}', this, 'Game code copied')">Copy game code <b>${esc(code)}</b></button></p>`:''}
+  </div>`;
+}
+/* the first time an iPhone player in Safari reaches an online game, offer the guide once */
+function maybeA2HS(){
+  if(!IS_IOS || IS_STANDALONE || ui.modal || store.get('whisker-isles-a2hs')==='1') return;
+  store.set('whisker-isles-a2hs','1'); ui.modal = {kind:'a2hs'}; render();
+}
 async function enablePush(){
-  if(IS_IOS && !IS_STANDALONE){ toast('Add the game to your Home Screen first', 'Tap Share, then Add to Home Screen. Open it from there and tap Notify me again.'); return; }
+  if(IS_IOS && !IS_STANDALONE){ ui.modal = {kind:'a2hs'}; render(); return; }
   if(!PUSH_OK){ toast('Notifications are not available here', 'Try Chrome on Android, or add the game to your iPhone Home Screen.'); return; }
   try{
     const perm = await Notification.requestPermission();
@@ -2328,7 +2361,7 @@ function turnPromptLeave(after){
   setTimeout(go, reduceMotion ? 0 : 280);
 }
 function onMsg(m){
-  if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); }
+  if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); setTimeout(maybeA2HS, 1800); }
   ON.offline=false;
   /* the host moved the game back to one screen: it carries on here, on this phone */
   if(m.type==='detached'){
@@ -3110,6 +3143,7 @@ function winHTML(){
 }
 function modalHTML(){
   const m = ui.modal;
+  if(m.kind==='a2hs') return a2hsHTML();
   if(m.kind==='rules') return rulesHTML();
   if(m.kind==='cat') return catSheetHTML(m.i);
   if(m.kind==='mycat') return lobbyCatHTML();
