@@ -556,14 +556,15 @@ img.pic{object-fit:contain}
   filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.3))}   /* a sticker, like Captain Whiskers */
 .cat-av .portrait img,.cat-av .portrait svg{object-fit:contain;object-position:50% 50%}
 .cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
-.cat-av.cur .portrait{filter:drop-shadow(3px 0 0 var(--butter)) drop-shadow(-3px 0 0 var(--butter)) drop-shadow(0 3px 0 var(--butter)) drop-shadow(0 -3px 0 var(--butter)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}
+.cat-av.cur .portrait{filter:drop-shadow(3px 0 0 var(--pc)) drop-shadow(-3px 0 0 var(--pc)) drop-shadow(0 3px 0 var(--pc)) drop-shadow(0 -3px 0 var(--pc)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}
 .cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
 .cat-av.pending .portrait{opacity:.55;filter:grayscale(.8) drop-shadow(0 0 0 #fff) drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff)}
 .cat-av.away .portrait{opacity:.6}
 .av-roll{position:absolute;left:50%;top:-12px;transform:translateX(-50%);min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:9px;background:var(--butter);border:2.5px solid var(--plum);box-shadow:1px 2px 0 var(--plum);font-family:var(--display);font-size:1.05rem;line-height:23px;text-align:center;color:var(--plum);z-index:2}
 .av-roll.wait{background:#fff;color:var(--plum-2)}
 .av-roll.out{opacity:.55}
-.av-vp{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:999px;background:#fff;border:2.5px solid var(--plum);font-family:var(--display);font-size:.95rem;line-height:21px;text-align:center;box-sizing:border-box}
+.av-vp{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:999px;background:var(--pc,#fff);color:var(--pt,var(--plum));transition:background .15s,color .15s;border:2.5px solid var(--plum);font-family:var(--display);font-size:.95rem;line-height:21px;text-align:center;box-sizing:border-box}
+.cat-av.open .av-vp{background:var(--butter);color:var(--plum)}
 .cat-av.no-trade::after{content:"";position:absolute;left:-6px;top:-6px;width:21px;height:21px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
 .cat-pop{pointer-events:auto;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:10px 12px 12px}
 .cp-head{display:flex;align-items:center;gap:10px}
@@ -767,13 +768,20 @@ svg :focus{outline:none}
 .rollbar{padding:0;overflow:hidden}
 /* turn strip runs edge to edge across the top of the panel */
 .rb-turn{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 14px;border-bottom:2.5px solid var(--plum)}
-.rb-turn .turn{grid-template-columns:52px auto;gap:10px;flex:none}
-.rb-turn .portrait{width:52px;height:52px}
+.rb-turn .turn{grid-template-columns:58px auto;gap:10px;flex:none}
+.rb-turn{border-radius:var(--r-md)}
+.rb-turn .portrait{width:58px;height:58px;border:0;border-radius:0;background:none;overflow:visible;margin:-4px 0;filter:drop-shadow(3px 0 0 var(--pc)) drop-shadow(-3px 0 0 var(--pc)) drop-shadow(0 3px 0 var(--pc)) drop-shadow(0 -3px 0 var(--pc)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}   /* a sticker in the cat's colour, like the avatars on the map */
+.rb-turn .portrait img,.rb-turn .portrait svg{object-fit:contain;object-position:50% 50%}
 .rb-turn .turn .who{font-size:1.15rem}
 .rb-turn .turn .sub{font-size:.84rem}
 .rb-turn .hint{margin:0;flex:1 1 100%;font-size:.86rem;padding:6px 10px}
 .rb-play{padding:10px 14px 12px}
 .rb-roll{display:flex;align-items:center;gap:10px}
+#board .pc{transition:opacity .2s}
+#board.hl-pieces .pc{opacity:.3}
+#board.hl-pieces .pc.on{opacity:1;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px var(--butter));animation:pc-glow 1.1s ease-in-out infinite alternate}
+@keyframes pc-glow{from{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px var(--butter))}to{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 11px var(--butter))}}
+@media (prefers-reduced-motion:reduce){#board.hl-pieces .pc.on{animation:none}}
 .rb-roll .btn{margin-left:auto;white-space:nowrap;flex:none;padding-left:16px;padding-right:16px}   /* 'Roll to go first' on one line */
 .rb-more{border-top:2.5px solid var(--plum)}
 .rb-more summary{cursor:pointer;padding:8px 14px;font-weight:800;font-size:.88rem;list-style:none;display:flex;align-items:center;gap:8px}
@@ -1497,7 +1505,7 @@ button.code-chip{font:inherit;cursor:pointer}
 
 /* ---- small boxes and chips across the game, the trades and the online screens ---- */
 .where-opt,.my-game,.pick-cat,.seat,.host-list li,.partner button,.stepper .ctrl button,.pill,.pills button,
-.bcard,.tcard,.award-chip,.first-rolls li,.dock-empty,.nook-x,.host-ic,.code-pill,.need,.stage-x,.av-vp,.av-roll.wait{background:var(--cream)}
+.bcard,.tcard,.award-chip,.first-rolls li,.dock-empty,.nook-x,.host-ic,.code-pill,.need,.stage-x,.av-roll.wait{background:var(--cream)}
 .where-opt,.my-game,.bcard,.tcard,.host-list li,.pick-cat{outline:2px dashed rgba(58,35,65,.2);outline-offset:-6px}
 .hint{background:var(--butter-2)}
 .hint.alert{background:var(--rose)}
@@ -4033,6 +4041,9 @@ function catOrder(){
   const f = S.setup && S.setup.first && S.setup.first.done;
   return f!=null && f>=0 && f<n ? idx.map(k=>(f+k)%n) : idx;
 }
+/* dark or white writing, whichever reads better on a cat's colour */
+function inkOn(hex){ const n = parseInt(String(hex).slice(1),16), l = [n>>16&255, n>>8&255, n&255].map(v=>{ v/=255; return v<=.03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); });
+  return .2126*l[0]+.7152*l[1]+.0722*l[2] > .3 ? '#3A2341' : '#fff'; }
 function renderCats(){
   const hud = $('#cat-hud'); musSync(!!(hud && S)); if(!hud || !S) return;
   if(ui.catPop!=null && !S.players[ui.catPop]) ui.catPop = null;
@@ -4046,11 +4057,12 @@ function renderCats(){
     const q = S.players[i];
     const st = S.online && ON.lobby && ON.lobby.seats[i], pending = !!(st && st.open), away = !!(S.online && ON.lobby && !pending && !ON.online.includes(st && st.pid));
     const open = ui.catPop===i, cur = i===S.cur;
-    return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}${ord && F4.rolls[i]!=null ? ', rolled '+F4.rolls[i] : ''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span>${ord ? `<span class="av-roll${F4.rolls[i]==null?' wait':''}${F4.live.includes(i)?'':' out'}${jump(i)}" aria-hidden="true">${F4.rolls[i]==null ? (F4.live.includes(i)?'…':'') : F4.rolls[i]}</span>`
+    return `<button class="cat-av${cur?' cur':''}${pending?' pending':''}${away?' away':''}${open?' open':''}${q.noTrade?' no-trade':''}" data-i="${i}" style="--pc:${pcol(q)};--pt:${inkOn(pcol(q))}" aria-expanded="${open}" aria-label="${esc(q.name)}${S.online&&ON.mine.includes(i)?' (you)':''}, ${vp(i,false)} points${cur?', their turn':''}${q.noTrade?', no trades':''}${ord && F4.rolls[i]!=null ? ', rolled '+F4.rolls[i] : ''}. Show details" onclick="G.catInfo(${i})">${portrait(q)}<span class="av-vp" aria-hidden="true">${vp(i,false)}</span>${ord ? `<span class="av-roll${F4.rolls[i]==null?' wait':''}${F4.live.includes(i)?'':' out'}${jump(i)}" aria-hidden="true">${F4.rolls[i]==null ? (F4.live.includes(i)?'…':'') : F4.rolls[i]}</span>`
       : jump(i) ? `<span class="av-roll${jump(i)}" aria-hidden="true">${ui.rollJump.sum}</span>` : ''}</button>`;
   }).join('');
   const ico = SND.muted ? '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' : '<path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
   hud.innerHTML = `<div class="cat-row">${avs}</div>${ui.catPop!=null ? catPopHTML(ui.catPop) : ''}`;
+  pieceHl();
   if(!reduceMotion) hud.querySelectorAll('.cat-av').forEach(b=>{
     const o = prevPos[b.dataset.i]; if(!o) return;
     const r = b.getBoundingClientRect(), dx = o.left-r.left, dy = o.top-r.top;
@@ -4285,15 +4297,15 @@ return `<image href="${artSrc('port-boat')}" x="${bx}" y="${by}" width="${BOAT.w
     const x1=a.x, y1=a.y, x2=b.x, y2=b.y;
     let ang = Math.atan2(b.y-a.y, b.x-a.x)*180/Math.PI; if(ang>90) ang-=180; if(ang<=-90) ang+=180;
     const side = Math.hypot(x2-x1, y2-y1), hh = side*58/320*1.35, len = side + hh*.6;
-    out += `<g aria-hidden="true" transform="translate(${(x1+x2)/2} ${(y1+y2)/2}) rotate(${ang})"><image href="${icHref('ic-path-h', c)}" x="${-len/2}" y="${-hh/2}" width="${len}" height="${hh}"/></g>`;
+    out += `<g class="pc" data-p="${p}" aria-hidden="true" transform="translate(${(x1+x2)/2} ${(y1+y2)/2}) rotate(${ang})"><image href="${icHref('ic-path-h', c)}" x="${-len/2}" y="${-hh/2}" width="${len}" height="${hh}"/></g>`;
   });
   /* a corner sits 60 from each tile centre and the number token reaches 32 below it (pips at 26), so a tower
      on the corner under a tile tops out at 27 and leaves the number and its pips clear */
   Object.entries(S.bld).forEach(([v,b])=>{
     const c = pcol(S.players[b.p]);
     out += b.t==='tower'
-      ? `<g transform="translate(${V[v].x} ${V[v].y})" aria-hidden="true"><ellipse cy="10" rx="14" ry="3.2" fill="#3A2341" opacity=".22"/><image href="${icHref('ic-tower', c)}" x="-14.5" y="-33" width="29" height="46.1"/></g>`
-      : `<g transform="translate(${V[v].x} ${V[v].y})" aria-hidden="true"><ellipse cy="11" rx="16" ry="3.4" fill="#3A2341" opacity=".22"/><image href="${icHref('ic-bed', c)}" x="-19" y="-20" width="38" height="32.7"/></g>`;
+      ? `<g class="pc" data-p="${b.p}" transform="translate(${V[v].x} ${V[v].y})" aria-hidden="true"><ellipse cy="10" rx="14" ry="3.2" fill="#3A2341" opacity=".22"/><image href="${icHref('ic-tower', c)}" x="-14.5" y="-33" width="29" height="46.1"/></g>`
+      : `<g class="pc" data-p="${b.p}" transform="translate(${V[v].x} ${V[v].y})" aria-hidden="true"><ellipse cy="11" rx="16" ry="3.4" fill="#3A2341" opacity=".22"/><image href="${icHref('ic-bed', c)}" x="-19" y="-20" width="38" height="32.7"/></g>`;
   });
   /* drawn after the beds and towers so they never hide it */
   const vh = HEX[S.vac];
@@ -4323,6 +4335,14 @@ return `<image href="${artSrc('port-boat')}" x="${bx}" y="${by}" width="${BOAT.w
     out += `<g class="hot-h" data-h="${i}" tabindex="0" role="button" aria-label="Send the Vacuum to ${RINFO[S.board.tiles[i].type].tile}"><polygon points="${hexPoints(hx.x,hx.y,HR-8)}"/></g>`;
   });
   svg.innerHTML = out;
+  pieceHl();
+}
+/* tapping a cat's avatar lights up their beds, towers and yarn on the map and dims everyone else's */
+function pieceHl(){
+  const svg = $('#board'); if(!svg) return;
+  const who = S && ui.catPop!=null ? String(ui.catPop) : null;
+  svg.classList.toggle('hl-pieces', who!=null);
+  svg.querySelectorAll('.pc').forEach(g=>g.classList.toggle('on', g.dataset.p===who));
 }
 
 const FACES = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
@@ -5248,16 +5268,6 @@ function startScreen(){
    </main>`;
 }
 /* a returning player sees their total as they type */
-/* typing a name fills in the rest of a leaderboard name that starts the same way (most recent player first), with the
-   added letters selected, so a player lands on their exact board name; typing on or deleting replaces the suggestion */
-function nameFill(el, ev, skip){
-  const typed = el.value; if(!ev || !/^insert/.test(ev.inputType||'') || !typed.trim() || el.selectionEnd!==typed.length) return typed;
-  const k = nameKey(typed), rows = (LB.rows || localRows() || []).slice().sort((a,b)=>(b.last||0)-(a.last||0));
-  const hit = rows.find(r => r.name && nameKey(r.name).startsWith(k) && r.name.length>typed.length && !skip(r.name));
-  if(!hit) return typed;
-  el.value = hit.name; el.setSelectionRange(typed.length, el.value.length);
-  return el.value;
-}
 const COATS = [['#FFFFFF','White'],['#FFF1DC','Cream'],['#F3C46B','Golden'],['#F8AD69','Ginger'],['#9B6A4A','Brown'],['#8B94AE','Grey'],['#C9B3E6','Lilac'],['#F2A7C3','Pink'],['#3A3640','Black']];
 const MARKS = [['#E58046','Orange'],['#9B6A2F','Caramel'],['#674D4B','Chocolate'],['#2E2A33','Black'],['#71728B','Grey'],['#9B7FD1','Purple'],['#2BA89A','Teal'],['#FFFFFF','White']];
 const EYES = [['#5DBB4A','Green'],['#4C93DC','Blue'],['#E8A23A','Amber'],['#F2D23B','Yellow'],['#8A5A3C','Brown'],['#9B7FD1','Violet'],['#E0335A','Ruby']];
@@ -5312,7 +5322,7 @@ const BOOT = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
 function lobbyCatHTML(){
   const s0 = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s0) return '';
   const s = fixColors(ON.lobby.seats).find(x=>x.pid===ON.me) || s0;
-  return `<div class="modal cat-sheet">${catPreview(s, `oninput="G.lobbyNameFill(this,event)" onchange="G.lobbyRename()" onkeydown="if(event.key==='Enter')this.blur()"`, !!ON.note)}
+  return `<div class="modal cat-sheet">${catPreview(s, `onchange="G.lobbyRename()" onkeydown="if(event.key==='Enter')this.blur()"`, !!ON.note)}
     <div class="cs-body">
     ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
     <div class="field">Pick a cat</div>${breedPicker(s.breed, [], 'G.lobbyBreed')}
@@ -5457,7 +5467,7 @@ const G = {
     if(!S && ['lobby','pick'].includes(ON.status)) leaveOnline();
     document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
   },
-  seatName(i,v,el,ev){ if(el) v = nameFill(el, ev, n => ui.seats.some((x,j)=>j!==i && nameKey(x.name)===nameKey(n))); ui.seats[i].name=v; if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); }
+  seatName(i,v,el,ev){ ui.seats[i].name=v; if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); }
     /* the customise sheet's name field: keep its heading, note and the nook's name box in step */
     if(ui.modal && ui.modal.kind==='cat' && ui.modal.i===i){ const box=$('#seat-name-'+i); if(box && box!==document.activeElement) box.value=v;
       if(ui.catErr===i && v.trim()){ ui.catErr=null; const e=$('#cs-err'); if(e) e.remove(); const c=$('#cs-name'); if(c){ c.removeAttribute('aria-invalid'); c.removeAttribute('aria-describedby'); } } } },
@@ -5465,7 +5475,6 @@ const G = {
   catDone(){ const m = ui.modal, s = m && m.kind==='cat' && ui.seats[m.i];
     if(s && !s.name.trim()){ ui.catErr = m.i; render(); const c=$('#cs-name'); if(c) c.focus(); return false; }
     ui.catErr = null; ui.modal = null; render(); return true; },
-  lobbyNameFill(el, ev){ nameFill(el, ev, n => !!(ON.lobby && ON.lobby.seats.some(x=>x.pid!==ON.me && nameKey(x.name)===nameKey(n)))); },
   lbAll(){ ui.lbAll=!ui.lbAll; render(); },
   /* customise sheet: any cat for anyone, and a colour nobody else has */
   seatPick(i,b){ const s=ui.seats[i]; s.breed=b; if(!ui.seats.some((x,j)=>j!==i&&x.color===b)) s.color=b; ui.refocus='.breeds [aria-checked="true"]'; render(); },
