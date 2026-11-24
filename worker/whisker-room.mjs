@@ -12,6 +12,8 @@
 //   convert {cats, you, state} host, right after hello in a new room: bring a game played on one screen online. The host
 //                              plays cats[you]; every other cat is an open seat that a friend takes by joining with its
 //                              name. The game waits until every cat has a device.
+//   chat {text}                a message for everyone in the game (live only, never saved; the last 30 are kept in memory)
+//   typing {on}                tell the others you are typing
 //   again {}                   anyone seated, once the game is over: back to the lobby with the same cats and code
 //   release {pid}              host only: free a friend's cat (pid is the seat's public id) so someone else can take it
 //   detach {base, state}       host only: move the game back to one screen; everyone else is disconnected and the room closes
@@ -26,6 +28,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
+import { cleanChat, chatReady, chatPush } from './whisker-chat.mjs';
 import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
@@ -93,7 +96,7 @@ export class WhiskerRoom extends DurableObject {
         this.send(w, { type: 'error', deleted: true, message: 'The host deleted this game.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'deleted'); } catch (e) { /* closed */ }
       }
-      await this.ctx.storage.deleteAll(); this._room = null;
+      await this.ctx.storage.deleteAll(); this._room = null; this._chat = [];
       return json(200, { ok: true });
     }
     if (url.pathname === '/ws') {
@@ -208,6 +211,7 @@ export class WhiskerRoom extends DurableObject {
       ws.serializeAttachment({ pid });
       await this.put(room);
       this.send(ws, this.lobbyMsg(room, true, pid));
+      if (this._chat && this._chat.length) this.send(ws, { type: 'chatlog', msgs: this._chat });
       this.broadcast(room, false, ws);
       return;
     }
@@ -267,8 +271,24 @@ export class WhiskerRoom extends DurableObject {
       room.started = true; room.state = m.state; room.ver = 1;
       await this.put(room); this.broadcast(room, true); return;
     }
+    if (m.type === 'chat' || m.type === 'typing') {
+      const seat = room.seats.find(s => s.pid === me); if (!seat) return;
+      if (m.type === 'typing') {
+        for (const w of this.ctx.getWebSockets()) { const pid = (w.deserializeAttachment() || {}).pid; if (pid && pid !== me) this.send(w, { type: 'typing', from: seat.sid, on: !!m.on }); }
+        return;
+      }
+      const text = cleanChat(m.text), now = Date.now();
+      this._chatAt = this._chatAt || new Map();
+      if (!text || !chatReady(this._chatAt.get(me), now)) return;
+      this._chatAt.set(me, now); this._chatN = (this._chatN || 0) + 1;
+      const msg = { id: `${now}-${this._chatN}`, from: seat.sid, text, t: now };
+      this._chat = chatPush(this._chat || [], msg);
+      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid) this.send(w, { type: 'chat', msg });
+      return;
+    }
     if (m.type === 'again') {
       if (!room.seats.some(s => s.pid === me) || !rematchRoom(room)) return;
+      this._chat = [];
       await this.put(room); this.broadcast(room, false); return;
     }
     if (m.type === 'release') {
@@ -285,7 +305,7 @@ export class WhiskerRoom extends DurableObject {
         else this.send(w, { type: 'error', detached: true, message: 'The host moved the game back to one screen.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'detached'); } catch (e) { /* closed */ }
       }
-      await this.ctx.storage.deleteAll(); this._room = null; return;
+      await this.ctx.storage.deleteAll(); this._room = null; this._chat = []; return;
     }
     if (m.type === 'start') {
       if (room.started || room.host !== me || room.seats.length < 2 || !validState(m.state, room.seats.length)) return;

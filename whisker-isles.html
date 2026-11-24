@@ -1482,6 +1482,43 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .room-prop.locked{filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(2px 4px 0 rgba(58,35,65,.3)) saturate(.85)}
 .room-prop img,.room-prop:hover img,.room-prop:focus-visible img,.room-prop.locked img{filter:none}
 .room-prop .prop-tag{top:-8px;box-shadow:none}
+
+/* chat: a round button with the sound and music ones, and one plain box that opens above the paws */
+.cat-mute.cat-chat{background:var(--butter);position:relative}
+.chat-n{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:var(--strawberry,#E0335A);color:#fff;border:2px solid var(--plum);font:900 .68rem/15px inherit;text-align:center}
+.chat-box{position:fixed;left:50%;bottom:58px;transform:translateX(-50%);z-index:175;width:min(94vw,360px);max-height:min(56vh,380px);display:flex;flex-direction:column;background:var(--milk);border:3px solid var(--plum);border-radius:22px;box-shadow:5px 5px 0 var(--plum);overflow:hidden;color:var(--plum);padding:10px 12px 12px}
+.chat-box[hidden]{display:none}
+.chat-x{position:absolute;top:4px;right:6px;width:30px;height:30px;border:0;background:none;font-size:1.5rem;line-height:1;color:var(--plum-2);cursor:pointer;border-radius:50%}
+.chat-x:hover,.chat-x:focus-visible{background:rgba(58,35,65,.1)}
+.chat-list{list-style:none;margin:0;padding:0 22px 0 0;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;min-height:84px}
+.cm{display:flex;gap:9px;align-items:flex-start}
+.cm-av{flex:none;display:block}
+/* the cat (no circle) and its name are one sticker: one white edge round both, one shadow */
+.cm-stk{flex:none;display:flex;flex-direction:column;align-items:center;min-width:54px;max-width:96px;padding-top:2px;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(1px 3px 0 rgba(58,35,65,.3))}
+.cm-stk .portrait,.ct-avs .portrait{border:0;border-radius:0;background:none;overflow:visible;box-shadow:none;filter:none}
+.cm-stk .portrait img,.cm-stk .portrait svg,.ct-avs .portrait img,.ct-avs .portrait svg{object-fit:contain;object-position:50% 50%}
+.cm-stk .portrait{width:44px;height:44px}
+.cm-stk b{position:relative;margin-top:-9px;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.7rem;font-weight:900;line-height:1.2;color:var(--plum);padding:1px 9px;border:2px solid var(--plum);border-radius:999px;background:color-mix(in srgb,var(--c,#fff) 65%,#fff)}
+.cm{max-width:94%}
+.cm.mine{align-self:flex-end;flex-direction:row-reverse}
+/* the message sits in a box in its sender's colour; yours on the right, everyone else's on the left */
+.cm p{margin:0;min-width:0;align-self:center;font-weight:800;font-size:.98rem;line-height:1.35;overflow-wrap:anywhere;color:color-mix(in srgb,var(--c,#7A5A85) 55%,#3A2341);padding:7px 12px;border:2.5px solid var(--plum);border-radius:16px 16px 16px 5px;background:color-mix(in srgb,var(--c,#fff) 20%,#fff);box-shadow:2px 2px 0 var(--c,var(--plum))}
+.cm.mine p{border-radius:16px 16px 5px 16px}
+.cm-empty{text-align:center;color:var(--plum-2);font-weight:800;font-size:.88rem;padding:18px 8px}
+.chat-typing{display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:800;color:var(--plum-2)}
+.chat-typing:not(:empty){min-height:30px;padding-top:4px}
+.ct-avs{display:flex}.ct-avs .cm-av+.cm-av{margin-left:-8px}
+.ct-avs .portrait{width:26px;height:26px}
+.ct-dots::after{content:"...";display:inline-block;width:1.2em;text-align:left;animation:ctDots 1.2s steps(4,end) infinite;overflow:hidden;vertical-align:bottom}
+@keyframes ctDots{0%{width:0}100%{width:1.2em}}
+@media (prefers-reduced-motion:reduce){.ct-dots::after{animation:none}}
+.chat-form{position:relative;margin-top:8px}
+.chat-form input{width:100%;box-sizing:border-box;font:inherit;font-weight:700;font-size:16px;color:var(--plum);background:#fff;border:2.5px solid var(--plum);border-radius:999px;padding:8px 48px 8px 16px}
+.chat-go{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:2.5px solid var(--plum);background:var(--butter);color:var(--plum);display:grid;place-items:center;padding:0;cursor:pointer}
+.chat-go svg{width:16px;height:16px}
+#chat-peek{position:fixed;left:50%;bottom:58px;transform:translate(-50%,10px);z-index:174;max-width:min(92vw,340px);padding:7px 14px;border:3px solid var(--plum);border-radius:18px;background:#fff;color:var(--plum);font:700 .9rem/1.25 inherit;box-shadow:3px 3px 0 var(--plum);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:left}
+#chat-peek.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){#chat-peek{transition:opacity .2s}}
 </style>
 </head><body>
 <div id="boot" role="status" aria-live="polite" aria-label="Loading Whisker Isles">
@@ -3005,6 +3042,71 @@ function audioUnlock(){
 }
 ['touchend','pointerup','click','keydown'].forEach(ev=>document.addEventListener(ev, audioUnlock, {passive:true, capture:true}));
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && ALERT.ctx && ALERT.ctx.state!=='running') ALERT.ctx.resume().catch(()=>{}); });
+/* ---------- chat: friends talk during an online game. Live only: it is never saved, and is forgotten when the game ends ---------- */
+const CHAT = {open:false, msgs:[], unread:0, typing:{}, sentAt:0, offT:null, peekT:null};
+function chatOn(){ return !!(S && S.online && ON.lobby && ON.ws); }
+function chatSeat(sid){ const L = ON.lobby; if(!L) return null; const i = L.seats.findIndex(s=>s.pid===sid); if(i<0) return null; const p = (S && S.players[i]) || fixColors(L.seats)[i]; return {i, p, mine: ON.mine.includes(i)}; }
+function chatBtnHTML(){
+  if(!chatOn()) return '';
+  return `<button class="cat-mute cat-chat" onclick="G.chat()" aria-haspopup="dialog" aria-expanded="${CHAT.open}" aria-label="Chat${CHAT.unread?`, ${CHAT.unread} new`:''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-2A1.5 1.5 0 0 1 3 15.5v-9A1.5 1.5 0 0 1 4.5 5z" fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="8.5" cy="11" r="1.2" fill="currentColor"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><circle cx="15.5" cy="11" r="1.2" fill="currentColor"/></svg>${CHAT.unread?`<span class="chat-n" aria-hidden="true">${CHAT.unread>9?'9+':CHAT.unread}</span>`:''}</button>`;
+}
+function chatBadge(){
+  const b = document.querySelector('.cat-chat'); if(!b) return;
+  b.setAttribute('aria-expanded', String(CHAT.open)); b.setAttribute('aria-label', 'Chat'+(CHAT.unread?`, ${CHAT.unread} new`:''));
+  const n = b.querySelector('.chat-n'); if(n) n.remove();
+  if(CHAT.unread) b.insertAdjacentHTML('beforeend', `<span class="chat-n" aria-hidden="true">${CHAT.unread>9?'9+':CHAT.unread}</span>`);
+}
+function chatMsgHTML(m){
+  const w = chatSeat(m.from), name = w ? w.p.name : 'A cat';
+  return `<li class="cm${w && w.mine?' mine':''}"${w?` style="--c:${pcol(w.p)}"`:''}><span class="cm-stk">${w?`<span class="cm-av" aria-hidden="true">${portrait(w.p)}</span>`:''}<b>${esc(name)}</b></span><p>${esc(m.text)}</p></li>`;
+}
+function chatDraw(){
+  chatBadge();
+  const list = document.getElementById('chat-list'); if(!list) return;
+  const stick = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+  list.innerHTML = CHAT.msgs.length ? CHAT.msgs.map(chatMsgHTML).join('') : '<li class="cm-empty">Say hi. Chat is not saved.</li>';
+  if(stick) list.scrollTop = list.scrollHeight;
+  chatTypingDraw();
+}
+function chatTypingDraw(){
+  const t = document.getElementById('chat-typing'); if(!t) return;
+  const now = Date.now(), who = Object.keys(CHAT.typing).filter(k=>CHAT.typing[k]>now).map(k=>chatSeat(k)).filter(w=>w && !w.mine);
+  t.innerHTML = who.length ? `<span class="ct-avs">${who.slice(0,3).map(w=>`<span class="cm-av" aria-hidden="true">${portrait(w.p)}</span>`).join('')}</span><span>${who.map(w=>esc(w.p.name)).join(' and ')} ${who.length>1?'are':'is'} typing<i class="ct-dots" aria-hidden="true"></i></span>` : '';
+}
+function chatGot(msg){
+  if(!msg || !msg.text) return;
+  if(CHAT.msgs.some(x=>x.id===msg.id)) return;
+  CHAT.msgs.push(msg); if(CHAT.msgs.length>60) CHAT.msgs.shift();
+  CHAT.typing[msg.from] = 0;
+  const w = chatSeat(msg.from);
+  if(!(w && w.mine) && !CHAT.open){
+    CHAT.unread++;
+    chatPeek(w ? w.p.name : 'A cat', msg.text);
+    if(document.hidden || !document.hasFocus()){ stopFlash(); let on = false; const t = '● '+(w?w.p.name:'Chat'); document.title = t; ALERT.flash = setInterval(()=>{ on = !on; document.title = on ? ALERT.base : t; }, 1100); }
+  }
+  chatDraw();
+}
+/* a line floats up above the buttons for a few seconds when the box is closed */
+function chatPeek(name, text){
+  let el = document.getElementById('chat-peek');
+  if(!el){ el = document.createElement('button'); el.id = 'chat-peek'; el.type = 'button'; el.onclick = () => G.chat(); document.body.appendChild(el); }
+  el.innerHTML = `<b>${esc(name)}</b> ${esc(text.length>60 ? text.slice(0,59)+'…' : text)}`;
+  el.classList.add('show'); clearTimeout(CHAT.peekT); CHAT.peekT = setTimeout(()=>el.classList.remove('show'), 4200);
+}
+function chatBox(){
+  let box = document.getElementById('chat');
+  if(!box){
+    box = document.createElement('section'); box.id = 'chat'; box.className = 'chat-box'; box.setAttribute('role','dialog'); box.setAttribute('aria-label','Cat chat'); box.hidden = true;
+    box.innerHTML = `<button type="button" class="chat-x" onclick="G.chat()" aria-label="Close chat">×</button><ul id="chat-list" class="chat-list" aria-live="polite"></ul><div id="chat-typing" class="chat-typing" aria-live="polite"></div><form class="chat-form" onsubmit="return G.chatSend(event)"><input id="chat-in" maxlength="140" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" placeholder="Say something…" aria-label="Message" oninput="G.chatType()"><button class="chat-go" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l15-7-5 15-3-6z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></form>`;
+    document.body.appendChild(box);
+  }
+  return box;
+}
+function chatReset(){
+  CHAT.open = false; CHAT.msgs = []; CHAT.unread = 0; CHAT.typing = {}; clearTimeout(CHAT.offT); clearTimeout(CHAT.peekT);
+  const b = document.getElementById('chat'); if(b) b.remove();
+  const p = document.getElementById('chat-peek'); if(p) p.remove();
+}
 function toast(title, body){
   let el = $('#wi-toast');
   if(!el){ el = document.createElement('div'); el.id = 'wi-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
@@ -3404,6 +3506,9 @@ function onMsg(m){
     toast('Back on one screen', `Pass the phone to ${S.players[S.cur].name} to carry on.`); return;
   }
   /* a started game with no name given: these are the cats a friend can take over */
+  if(m.type==='chat'){ chatGot(m.msg); return; }
+  if(m.type==='chatlog'){ CHAT.msgs = (m.msgs||[]).slice(-60); CHAT.unread = 0; chatDraw(); return; }
+  if(m.type==='typing'){ CHAT.typing[m.from] = m.on ? Date.now()+4000 : 0; chatTypingDraw(); if(m.on) setTimeout(chatTypingDraw, 4100); return; }
   if(m.type==='pick'){ ON.status='pick'; ON.pick = {cats:m.cats||[]}; ON.err=null; render(); return; }
   if(m.type==='oops'){ ON.note = m.message; render(); setTimeout(()=>{ if(ON.note===m.message){ ON.note=null; render(); } }, 5000); return; }
   if(m.type==='error'){ ON.convert = null; }
@@ -3438,7 +3543,7 @@ function onMsg(m){
     if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
     if(!m.lobby.started){
-      if(S){ document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); ui.hideWin = false; ui.modal = null; ui.deal = null; ui.emoteSeen = undefined; ui.lastSwipe = null; $('#root').innerHTML=''; window.scrollTo(0,0); }
+      if(S){ chatReset(); document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); ui.hideWin = false; ui.modal = null; ui.deal = null; ui.emoteSeen = undefined; ui.lastSwipe = null; $('#root').innerHTML=''; window.scrollTo(0,0); }
       ON.status='lobby'; S=null; render(); return;
     }
   }
@@ -3501,6 +3606,7 @@ function pushState(){
   ON.ver++;
 }
 function leaveOnline(){
+  chatReset();
   const ws = ON.ws; ON.ws=null; ON.code=null; ON.status='idle'; ON.lobby=null; ON.seat=-1; ON.mine=[]; ON.convert=null; ON.pick=null;
   document.body.classList.remove('my-turn'); stopFlash();
   if(ws){ try{ ws.onclose=null; ws.close(); }catch(e){} }
@@ -3538,12 +3644,12 @@ function render(){
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav"><div class="wi-left">${meLink()}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
-    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p></aside>
+    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p></aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}Code <b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host tools</button>` : ''}${S.online ? bellBtn() : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
-  $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
+  $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${lobbyAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('leave','Leave game','Leave',"G.open('newgame')"):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')"):'')+navAct('newgame','New game','New',"G.open('newgame')")}</div>`;
   renderBoard(); renderPanel(); renderRollbar(); renderCats(); renderOverlay(); turnPromptSync(); setupPromptSync(); playLogSounds();
   placeLogo(); placeCats();
   watchAwards();
@@ -3615,7 +3721,7 @@ function renderCats(){
     const r = b.getBoundingClientRect(), dx = o.left-r.left, dy = o.top-r.top;
     if(Math.abs(dx)+Math.abs(dy) > 2) b.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}], {duration:650, easing:'cubic-bezier(.3,1.25,.5,1)'});
   });
-  const tools = $('#cat-tools'); if(tools) tools.innerHTML = `${ui.musicMenu ? musMenuHTML() : ''}<div class="tool-row"><button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-haspopup="true" aria-expanded="${!!ui.musicMenu}" aria-label="${MUS.on?'Music: '+MUS_TR[MUS.track].name+'. Choose music':'Music is off. Choose music'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button></div>`;
+  const tools = $('#cat-tools'); if(tools) tools.innerHTML = `${ui.musicMenu ? musMenuHTML() : ''}<div class="tool-row"><button class="cat-mute" onclick="G.mute()" aria-pressed="${SND.muted}" aria-label="${SND.muted?'Sounds are off. Turn sounds on':'Sounds are on. Turn sounds off'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico}</svg></button><button class="cat-mute cat-music${MUS.on?'':' off'}" onclick="G.music()" aria-haspopup="true" aria-expanded="${!!ui.musicMenu}" aria-label="${MUS.on?'Music: '+MUS_TR[MUS.track].name+'. Choose music':'Music is off. Choose music'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="16.5" cy="16" r="2.8" fill="currentColor"/>${MUS.on?'':'<path d="M3 21L21 3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'}</svg></button>${chatBtnHTML()}</div>`;
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
 function placeCats(){
@@ -3737,8 +3843,9 @@ const NAV_ICON = {
 const navIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[k]}</svg>`;
 /* the full label on wider screens, a one-word label on phones; the full one is always the accessible name */
 function navAct(icon, label, short, on){ return `<button class="wi-act" onclick="${on}" aria-label="${label}">${navIcon(icon)}<span class="long">${label}</span><span class="short" aria-hidden="true">${short}</span></button>`; }
-function homeAct(){ return `<a class="wi-act" href="https://jessyux.com/" aria-label="Home">${navIcon('home')}<span class="long">Home</span><span class="short" aria-hidden="true">Home</span></a>`; }
-function meLink(){ return `<a class="wi-me" href="https://jessyux.com/?from=game#about" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
+/* in a game this is the way back to the lobby: the in-person setup room, or the online cat corner. The lobby screens already are the lobby, so they don't show it */
+function lobbyAct(){ return navAct('home', 'Lobby', 'Lobby', "G.open('newgame')"); }
+function meLink(){ return `<a class="wi-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
 function renderBoard(){
   const svg = $('#board');
   if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
@@ -4131,7 +4238,7 @@ document.addEventListener('click', e=>{
   if(h){ const k = h.dataset.hand; if(!e.target.closest('.dock-tab') && !(ui.handUp||{})[k]){ e.preventDefault(); e.stopPropagation(); setHand(k, true); } return; }
   if(handsUp() && !(e.target.closest && e.target.closest('.overlay'))) setHand(null, false);
 }, true);
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && handsUp() && !ui.modal) setHand(null, false); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && CHAT.open){ G.chat(); return; } if(e.key==='Escape' && handsUp() && !ui.modal) setHand(null, false); });
 document.addEventListener('pointerdown', e=>{
   const w = e.target.closest && e.target.closest('.build-wrap'); if(!w || !w.querySelector('.need') || e.pointerType==='mouse') return;
   document.querySelectorAll('.build-wrap.show-need').forEach(x=>x.classList.remove('show-need'));
@@ -4428,8 +4535,8 @@ function modalHTML(){
     <p class="muted small">The game waits until every cat has a phone. You can move it back to one screen any time.</p>
     <div class="actions"><button class="btn" onclick="G.close()">Not now</button><button class="btn primary" ${ON.status==='creating'?'disabled':''} onclick="G.goOnline()">${ON.status==='creating'?'Making a code…':'Make a code'}</button></div></div>`;
   if(m.kind==='newgame') return S && S.online
-    ? `<div class="modal"><h2>Leave this game?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`
-    : `<div class="modal"><h2>${S && S.phase==='over' ? 'Back to the start?' : 'Leave this game?'}</h2><p>${S && S.phase==='over' ? 'This finished game stays in your saved games until you delete it.' : 'It stays saved on this device. Pick it from Saved games to carry on, or start another one.'}</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toStart()">Leave game</button></div></div>`;
+    ? `<div class="modal"><h2>Back to the lobby?</h2><p>The game is saved. Come back any time with code <b>${esc(S.code)}</b> and the same name.</p><div class="actions"><button class="btn" onclick="G.close()">Stay</button><button class="btn hot" onclick="G.toLobby()">Go to the lobby</button></div></div>`
+    : `<div class="modal"><h2>Back to the lobby?</h2><p>${S && S.phase==='over' ? 'This finished game stays in your saved games until you delete it.' : 'It stays saved on this device. Pick it from Saved games to carry on, or start another one.'}</p><div class="actions"><button class="btn" onclick="G.close()">Keep playing</button><button class="btn hot" onclick="G.toLobby()">Go to the lobby</button></div></div>`;
   if(m.kind==='bought') return `<div class="modal handoff card-view"><div class="flip"><div class="flip-in" id="flip-in">${treatCard(m.t,'lg')}${cardBack('lg')}</div></div><h2>You got ${TREATS[m.t].name}</h2><p class="empty">${m.t==='trophy'?'It counts toward your score right away, but stays secret.':'You can play it from your next turn.'}</p><button class="stage-x" onclick="G.close()" aria-label="Close">×</button></div>`;
   if(m.kind==='treat'){
     const c = S.players[me()] && S.players[me()].cards[m.i]; if(!c || !TREATS[c.t]) return '';
@@ -4691,7 +4798,7 @@ function startScreen(){
       </section>`;
   return `<main class="start${where==='here'?' start-here':''}">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -4723,7 +4830,7 @@ function startScreen(){
       ${where==='online' ? online : ''}
       ${where==='here' ? '' : lbCard}
     </div>
-    <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
+    <p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p>
     ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on whisker.jessyux.com.</p>' : ''}
   </main>`;
 }
@@ -4818,7 +4925,7 @@ function pickScreen(){
   const tag = c => c.open ? '<small>Needs a phone</small>' : c.online ? '<small>Playing on another device</small>' : '<small>Continue here</small>';
   return `<main class="start pick-screen">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -4844,7 +4951,7 @@ function lobbyScreen(){
       <b>${esc(s.name)}</b>${s.pid===L.host ? '' : s.pid===ON.me ? `<button class="ready-btn${s.ready?' on':''}" aria-pressed="${!!s.ready}" onclick="G.ready()">${s.ready?'✓ Ready · tap to undo':'Ready'}</button>` : s.ready ? '<span class="ready-chip">✓ Ready</span>' : ''}<span class="sr">${[s.pid===L.host?'Host':'', s.pid===ON.me?'You':'', away(s)?'Napping, back soon':'', s.ready?'Ready':'Not ready'].filter(Boolean).join(', ')}</span></li>`; }).join('');
   const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" data-tip="Click to copy invite link" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
-    <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
+    <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
     <div class="corner-frame"><section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-bar">
         <h2>The cat corner</h2><span class="cat-count">${n} ${n===1?'cat':'cats'}${n>MAX_CLASSIC?' · Big Island':''}</span>
@@ -4862,7 +4969,7 @@ function lobbyScreen(){
       ${isHost ? `<button class="btn primary big start-cta" onclick="${n>=2?'G.hostStart()':"G.open('need2')"}">${n>=2?`Start with ${n} cats`:'Start game'}</button>`
         : `<button class="btn primary big start-cta" disabled>Host starts soon…</button>`}
     </div></div>
-    <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
+    <p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p>
   </main>`;
 }
 
@@ -4897,6 +5004,35 @@ const G = {
     }
     const seats = S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint?JSON.parse(JSON.stringify(p.tint)):undefined}));
     G.toStart(); ui.seats = seats; ui.where = 'here'; ui.startErr = null; ui.badSeat = null; render();
+  },
+  chat(){
+    if(!chatOn()) return;
+    CHAT.open = !CHAT.open;
+    const box = chatBox(); box.hidden = !CHAT.open;
+    const peek = document.getElementById('chat-peek'); if(peek) peek.classList.remove('show');
+    if(CHAT.open){ CHAT.unread = 0; stopFlash(); chatDraw(); const l = document.getElementById('chat-list'); if(l) l.scrollTop = l.scrollHeight; const i = document.getElementById('chat-in'); if(i && matchMedia('(hover:hover)').matches) i.focus(); }
+    chatBadge();
+  },
+  chatSend(ev){
+    if(ev) ev.preventDefault();
+    const i = document.getElementById('chat-in'); if(!i) return false;
+    const text = i.value.replace(/\s+/g,' ').trim(); if(!text) return false;
+    if(ON.ws && ON.ws.readyState===1){ ON.ws.send(JSON.stringify({type:'chat', text})); ON.ws.send(JSON.stringify({type:'typing', on:false})); CHAT.sentAt = 0; clearTimeout(CHAT.offT); i.value = ''; }
+    else toast('Not connected', 'Hang on while it reconnects, then send again.');
+    return false;
+  },
+  /* tell the others while you type; it stops by itself a few seconds after the last key */
+  chatType(){
+    if(!(ON.ws && ON.ws.readyState===1)) return;
+    const now = Date.now();
+    if(now - CHAT.sentAt > 2500){ CHAT.sentAt = now; ON.ws.send(JSON.stringify({type:'typing', on:true})); }
+    clearTimeout(CHAT.offT); CHAT.offT = setTimeout(()=>{ CHAT.sentAt = 0; if(ON.ws && ON.ws.readyState===1) ON.ws.send(JSON.stringify({type:'typing', on:false})); }, 3000);
+  },
+  /* the game's own lobby: online goes to the cat corner (make or join a game), in person to the setup room with the same cats */
+  toLobby(){
+    const online = !!(S && S.online);
+    const seats = S && !online ? S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint?JSON.parse(JSON.stringify(p.tint)):undefined})) : null;
+    G.toStart(); if(seats) ui.seats = seats; ui.where = online ? 'online' : 'here'; ui.startErr = null; ui.badSeat = null; render();
   },
   toStart(){
     fetchBoard();
