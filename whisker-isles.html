@@ -196,7 +196,12 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-copy{height:40px;flex:0 1 auto;min-width:0;border-radius:999px;border:2.5px solid var(--plum);background:var(--butter-2,#FFF1C9);color:var(--plum);box-shadow:2px 2px 0 var(--plum);align-items:center;gap:4px;padding:0 9px 0 11px;font:inherit;font-weight:900;font-size:.74rem;letter-spacing:-.01em;cursor:pointer;box-sizing:border-box}
 .wi-copy span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wi-copy svg{width:15px;height:15px;flex:none}
-.wi-copy.copied{background:#E3F6DD}
+/* copy buttons: the copy icon turns into a tick for a moment */
+.cp{display:inline-grid;flex:none;vertical-align:-.2em}
+.cp svg{grid-area:1/1;width:15px;height:15px}
+.cp svg+svg,.copied .cp svg:first-child{visibility:hidden}
+.copied .cp svg+svg{visibility:visible}
+.code-chip .cp{margin-left:.4em}
 .wi-copy:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
 /* phones: one row. Avatar and copy-code on the left, then Home, Rules and Settings as icons; everything else is in Settings */
 @media (max-width:768px){
@@ -1217,7 +1222,6 @@ body{overflow-x:clip}
 .cozy-bar .bell{margin:0}
 .code-pill{display:grid;justify-items:center;gap:2px;margin:0 auto 6px;padding:10px 22px;border:3px solid var(--plum);border-radius:22px;background:#fff;box-shadow:3px 3px 0 var(--plum);cursor:pointer;font:inherit;color:var(--plum)}
 .code-pill:hover,.code-pill:focus-visible{background:#FFF7DA}
-.code-pill.copied{background:#E3F7D9}
 .code-label{font-size:.75rem;font-weight:800;color:var(--plum-2)}
 .code-txt{font-family:var(--display);font-size:clamp(1.15rem,5.4vw,2.2rem);line-height:1.1;white-space:nowrap}
 .code-row{display:flex;align-items:center;gap:10px}
@@ -1241,6 +1245,8 @@ body{overflow-x:clip}
 .nook-invite::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:128px;box-sizing:border-box;padding:5px 8px;border-radius:12px;background:var(--plum);color:#fff;font-size:.74rem;font-weight:800;line-height:1.25;text-align:center;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3}
 .nook-invite:hover::after,.nook-invite:focus-visible::after{opacity:1;transform:translate(-50%,0)}
 .nook-invite.copied::after{opacity:0}
+.nook.empty .nook-invite.copied .ghost{font-size:0;place-content:center}
+.nook.empty .nook-invite.copied .ghost::before{content:'✓';font-size:1.7rem}
 .nook.empty .ghost{display:grid;place-items:center;font-family:var(--display);font-size:2rem;line-height:1;color:var(--plum-2)}
 .nook-cat{position:relative;z-index:1;margin-bottom:-22px}
 .nook .portrait{width:72px;height:72px}
@@ -3500,7 +3506,7 @@ function a2hsHTML(){
     </ol>
     <p class="muted small">On Android, tap the menu <b>⋮</b> in Chrome, then <b>Install app</b> or <b>Add to Home screen</b>.</p>
     <p class="muted small">${IS_CHROME_IOS ? '' : 'In Safari instead? Tap Share at the bottom of the screen. '}After that, every Whisker Isles game on this phone can tell you when it's your turn, even with the browser closed.</p>
-    ${code?`<p class="center"><button class="code-chip" onclick="G.copy('${esc(code)}', this, 'Game code copied')">Copy game code <b>${esc(code)}</b></button></p>`:''}
+    ${code?`<p class="center"><button class="code-chip" onclick="G.copy('${esc(code)}', this, 'Game code copied')">Copy game code <b>${esc(code)}</b>${copyIcon()}</button></p>`:''}
   </div>`;
 }
 /* the first time an iPhone player in Safari reaches an online game, offer the guide once */
@@ -4035,11 +4041,11 @@ function render(){
   }
   chatDock();
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
-    <header class="topbar wi-nav"><div class="wi-left">${meLink()}${S.online?`<button class="wi-copy m-only" onclick="G.copy('${esc(S.code)}', this, 'Code ${esc(S.code)} copied')" aria-label="Copy game code ${esc(S.code)}" title="Copy game code"><span>${esc(S.code)}</span>${navIcon('copy')}</button>`:''}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
+    <header class="topbar wi-nav"><div class="wi-left">${meLink()}${S.online?`<button class="wi-copy m-only" onclick="G.copy('${esc(S.code)}', this, 'Code ${esc(S.code)} copied')" aria-label="Copy game code ${esc(S.code)}" title="Copy game code"><span>${esc(S.code)}</span>${copyIcon()}</button>`:''}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
     <div class="board-wrap"><div class="board-scroll" id="board-scroll"><svg id="board" role="application" aria-label="Game board"></svg></div><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div>${creditHTML()}</aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
-  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}<span class="cc-lbl">Code </span><b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host<span class="cc-lbl"> tools</span></button>` : ''}${S.online ? bellBtn() : ''}`;
+  $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}<span class="cc-lbl">Code </span><b>${esc(S.code)}</b>${copyIcon()}</button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host<span class="cc-lbl"> tools</span></button>` : ''}${S.online ? bellBtn() : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
   $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${lobbyAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('quit','Quit game','Quit',"G.open('leave')",'d-only'):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')",'d-only'):'')+navAct('newgame','New game','New',"G.open('newgame')",'d-only')}${navAct('gear','Settings','Settings',"G.open('settings')",'m-only')}</div>`;
@@ -4227,6 +4233,7 @@ function boardMode(){
 
 /* ---------- the slim bar on every screen: Jessy on the left (opens About me), the game's buttons on the right ---------- */
 const NAV_ICON = {
+  tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M10 20v-5.5h4V20"/>',
   rules:'<path d="M4 5.5C6.5 4.3 9.3 4.3 12 6c2.7-1.7 5.5-1.7 8-.5V19c-2.5-1.2-5.3-1.2-8 .5-2.7-1.7-5.5-1.7-8-.5Z"/><path d="M12 6v13.5"/>',
   newgame:'<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
@@ -4239,6 +4246,7 @@ const NAV_ICON = {
   board:'<path d="M8 4h8v4a4 4 0 0 1-8 0Z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 12v4M8.5 20h7l-1-4h-5Z"/>'
 };
 const navIcon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${NAV_ICON[k]}</svg>`;
+const copyIcon = () => `<span class="cp" aria-hidden="true">${navIcon('copy')}${navIcon('tick')}</span>`;
 /* the full label on wider screens, a one-word label on phones; the full one is always the accessible name */
 function navAct(icon, label, short, on, cls){ return `<button class="wi-act${cls?' '+cls:''}" onclick="${on}" aria-label="${label}">${navIcon(icon)}<span class="long">${label}</span><span class="short" aria-hidden="true">${short}</span></button>`; }
 /* in a game this is the way back to the lobby: the in-person setup room, or the online cat corner. The lobby screens already are the lobby, so they don't show it */
@@ -4857,7 +4865,7 @@ function waitingHTML(){
   const L = ON.lobby, open = openCats(), isHost = L.host===ON.me, link = inviteLink(L.code);
   return `<div class="modal handoff waiting"><h2>Waiting for ${open.length>1 ? open.length+' cats' : esc(L.seats[open[0]].name)}</h2>
     <p>Every cat needs its own phone. Open the code on another device and pick a cat.</p>
-    <p><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button></p>
+    <p><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b>${copyIcon()}</button></p>
     <ul class="wait-cats">${L.seats.map((x,i)=>`<li class="${x.open?'open':'here'}">${portrait(x)}<b>${esc(x.name)}</b><small>${x.open?'Needs a phone':ON.mine.includes(i)?'You':'Here'}</small></li>`).join('')}</ul>
     <div class="actions center"><button class="btn primary" onclick="G.hideWait(true)">Wait in the game</button>${isHost ? `<button class="btn" onclick="G.goInPerson()">Back to one screen</button>` : `<button class="btn" onclick="G.toStart()">Leave game</button>`}</div></div>`;
 }
@@ -4867,7 +4875,7 @@ function waitBanner(){
   const L = ON.lobby, link = inviteLink(L.code), names = open.map(i=>esc(L.seats[i].name)).join(', ');
   return `<section class="card wait-banner" role="status"><h3>Waiting for ${open.length} ${open.length>1?'cats':'cat'}</h3>
     <p class="small">The game is paused until every cat has a phone. Still to join: <b>${names}</b>.</p>
-    <p class="wb-acts"><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b></button><button class="btn small" onclick="G.hideWait(false)">Show invite</button></p></section>`;
+    <p class="wb-acts"><button class="code-chip" onclick="G.copy('${esc(link)}', this, 'Invite link copied')">Code <b>${esc(L.code)}</b>${copyIcon()}</button><button class="btn small" onclick="G.hideWait(false)">Show invite</button></p></section>`;
 }
 function handoffHTML(){
   const pl = P(), rollNow = S.phase==='play' && !S.rolled;
@@ -5662,8 +5670,8 @@ const G = {
     S = null;   // wait for the server to confirm, so every screen starts together
   },
   copy(text, btn, done){
-    /* the same yellow alert as the rest of the game; the button keeps its own look and just flashes green */
-    const said = () => { toast((done || 'Copied').replace(/ to clipboard$/,''), ''); btn.classList.add('copied'); setTimeout(()=>btn.classList.remove('copied'), 1400);
+    /* no pop-up: the copy icon shows a tick where it was tapped, and screen readers hear it from #live */
+    const said = () => { const l = $('#live'); if(l) l.textContent = (done || 'Copied').replace(/ to clipboard$/,''); btn.classList.add('copied'); clearTimeout(btn.copiedT); btn.copiedT = setTimeout(()=>btn.classList.remove('copied'), 1500);
       const nk = btn.closest('.nook'), lb = nk && nk.querySelector('b'); if(lb){ lb.textContent = 'Link copied'; ui.invitePending = true; setTimeout(()=>{ if(lb.isConnected) lb.textContent = 'Pending'; }, 1800); } };
     const fallback = () => { const t = document.createElement('textarea'); t.value = text; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); said(); }catch(e){} t.remove(); };
     if(navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(said, fallback); else fallback();
