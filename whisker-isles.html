@@ -3018,10 +3018,10 @@ function musStart(){
     const c = sfxCtx(); if(!c) return;
     musBus(c); const tr = MUS_TR[MUS.track]; MUS.lp.frequency.value = tr.lp; MUS.dl.delayTime.value = 60/tr.bpm*.75;
     MUS.bus.gain.cancelScheduledValues(c.currentTime); MUS.bus.gain.setValueAtTime(MUS.bus.gain.value, c.currentTime); MUS.bus.gain.linearRampToValueAtTime(MUS.vol*.92, c.currentTime+2.5);
-    // vinyl crackle: sparse little clicks and a bed of hiss, very quiet
+    // vinyl crackle, softened: almost no hiss, just a rare faint pop
     const b = c.createBuffer(1, c.sampleRate*4, c.sampleRate), d = b.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*.015 + (Math.random()<.0006 ? (Math.random()*2-1)*.9 : 0);
-    const cr = c.createBufferSource(), cf = c.createBiquadFilter(), cg = c.createGain(); cr.buffer = b; cr.loop = true; cf.type = 'bandpass'; cf.frequency.value = 3200; cf.Q.value = .5; cg.gain.value = tr.crackle;
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*.002 + (Math.random()<.00018 ? (Math.random()*2-1)*.4 : 0);
+    const cr = c.createBufferSource(), cf = c.createBiquadFilter(), cg = c.createGain(); cr.buffer = b; cr.loop = true; cf.type = 'bandpass'; cf.frequency.value = 3200; cf.Q.value = .5; cg.gain.value = tr.crackle*.6;
     cr.connect(cf); cf.connect(cg); cg.connect(MUS.bus); cr.start(); MUS.crackle = cr;
     MUS.t0 = c.currentTime + .25; MUS.step = 0; MUS.timer = setInterval(musTick, 120);
   }catch(e){}
