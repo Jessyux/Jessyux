@@ -2116,9 +2116,18 @@ function icTint(art, color){
 }
 /* the same tinted art for the board's SVG; the board is drawn again once a colour is ready */
 function icHref(art, color){
-  const key = art+'|'+color, done = ICONS[key] && ICONS[key].url;
-  if(!done) icTint(art, color).then(()=>{ if(S && document.getElementById('board')) renderBoard(); }).catch(()=>{});
-  return done || artSrc(art);
+  const key = art+'|'+color, job = ICONS[key];
+  if(job && job.url) return job.url;
+  /* ask for each colour once, and re-draw once when it's ready. (Asking on every draw added another re-draw each time,
+     so a late game with beds, towers and paths in three colours re-drew the board thousands of times and froze the phone.) */
+  if(!job) icTint(art, color).then(boardSoon).catch(()=>{});
+  return artSrc(art);
+}
+/* draw the board again on the next frame; several pictures finishing together share one re-draw */
+let boardSoonT = 0;
+function boardSoon(){
+  if(boardSoonT) return;
+  boardSoonT = requestAnimationFrame(()=>{ boardSoonT = 0; if(S && document.getElementById('board')) renderBoard(); });
 }
 function icImg(art, color, px){
   if(!color) return `<img class="pic" src="${artSrc(art)}" style="width:${px}px;height:${px}px" alt="">`;
