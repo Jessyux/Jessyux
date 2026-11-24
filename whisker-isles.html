@@ -911,9 +911,12 @@ button.tm-card:hover{translate:0 -2px}
 .tu-roll small{font-weight:800;font-size:.78rem}
 .tu-roll b{font-family:var(--display);font-weight:400;font-size:2.4rem;line-height:1}
 @keyframes tuPop{from{transform:translateX(-50%) scale(.4);opacity:0}}
-#rollbar.nudge .dice-row{animation:nudgeDice .5s ease-in-out 3}
-@keyframes nudgeDice{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(5deg) translateY(-3px)}}
-@media (prefers-reduced-motion:reduce){#rollbar.nudge .dice-row{animation:none}}
+/* each die jiggles on its own: its own tilt, hop, speed and start, so the two never move in step */
+#rollbar.nudge .die:nth-child(1){animation:nudgeDieA .46s ease-in-out .02s 3}
+#rollbar.nudge .die:nth-child(2){animation:nudgeDieB .58s ease-in-out .17s 3}
+@keyframes nudgeDieA{0%,100%{transform:rotate(-7deg) translate(0,0)}35%{transform:rotate(6deg) translate(-1px,-5px)}70%{transform:rotate(-3deg) translate(1px,-1px)}}
+@keyframes nudgeDieB{0%,100%{transform:rotate(5deg) translate(0,0)}30%{transform:rotate(-8deg) translate(1px,-2px)}65%{transform:rotate(7deg) translate(-1px,-6px)}}
+@media (prefers-reduced-motion:reduce){#rollbar.nudge .die{animation:none}}
 #wi-toast{position:fixed;left:50%;top:14px;z-index:200;width:max-content;transform:translate(-50%,-140%);display:flex;flex-direction:column;gap:2px;max-width:min(92vw,420px);padding:10px 18px;border:3px solid var(--plum);border-radius:18px;background:var(--butter);color:var(--plum);box-shadow:3px 3px 0 var(--plum);text-align:center;pointer-events:none;opacity:0;transition:transform .35s cubic-bezier(.3,1.3,.5,1),opacity .2s}
 #wi-toast.show{transform:translate(-50%,0);opacity:1}
 #wi-toast b{font-family:var(--display);font-weight:400;font-size:1.05rem}
@@ -1459,6 +1462,26 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 @media (max-width:480px){.corner-go{gap:10px;padding:0 14px}.corner-go .btn{font-size:.95rem;min-height:52px}}
 .crew-online{margin-top:0}
 .corner-go.solo{grid-template-columns:minmax(0,320px);justify-content:center}
+
+/* the table and the laptop say what they do: a sticker label that is always showing, no hover needed */
+.room-prop::after{display:none!important}
+.room-prop .prop-tag{position:absolute;left:50%;top:-14px;transform:translateX(-50%);white-space:nowrap;font-family:var(--display);font-weight:400;font-size:.92rem;line-height:1;color:var(--plum);
+  background:var(--butter);border:2.5px solid var(--plum);border-radius:999px;padding:5px 12px 6px;
+  box-shadow:0 0 0 3px #fff,2px 4px 0 3px rgba(58,35,65,.28);transition:transform .18s,background .18s}
+.room-prop:hover .prop-tag,.room-prop:focus-visible .prop-tag{background:#fff;transform:translateX(-50%) rotate(-2deg) scale(1.05)}
+.room-prop.locked .prop-tag{background:#EFE6F3;color:var(--plum-2)}
+@media (max-width:480px){.room-prop .prop-tag{font-size:.82rem;padding:4px 10px 5px}}
+
+/* the table and laptop are stickers like the label: a solid white edge and a plum drop shadow, not a fading glow */
+.room-prop img,.room-prop:hover img,.room-prop:focus-visible img,.room-prop.locked img{animation:none;opacity:1;
+  filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(2px 4px 0 rgba(58,35,65,.35))}
+.room-prop.locked img{filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(2px 4px 0 rgba(58,35,65,.3)) saturate(.8)}
+
+/* one sticker: the picture and its label share a single white edge and one shadow, so they read as one piece */
+.room-prop,.room-prop:hover,.room-prop:focus-visible{filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(2px 4px 0 rgba(58,35,65,.32))}
+.room-prop.locked{filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(2px 4px 0 rgba(58,35,65,.3)) saturate(.85)}
+.room-prop img,.room-prop:hover img,.room-prop:focus-visible img,.room-prop.locked img{filter:none}
+.room-prop .prop-tag{top:-8px;box-shadow:none}
 </style>
 </head><body>
 <div id="boot" role="status" aria-live="polite" aria-label="Loading Whisker Isles">
@@ -4642,7 +4665,7 @@ function startScreen(){
         ${invited ? `<div class="code-pill code-entry"><span class="code-label">Joining game</span><span class="code-row"><span class="code-txt">${esc(inviteCode)}</span></span></div>`
           : `<div class="code-pill code-entry"><label class="code-label" for="on-code">Have a code? Type it here</label><input id="on-code" class="code-in" value="${esc(ui.form.code)}" placeholder="sleepy-tuna-42" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();G.join()}"></div>`}
         ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
-        <button class="room-prop" onclick="G.where('here')" data-tip="Play in person instead" aria-label="Play in person instead"><img src="${artSrc('table-game')}" alt=""></button>
+        <button class="room-prop" onclick="G.where('here')" aria-label="Play in person instead"><img src="${artSrc('table-game')}" alt=""><span class="prop-tag" aria-hidden="true">Play in person</span></button>
         <ul class="nooks ring" aria-label="Your cat"><li class="nook seat-nook me" data-pr="0" style="--pillow:#FFE9A8">
           <span class="nook-cat">${portrait({name:ui.form.name, breed:ui.form.breed, color:ui.form.breed})}</span>
           <span class="pillow" aria-hidden="true"></span>
@@ -4678,7 +4701,7 @@ function startScreen(){
         <div class="cozy-bar">
           <div class="bar-title"><h2 id="crew-h">Who's playing?</h2><p>Pass one screen around. Type a name, tap a cat to change its look.</p></div><span class="cat-count">${n} cats${n>MAX_CLASSIC?' · Big Island':''}</span>
         </div>
-        <button class="room-prop" onclick="G.where('online')" data-tip="Play online instead" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""></button>
+        <button class="room-prop" onclick="G.where('online')" aria-label="Play online instead"><img src="${artSrc('desk-laptop')}" alt=""><span class="prop-tag" aria-hidden="true">Play online</span></button>
         ${ui.startErr?`<p class="hint alert" role="alert">${esc(ui.startErr)}</p>`:''}
         <ul class="nooks ring" aria-label="Cats playing">${seats.map((s,i)=>{ return `<li class="nook seat-nook" data-pr="${seats.length-1-i}" style="--pillow:${['#FFD3E2','#CDEBFF','#FFE9A8','#D9F3D0','#E6DAFF','#FFD9BF'][i%6]}">
           <span class="nook-cat"><button class="nook-edit" onclick="G.open('cat',${i})" aria-label="Customise ${esc(s.name)}">${portrait(s)}<span class="pencil" aria-hidden="true">${PENCIL}</span><span class="tip" aria-hidden="true">Customise</span></button>
@@ -4831,7 +4854,7 @@ function lobbyScreen(){
         <span class="code-label">Game code</span><span class="code-row"><span class="code-txt">${esc(L.code)}</span><span class="copy-ic" aria-hidden="true"><svg class="ic-copy" viewBox="0 0 24 24" width="26" height="26"><rect x="8" y="8" width="12" height="13" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="2.2"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg><svg class="ic-done" viewBox="0 0 24 24" width="26" height="26"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="code-hint" aria-live="polite"></span>
       </button>
       ${ON.note ? `<p class="hint alert" role="alert">${esc(ON.note)}</p>` : ''}
-      <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" data-tip="${isHost?'Play in person instead':'Only the host can change the game type'}" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""></button>
+      <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""><span class="prop-tag" aria-hidden="true">${isHost?'Play in person':'Host picks'}</span></button>
       <ul class="nooks ring" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
     <div class="corner-go${isHost && n<2 ? ' solo' : ''}">
