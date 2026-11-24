@@ -1692,7 +1692,7 @@ function bootLift(){
   setTimeout(()=>{
     setTimeout(loadLate, 400); const b = document.getElementById('boot'); if(!b) return;
     /* whatever goes wrong drawing the first screen, the loading screen must still lift (it used to stay up at 100%) */
-    try{ render(); }catch(e){ console.error('first render failed', e); try{ window.__bootErr = String(e && e.message || e); const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:16px;padding:12px;font:700 14px system-ui'; d.textContent = 'Something went wrong starting up: ' + window.__bootErr + '. Pull down to reload.'; document.body.appendChild(d); }catch(_){} }
+    try{ render(); popAfter(); }catch(e){ console.error('first render failed', e); try{ window.__bootErr = String(e && e.message || e); const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:16px;padding:12px;font:700 14px system-ui'; d.textContent = 'Something went wrong starting up: ' + window.__bootErr + '. Pull down to reload.'; document.body.appendChild(d); }catch(_){} }
     b.classList.add('out'); setTimeout(()=>{ b.remove(); clearInterval(LOADING.flip); }, 600);
   }, wait);
 }
@@ -3543,7 +3543,7 @@ function turnPromptSync(){
     <div class="actions center"><button class="btn primary big" onclick="G.turnRoll()">Roll dice</button></div>
     <button class="btn small tp-later" onclick="G.turnAway()">Not yet</button></div>`;
   root.addEventListener('pointerdown', e=>{ if(e.target===root) G.turnAway(); });
-  document.body.appendChild(root); placePrompt(root);
+  document.body.appendChild(root); placePrompt(root); popAfter();
   const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
   /* the same plush dice that roll across the island, resting and rocking gently */
   if(!reduceMotion) root.querySelectorAll('.tp-die .sprite-spin').forEach((c,k)=>c.animate([{transform:'rotate(-7deg) translateY(2px)'},{transform:'rotate(8deg) translateY(-4px)'},{transform:'rotate(-7deg) translateY(2px)'}],{duration:2200,iterations:Infinity,easing:'ease-in-out',delay:k*-700}));
@@ -3587,9 +3587,15 @@ function placePrompt(root, sel){
 }
 /* coming back to the app: a pop-up's slide-in can be left stuck at "invisible" by the phone while the app was asleep. Finish any
    such entrance at once so the card shows, and draw the turn pop-up if it was waiting for you */
+function popFinish(){
+  document.querySelectorAll('.tp-card, .overlay .modal, #setup-prompt .modal').forEach(c=>{ try{ c.getAnimations().forEach(a=>{ const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : null; if(t && t.iterations !== Infinity) a.finish(); }); }catch(e){} });
+}
+/* a pop-up made while the loading screen was lifting (or the phone was busy) can be left at "invisible" with only its dim backdrop showing:
+   once its entrance should be long over, finish it so the card is there and can be tapped */
+function popAfter(){ [800,1800].forEach(t=>setTimeout(()=>{ if(!document.hidden) popFinish(); }, t)); }
 function popRescue(){
   if(document.hidden) return;
-  document.querySelectorAll('.tp-card, .overlay .modal, #setup-prompt .modal').forEach(c=>{ try{ c.getAnimations().forEach(a=>{ const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : null; if(t && t.iterations !== Infinity) a.finish(); }); }catch(e){} });
+  popFinish();
   try{ if(S){ turnPromptSync(); setupPromptSync(); } }catch(e){}
 }
 function popSettle(){ [0,250,900,2200].forEach(t=>setTimeout(popRescue, t)); }
@@ -3636,7 +3642,7 @@ function setupPromptSync(){
     <div class="actions center"><button class="btn primary big" onclick="G.setupRoll()">Roll dice</button></div>
     <button class="btn small tp-later" onclick="G.setupAway()">Not yet</button></div>`;
   root.addEventListener('pointerdown', e=>{ if(e.target===root) G.setupAway(); });
-  document.body.appendChild(root); placePrompt(root);
+  document.body.appendChild(root); placePrompt(root); popAfter();
   const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
   if(!reduceMotion) root.querySelectorAll('.tp-die .sprite-spin').forEach((c,k)=>c.animate([{transform:'rotate(-7deg) translateY(2px)'},{transform:'rotate(8deg) translateY(-4px)'},{transform:'rotate(-7deg) translateY(2px)'}],{duration:2200,iterations:Infinity,easing:'ease-in-out',delay:k*-700}));
   if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
