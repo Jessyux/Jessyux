@@ -376,6 +376,8 @@ img.pic{object-fit:contain}
 .cost .ic img{width:100%;height:100%;object-fit:contain}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row .btn{flex:1}
+.deal-row{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.btn.deal-btn{width:100%;min-height:54px;padding:.6em 1em;font-size:1.1rem;font-weight:800;line-height:1.15;text-align:center}
 
 /* ---------- treats ---------- */
 .treats{display:flex;gap:8px;flex-wrap:wrap}
@@ -3755,9 +3757,9 @@ function renderPanel(){
       ${buildBtn('tower','Cat tower', `${cp.pieces.tower} left · 2 points, collects double`, towerOK, icImg('ic-tower', br.color, 42))}
       ${wrap('treat', treatOK, `<button class="build" ${treatOK?'':'disabled'} onclick="G.buyTreat()">${icImg('ic-card', null, 42)}<span class="nm">Treat card<small>${S.deck.length} in the jar</small></span>${costChips(COST.treat, play&&mt?cp.res:null)}</button>`)}
     </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn small" ${free?'':'disabled'} onclick="G.open('bank')">Barter with Captain</button>
-      <button class="btn small" ${free?'':'disabled'} onclick="G.open('trade')">Trade with a cat</button>
+    <div class="deal-row">
+      <button class="btn deal-btn" ${free?'':'disabled'} onclick="G.open('bank')">Barter with Captain</button>
+      <button class="btn deal-btn" ${free?'':'disabled'} onclick="G.open('trade')">Trade with a cat</button>
     </div>
     <div style="margin-top:12px"><button class="btn hot block" ${S.rolled&&!S.sub&&!S.offer?'':'disabled'} onclick="G.endTurn()">End turn</button></div>
     </section>`;
