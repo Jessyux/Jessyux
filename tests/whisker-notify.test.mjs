@@ -63,3 +63,14 @@ test('push subscriptions never appear in what is sent to players', () => {
   const out = JSON.stringify(publicLobby(room, ['a'], 'a'));
   assert.ok(!out.includes('secret-endpoint') && !out.includes('push'));
 });
+
+test('an emote tells the target cat once, and not the sender or the same emote again', () => {
+  const em = (id, to = 1, from = 0) => ({ id, from, to, kind: 'groom' });
+  const r = moveAlerts(st(), st({ emote: em(1) }), seats, 'x-y-11');
+  assert.equal(r.length, 1);
+  assert.equal(r[0].pid, 'b');
+  assert.match(r[0].payload.body, /Mochi groomed you/);
+  assert.deepEqual(moveAlerts(st({ emote: em(1) }), st({ emote: em(1) }), seats, 'x-y-11'), []);
+  assert.deepEqual(moveAlerts(st(), st({ emote: em(2, 0, 0) }), seats, 'x-y-11'), []);
+  assert.match(moveAlerts(st(), st({ emote: { id: 3, from: 0, to: 1, kind: 'hiss' } }), seats, 'x-y-11')[0].payload.body, /hissed at you/);
+});

@@ -28,6 +28,12 @@ export function moveAlerts(prev, next, seats, code) {
       out.push({ pid: seats[i].pid, payload: { title: 'Trade offer', body, url, tag: 'offer-' + code } });
     }
   }
+  /* a cat was tapped, hissed at or groomed: only the cat's own device hears about it, and once per emote */
+  const em = next.emote, was = prev && prev.emote;
+  if (em && (!was || was.id !== em.id) && em.to !== em.from && seats[em.to] && seats[em.to].pid && !(seats[em.from] && seats[em.from].pid === seats[em.to].pid)) {
+    const verb = { tap: 'tapped', hiss: 'hissed at', groom: 'groomed' }[em.kind];
+    if (verb) out.push({ pid: seats[em.to].pid, payload: { title: 'Whisker Isles', body: `${name(next.players[em.from])} ${verb} you`, url, tag: 'emote-' + code } });
+  }
   return out;
 }
 

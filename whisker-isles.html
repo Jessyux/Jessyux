@@ -2337,6 +2337,13 @@ function counterStart(o, res){
   return {give, get};
 }
 /* is this still the offer the cat tapped an answer on? */
+/* cat emotes: tap, hiss or groom a cat, just for fun. No effect on the game */
+const EMOTES = {tap:'tapped', hiss:'hissed at', groom:'groomed'};
+function emoteMake(from, to, kind, id){
+  return ['tap','hiss','groom'].includes(kind) ? {id, from, to, kind} : null;
+}
+function emoteReady(lastAt, now){ return now - lastAt >= 4000; }
+function emoteIsNew(seenId, emote){ return !!emote && emote.id !== seenId; }
 function sameOffer(a, b){
   return !!a && !!b && a.from===b.from && (a.round||0)===(b.round||0) && RES.every(r=>(a.give[r]||0)===(b.give[r]||0) && (a.get[r]||0)===(b.get[r]||0));
 }
