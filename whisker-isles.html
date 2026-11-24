@@ -810,6 +810,7 @@ div.build{cursor:default}
 @media (prefers-reduced-motion:reduce){.paw-hand .fc.swipe-new .pcard{animation:none}}
 .turn-prompt{position:fixed;inset:0;z-index:170;display:grid;place-items:center;padding:16px;background:rgba(58,35,65,.55)}
 .turn-prompt.on-board,.overlay.on-board{display:block}
+.turn-prompt.wait{visibility:hidden}
 .overlay.on-board > .modal{position:absolute;left:var(--cx);top:var(--cy);translate:-50% -50%;max-width:calc(100vw - 32px)}
 .turn-prompt.on-board .tp-card{position:absolute;left:var(--cx);top:var(--cy);translate:-50% -50%;max-width:calc(100vw - 32px)}
 .rb-setup .rb-acts{margin-top:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1665,6 +1666,27 @@ const BUILD = '24 Nov 7:20pm';
   addEventListener('error', e=>say(e.message || 'error'));
   addEventListener('unhandledrejection', e=>say((e.reason && e.reason.message) || e.reason || 'rejected'));
 })();
+/* when the app goes to the background the phone keeps a snapshot of it and shows that snapshot while the app wakes up again,
+   so a dimmed, half-finished game screen looked frozen. Cover the game with the loading screen as it leaves, so the snapshot is the loading cat. */
+const BOOT_HTML = (document.getElementById('boot') || {}).outerHTML || '';
+function awayCover(on){
+  try{
+    const old = document.getElementById('boot');
+    if(!on){ if(old && old.dataset.away) old.remove(); return; }
+    if(old || !BOOT_HTML) return;
+    const d = document.createElement('div'); d.innerHTML = BOOT_HTML;
+    const el = d.firstElementChild; el.dataset.away = '1'; el.classList.remove('out');
+    const f = el.querySelector('#boot-fill'), y = el.querySelector('#b-res-yarn'), t = el.querySelector('#boot-say');
+    if(f) f.style.width = '100%'; if(y) y.style.left = '100%'; if(t) t.textContent = 'Welcome back...';
+    el.querySelectorAll('[id]').forEach(n=>{ if(!['boot-fill','b-res-yarn','boot-say','b-cat-ginger'].includes(n.id)) n.removeAttribute('id'); });
+    el.removeAttribute('id'); el.id = 'boot'; el.onclick = ()=>awayCover(false);
+    document.body.appendChild(el);
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>awayCover(document.hidden));
+addEventListener('pagehide', ()=>awayCover(true));
+addEventListener('pageshow', ()=>awayCover(false));
+addEventListener('focus', ()=>awayCover(false));
 /* ---------- optional illustrations from ./assets ---------- */
 const ART = new Set();
 const ART_FILES = [
@@ -3532,6 +3554,19 @@ function swipeLand(sw, n){
 }
 /* ---------- online: when it's your turn a pop-up says so and offers Roll dice.
    Tapping away (or Not yet) sends the pop-up shrinking down onto the dice in your turn card. ---------- */
+/* a turn pop-up and its dim backdrop appear together, once the card's pictures are ready (never the dim backdrop alone while the phone is busy) */
+function promptShow(root){
+  root.classList.add('wait');
+  let shown = false;
+  const go = () => {
+    if(shown || !root.isConnected) return; shown = true; root.classList.remove('wait');
+    const card = root.querySelector('.tp-card');
+    if(card && !reduceMotion) card.animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
+  };
+  const imgs = [...root.querySelectorAll('img')].map(i=>i.decode ? i.decode().catch(()=>{}) : null).filter(Boolean);
+  Promise.race([Promise.all(imgs), new Promise(r=>setTimeout(r,900))]).then(()=>requestAnimationFrame(go));
+  setTimeout(go, 1400);
+}
 const turnKey = () => S.turn+':'+S.cur+':'+S.rollN;
 function turnPromptWanted(){
   return !!(S && S.online && S.phase==='play' && myTurn() && !S.rolled && !S.sub && !ui.rolling && !ui.modal && !S.offer && ui.turnSeen!==turnKey());
@@ -3552,7 +3587,7 @@ function turnPromptSync(){
   const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
   /* the same plush dice that roll across the island, resting and rocking gently */
   if(!reduceMotion) root.querySelectorAll('.tp-die .sprite-spin').forEach((c,k)=>c.animate([{transform:'rotate(-7deg) translateY(2px)'},{transform:'rotate(8deg) translateY(-4px)'},{transform:'rotate(-7deg) translateY(2px)'}],{duration:2200,iterations:Infinity,easing:'ease-in-out',delay:k*-700}));
-  if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
+  promptShow(root);
 }
 /* the pop-up shrinks and flies onto the dice in the turn card, then `after` runs */
 function card_started(el){ return el.style.background==='transparent'; }
@@ -3644,7 +3679,7 @@ function setupPromptSync(){
   document.body.appendChild(root); placePrompt(root);
   const btn = root.querySelector('.primary'); if(btn) btn.focus({preventScroll:true});
   if(!reduceMotion) root.querySelectorAll('.tp-die .sprite-spin').forEach((c,k)=>c.animate([{transform:'rotate(-7deg) translateY(2px)'},{transform:'rotate(8deg) translateY(-4px)'},{transform:'rotate(-7deg) translateY(2px)'}],{duration:2200,iterations:Infinity,easing:'ease-in-out',delay:k*-700}));
-  if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
+  promptShow(root);
 }
 /* a roll is done: the two paws at the bottom swap for thumbs up in the rolling cat's colour, hold for 2 seconds, then
    sink back. Only then does the dock take the next cat's colour and the next cat's pop-up appear. */
