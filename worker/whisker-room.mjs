@@ -14,6 +14,8 @@
 //                              name. The game waits until every cat has a device.
 //   chat {text}                a message for everyone in the game (live only, never saved; the last 30 are kept in memory)
 //   typing {on}                tell the others you are typing
+//   peek {pid}                 a link visitor who has not joined yet: shows as a ghost in the lobby and can use the chat
+//                              (guests are counted in lobby.guests; their chat lines carry guest:true)
 //   again {}                   anyone seated, once the game is over: back to the lobby with the same cats and code
 //   release {pid}              host only: free a friend's cat (pid is the seat's public id) so someone else can take it
 //   detach {base, state}       host only: move the game back to one screen; everyone else is disconnected and the room closes
@@ -110,15 +112,21 @@ export class WhiskerRoom extends DurableObject {
 
   online() { return this.ctx.getWebSockets().map(ws => (ws.deserializeAttachment() || {}).pid).filter(Boolean); }
   send(ws, msg) { try { ws.send(JSON.stringify(msg)); } catch (e) { /* closed */ } }
-  lobbyMsg(room, withState, forPid) {
-    const msg = { type: 'lobby', ...publicLobby(room, this.online(), forPid) };
-    if (withState && room.started) { msg.state = room.state; msg.ver = room.ver; }
+  /* people who opened the invite link and have not joined yet: they show as ghosts in the lobby and can use the chat */
+  guests(except) {
+    const g = new Set();
+    for (const w of this.ctx.getWebSockets()) { if (w === except) continue; const a = w.deserializeAttachment() || {}; if (!a.pid && a.gid) g.add(a.gid); }
+    return g.size;
+  }
+  lobbyMsg(room, withState, forPid, except) {
+    const msg = { type: 'lobby', ...publicLobby(room, this.online(), forPid), guests: this.guests(except) };
+    if (withState && room.started && forPid) { msg.state = room.state; msg.ver = room.ver; }
     return msg;
   }
   broadcast(room, withState, except) {
     for (const ws of this.ctx.getWebSockets()) {
-      const pid = (ws.deserializeAttachment() || {}).pid;
-      if (ws !== except && pid) this.send(ws, this.lobbyMsg(room, withState, pid));
+      const a = ws.deserializeAttachment() || {};
+      if (ws !== except && (a.pid || a.gid)) this.send(ws, this.lobbyMsg(room, withState, a.pid || null, except));
     }
   }
   fail(ws, message) { this.send(ws, { type: 'error', message }); try { ws.close(1000, 'error'); } catch (e) { /* closed */ } }
@@ -215,7 +223,20 @@ export class WhiskerRoom extends DurableObject {
       this.broadcast(room, false, ws);
       return;
     }
-    if (!me) return this.fail(ws, 'Say hello first.');
+    /* a link visitor who has not joined yet: a ghost in the lobby with the chat, no seat and no say in the game */
+    if (m.type === 'peek') {
+      if (me || room.started) return;
+      const raw = String(m.pid || '').slice(0, 64); if (!raw) return;
+      let h = 5381; for (const c of raw) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+      const gid = 'g' + h.toString(36);
+      ws.serializeAttachment({ pid: null, gid });
+      this.send(ws, { ...this.lobbyMsg(room, false, null, null), gid });
+      if (this._chat && this._chat.length) this.send(ws, { type: 'chatlog', msgs: this._chat });
+      this.broadcast(room, false, ws);
+      return;
+    }
+    const gid = !me ? (ws.deserializeAttachment() || {}).gid : null;
+    if (!me && !(gid && (m.type === 'chat' || m.type === 'typing'))) return this.fail(ws, 'Say hello first.');
 
     if (m.type === 'ready') {
       if (room.started) return;
@@ -272,18 +293,20 @@ export class WhiskerRoom extends DurableObject {
       await this.put(room); this.broadcast(room, true); return;
     }
     if (m.type === 'chat' || m.type === 'typing') {
-      const seat = room.seats.find(s => s.pid === me); if (!seat) return;
+      const seat = room.seats.find(s => s.pid === me);
+      if (!seat && !gid) return;
+      const from = seat ? seat.sid : gid, who = seat ? me : gid;
       if (m.type === 'typing') {
-        for (const w of this.ctx.getWebSockets()) { const pid = (w.deserializeAttachment() || {}).pid; if (pid && pid !== me) this.send(w, { type: 'typing', from: seat.sid, on: !!m.on }); }
+        for (const w of this.ctx.getWebSockets()) { const a = w.deserializeAttachment() || {}; if (w !== ws && (a.pid || a.gid) && a.pid !== me) this.send(w, { type: 'typing', from, on: !!m.on, ...(seat ? {} : { guest: true }) }); }
         return;
       }
       const text = cleanChat(m.text), now = Date.now();
       this._chatAt = this._chatAt || new Map();
-      if (!text || !chatReady(this._chatAt.get(me), now)) return;
-      this._chatAt.set(me, now); this._chatN = (this._chatN || 0) + 1;
-      const msg = { id: `${now}-${this._chatN}`, from: seat.sid, text, t: now };
+      if (!text || !chatReady(this._chatAt.get(who), now)) return;
+      this._chatAt.set(who, now); this._chatN = (this._chatN || 0) + 1;
+      const msg = { id: `${now}-${this._chatN}`, from, text, t: now, ...(seat ? {} : { guest: true }) };
       this._chat = chatPush(this._chat || [], msg);
-      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid) this.send(w, { type: 'chat', msg });
+      for (const w of this.ctx.getWebSockets()) { const a = w.deserializeAttachment() || {}; if (a.pid || a.gid) this.send(w, { type: 'chat', msg }); }
       return;
     }
     if (m.type === 'again') {
