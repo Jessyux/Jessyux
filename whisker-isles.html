@@ -1687,12 +1687,14 @@ document.addEventListener('visibilitychange', ()=>awayCover(document.hidden));
 addEventListener('pagehide', ()=>awayCover(true));
 addEventListener('pageshow', ()=>awayCover(false));
 addEventListener('focus', ()=>awayCover(false));
+/* Tap, hiss and groom are switched off for now (false) while the game is made steadier on phones. Nothing is deleted: set to true to bring them back. */
+const EMOTES_ON = false;
 /* ---------- optional illustrations from ./assets ---------- */
 const ART = new Set();
 const ART_FILES = [
   ...RES.map(r=>RINFO[r].art), RINFO.nap.art, ...RES.map(r=>RINFO[r].tileArt), RINFO.nap.tileArt,
   ...BREEDS.map(b=>'cat-'+b.id), ...BREEDS.map(b=>'cat-'+b.id+'-win'),
-  ...BREEDS.flatMap(b=>['tap','hiss','groom'].flatMap(k=>[1,2].map(n=>'cat-'+b.id+'-'+k+'-'+n))),
+  ...(EMOTES_ON ? BREEDS.flatMap(b=>['tap','hiss','groom'].flatMap(k=>[1,2].map(n=>'cat-'+b.id+'-'+k+'-'+n))) : []),
   'vacuum', 'vacuum-suck', 'swirl', ...Object.values(TREATS).map(t=>t.art), 'logo-art', 'logo', 'paw-hold', 'paw-back', 'paw-thumb', 'paw-sign', 'paw-sign-treat', 'paw-up', 'lobby-here', 'desk-laptop', 'table-game', 'ic-bed', 'ic-path', 'ic-tower', 'ic-card', 'ic-path-h', 'captain-idle', 'captain-happy'
 ];
 /* the pictures the first screen needs stay inside the page (the loading screen waits for these). Every other picture is a separate
@@ -1706,7 +1708,7 @@ const ART_DATA = {"paw-up": "data:image/webp;base64,UklGRtyFAABXRUJQVlA4WAoAAAAQ
 function artSrc(name){ return ART_DATA[name] || ('assets/' + name + '.webp'); }
 /* the ginger cat on every loading screen: grooms, hisses and gets a head tap in turn, flipping between each pose's two drawings */
 function gingerFlip(id){
-  if(reducedMotion()) return null;
+  if(reducedMotion() || !EMOTES_ON) return null;
   let n = 0;
   const t = setInterval(()=>{ const c = document.getElementById(id); if(!c){ clearInterval(t); return; } const kind = ['groom','hiss','tap'][Math.floor(n/4)%3]; c.src = artSrc(`cat-ginger-${kind}-${n%2+1}`); n++; }, 350);
   return t;
@@ -3778,7 +3780,7 @@ function applyRemote(state, ver){
     else if(had && !wasDiscarding && discardSeat()>=0) alertMe('The Vacuum is coming', 'Choose cards to drop.');
   }
   /* someone tapped, hissed at or groomed a cat: play it once per emote, and tell the cat's owner */
-  if(S.emote){
+  if(S.emote && EMOTES_ON){
     const first = ui.emoteSeen === undefined, fresh = emoteIsNew(ui.emoteSeen, S.emote);
     if(fresh){
       ui.emoteSeen = S.emote.id;
@@ -3908,7 +3910,7 @@ function catPopHTML(i){
       <div class="cp-pts">${vp(i,false)}<small>of ${WIN_AT}</small></div><button class="cp-x" onclick="G.catInfo(null)" aria-label="Close">\u00d7</button></div>
     ${pending ? '<p class="cp-hold">Holding its cards until it joins.</p>' : `<dl class="cp-stats">${stat(total(q.res),'cards')}${stat(q.cards.length,'treats')}${stat(roadLength(i),'yarn')}${stat(q.zoomies,'zoomies')}</dl>`}
     ${awards || ctl ? `<div class="cp-extra">${awards}${ctl}</div>` : ''}
-    ${emoteFrom()!=null ? `<div class="cp-emotes" role="group" aria-label="Play with ${esc(q.name)}">${['tap','hiss','groom'].map(k=>`<button class="btn small" ${emoteReady(ui.emoteAt||0, Date.now())?'':'disabled'} onclick="G.emote(${i},'${k}')">${{tap:'Tap',hiss:'Hiss',groom:'Groom'}[k]}</button>`).join('')}</div>` : ''}</div>`;
+    ${EMOTES_ON && emoteFrom()!=null ? `<div class="cp-emotes" role="group" aria-label="Play with ${esc(q.name)}">${['tap','hiss','groom'].map(k=>`<button class="btn small" ${emoteReady(ui.emoteAt||0, Date.now())?'':'disabled'} onclick="G.emote(${i},'${k}')">${{tap:'Tap',hiss:'Hiss',groom:'Groom'}[k]}</button>`).join('')}</div>` : ''}</div>`;
 }
 /* who is playing: online, the cat on this device; in person, whoever's turn it is. Nobody if you're only watching */
 function emoteFrom(){ return !S ? null : S.online ? (ON.mine.length ? ON.mine[0] : null) : S.cur; }
@@ -5580,6 +5582,7 @@ const G = {
   },
   dealDone(){ ui.deal = null; renderOverlay(); },
   emote(to, kind){
+    if(!EMOTES_ON) return;
     const from = emoteFrom(); if(from==null || !S.players[to]) return;
     if(!emoteReady(ui.emoteAt||0, Date.now())) return;
     const em = emoteMake(from, to, kind, Date.now().toString(36)+Math.random().toString(36).slice(2,6)); if(!em) return;
