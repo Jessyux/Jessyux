@@ -1,4 +1,4 @@
-// Whisker Isles online games. Each cat code (like sleepy-tuna-42) is one Durable Object room that keeps the
+// Whisker Isles online games. Each cat code (like sleepy-tuna; older ones end in a number, like sleepy-tuna-42) is one Durable Object room that keeps the
 // lobby and the game state in its own storage, so the code opens the same game again at any time.
 //
 // Client to server (WebSocket messages, JSON):
@@ -7,6 +7,7 @@
 //   seat {name?, breed?, tint?} change your name, cat or colours while in the lobby
 //   host {pid}                 host only: hand the host role to another cat (pid here is the seat's public id)
 //   kick {pid, base?, state?}  host only: remove a cat by public id (in a game, with the state that has them taken out)
+//   leave {base, state}         a cat leaves a started game for good (state has their pieces taken off); one cat left ends the game
 //   start {state}              host only: start the game with this first state
 //   state {base, state}        the state after your move; accepted when base matches the room's version
 //   convert {cats, you, state} host, right after hello in a new room: bring a game played on one screen online. The host
@@ -31,27 +32,33 @@ import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
 import { cleanChat, chatReady, chatPush } from './whisker-chat.mjs';
-import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom } from './whisker-seat.mjs';
+import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom, leaveSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
-const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
-const NOUN = ['tuna','mochi','biscuit','noodle','muffin','sardine','pudding','dumpling','waffle','pretzel','bean','toffee','button','pickle','sprout','crumpet','nugget','salmon','pancake','tofu'];
-const CODE_RE = /^[a-z]+-[a-z]+-\d{2}$/;
+const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker',
+  'comfy','dozy','fuzzy','plush','cuddly','mellow','sweet','sugar','peachy','lucky','happy','dreamy','cloudy','starry','merry','jolly','cheeky','bubbly','snug','soft',
+  'warm','calm','perky','zippy','wiggly','giggly','teeny','rosy','lemon','mango','cherry','plum','butter','twinkly','silky','frosty','sandy','breezy','dusky','glowy'];
+const NOUN = ['tuna','mochi','biscuit','noodle','muffin','sardine','pudding','dumpling','waffle','pretzel','bean','toffee','button','pickle','sprout','crumpet','nugget','salmon','pancake','tofu',
+  'bagel','scone','cupcake','donut','cookie','jelly','peach','berry','olive','taco','bun','latte','kipper','prawn','shrimp','trout','minnow','yarn','pillow','blanket',
+  'mitten','sock','slipper','teacup','acorn','clover','daisy','tulip','petal','fern','puddle','bubble','cloud','star','moon','comet','paw','whisk','bell','ribbon'];
+// new codes are two words; older games keep the number on the end
+const CODE_RE = /^[a-z]+-[a-z]+(-\d{2})?$/;
 const key = s => String(s || '').trim().toLowerCase();
 
 function json(status, body) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 }
 const pick = a => a[Math.floor(Math.random() * a.length)];
-const newCode = () => `${pick(ADJ)}-${pick(NOUN)}-${String(Math.floor(Math.random() * 90) + 10)}`;
+const newCode = (num) => `${pick(ADJ)}-${pick(NOUN)}` + (num ? `-${String(Math.floor(Math.random() * 90) + 10)}` : '');
 
 /* routes under /api/whisker-isles: POST /new makes a code, GET /ws/<code> opens the room */
 export async function whiskerIsles(request, env, pathname) {
   if (!env.ROOMS) return json(503, { error: 'Online games are not set up here.' });
   if (pathname === '/api/whisker-isles/new') {
     if (request.method !== 'POST') return json(405, { error: 'Not allowed.' });
-    for (let i = 0; i < 8; i++) {
-      const code = newCode();
+    // two words first; if those keep landing on games that already exist, add a number like the older codes
+    for (let i = 0; i < 16; i++) {
+      const code = newCode(i >= 10);
       const r = await env.ROOMS.get(env.ROOMS.idFromName(code)).fetch('https://room/claim', { method: 'POST', body: JSON.stringify({ code }) });
       if (r.ok) return json(201, { code });
     }
@@ -60,14 +67,14 @@ export async function whiskerIsles(request, env, pathname) {
   if (pathname === '/api/whisker-isles/push-key') return json(200, { key: env.VAPID_PUBLIC || null });
   const m = pathname.match(/^\/api\/whisker-isles\/ws\/([a-z0-9-]{1,40})$/);
   if (m) {
-    if (!CODE_RE.test(m[1])) return json(400, { error: 'Game codes look like sleepy-tuna-42.' });
+    if (!CODE_RE.test(m[1])) return json(400, { error: 'Game codes look like sleepy-tuna.' });
     if (request.headers.get('Upgrade') !== 'websocket') return json(426, { error: 'Open this with a WebSocket.' });
     return env.ROOMS.get(env.ROOMS.idFromName(m[1])).fetch(new Request(`https://room/ws?code=${m[1]}`, request));
   }
   const d = pathname.match(/^\/api\/whisker-isles\/delete\/([a-z0-9-]{1,40})$/);
   if (d) {
     if (request.method !== 'POST') return json(405, { error: 'Not allowed.' });
-    if (!CODE_RE.test(d[1])) return json(400, { error: 'Game codes look like sleepy-tuna-42.' });
+    if (!CODE_RE.test(d[1])) return json(400, { error: 'Game codes look like sleepy-tuna.' });
     let pid = ''; try { pid = String((await request.json()).pid || '').slice(0, 64); } catch (e) { /* no body */ }
     return env.ROOMS.get(env.ROOMS.idFromName(d[1])).fetch('https://room/delete', { method: 'POST', body: JSON.stringify({ pid }) });
   }
@@ -183,6 +190,7 @@ export class WhiskerRoom extends DurableObject {
       const pid = String(m.pid || '').slice(0, 64), name = String(m.name || '').trim().slice(0, MAX_NAME);
       if (!pid) return this.fail(ws, 'Something went wrong joining. Reload and try again.');
       if ((room.banned || []).includes(pid)) return this.fail(ws, 'The host removed you from this game.');
+      if ((room.left || []).includes(pid)) return this.fail(ws, 'You quit this game, so you can\'t rejoin it.');
       let seat = room.seats.find(s => s.pid === pid);
       // a player on a new laptop or phone takes their seat back by typing the same name
       // a game moved online from one screen: a friend takes one of the cats still waiting for a device
@@ -282,6 +290,27 @@ export class WhiskerRoom extends DurableObject {
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'removed'); } catch (e) { /* closed */ }
       }
       this.broadcast(room, room.started); return;
+    }
+    if (m.type === 'leave') {
+      // a cat leaves for good: the client sends the game with their pieces already taken off the island
+      if (!room.started) return;
+      const n = room.seats.filter(s => s.pid === me).length;
+      if (!n || room.seats.length - n < 1 || m.base !== room.ver || !validState(m.state, room.seats.length - n)) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
+      const who = [...new Set(room.seats.filter(s => s.pid === me).map(s => s.name).filter(Boolean))].join(' and ') || 'A cat';
+      const r = leaveSeat(room, me); if (!r.ok) { this.send(ws, this.lobbyMsg(room, true, me)); return; }
+      room.state = m.state; room.ver++;
+      await this.put(room);
+      // everyone still in the game hears who left, even with the app closed
+      const last = room.seats.length === 1;
+      this.notify(room, [...new Set(room.seats.map(s => s.pid).filter(Boolean))].map(pid => ({ pid, payload: {
+        title: who + ' has left the game',
+        body: last ? 'You are the last cat on the island, so the game is over.' : 'Their pieces are gone from the island. The game carries on.',
+        url: '/' + room.code, tag: 'left-' + room.code } })));
+      for (const w of this.ctx.getWebSockets()) if ((w.deserializeAttachment() || {}).pid === me) {
+        this.send(w, { type: 'error', left: true, message: 'You quit the game.' });
+        w.serializeAttachment({ pid: null }); try { w.close(1000, 'left'); } catch (e) { /* closed */ }
+      }
+      this.broadcast(room, true); return;
     }
     if (m.type === 'convert') {
       if (room.host !== me || room.started || room.seats.length !== 1) return;

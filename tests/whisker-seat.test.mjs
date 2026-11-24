@@ -190,3 +190,34 @@ test('rematch only works on a finished game, and a second tap changes nothing', 
   const lobby = { started: false, ver: 3, state: null, seats: [] };
   assert.equal(seat.rematchRoom(lobby), false);
 });
+
+test('leaveSeat: a cat leaves a started game for good, and the host role moves on', () => {
+  const room = { started: true, host: 'a', seats: [{ pid: 'a', name: 'Jessy' }, { pid: 'b', name: 'Bo' }, { pid: 'c', name: 'Mo' }] };
+  const r = seat.leaveSeat(room, 'a');
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.gone, [0]);
+  assert.deepEqual(room.seats.map((s) => s.pid), ['b', 'c']);
+  assert.equal(room.host, 'b');
+  assert.deepEqual(room.left, ['a']);
+});
+
+test('leaveSeat lets a cat leave down to the last cat, but never empties the game', () => {
+  const two = { started: true, host: 'a', seats: [{ pid: 'a' }, { pid: 'b' }] };
+  assert.equal(seat.leaveSeat(two, 'a').ok, true);
+  assert.deepEqual(two.seats.map((s) => s.pid), ['b']);
+  assert.equal(two.host, 'b');
+  assert.equal(seat.leaveSeat(two, 'b').ok, false);
+  const solo = { started: true, host: 'a', seats: [{ pid: 'a' }, { pid: 'a' }] };
+  assert.equal(seat.leaveSeat(solo, 'a').ok, false);
+  const three = { started: true, host: 'a', seats: [{ pid: 'a' }, { pid: 'b' }, { pid: 'c' }] };
+  assert.equal(seat.leaveSeat(three, 'zz').ok, false);
+  assert.equal(seat.leaveSeat({ started: false, host: 'a', seats: [{ pid: 'a' }, { pid: 'b' }, { pid: 'c' }] }, 'b').ok, false);
+});
+
+test('leaveSeat takes every cat this device plays, and a non-host leaving keeps the host', () => {
+  const room = { started: true, host: 'a', seats: [{ pid: 'a' }, { pid: 'b' }, { pid: 'c' }, { pid: 'b' }] };
+  const r = seat.leaveSeat(room, 'b');
+  assert.deepEqual(r.gone, [1, 3]);
+  assert.deepEqual(room.seats.map((s) => s.pid), ['a', 'c']);
+  assert.equal(room.host, 'a');
+});

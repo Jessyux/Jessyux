@@ -131,3 +131,17 @@ export function rematchRoom(room) {
   for (const s of room.seats) s.ready = false;
   return true;
 }
+
+/* A cat leaves a started game for good: every seat this device plays goes, the host role passes to the next cat still
+   here, and the device can't come back. Refused when it would leave fewer than 2 cats (the game can't go on alone).
+   `gone` lists the removed seat numbers (lowest first), so the client's new state can be checked against them. */
+export function leaveSeat(room, pid) {
+  if (!room || !room.started || !pid) return { ok: false };
+  const gone = room.seats.map((s, i) => (s.pid === pid ? i : -1)).filter((i) => i >= 0);
+  if (!gone.length || room.seats.length - gone.length < 1) return { ok: false };
+  room.seats = room.seats.filter((s) => s.pid !== pid);
+  if (room.host === pid) room.host = (room.seats.find((s) => s.pid) || {}).pid || null;
+  room.left = [...(room.left || []), pid];
+  if (room.push && room.push[pid]) delete room.push[pid];
+  return { ok: true, gone };
+}
