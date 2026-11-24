@@ -41,3 +41,26 @@ test('the screen goes back to the turn cat, unless they already hold it', () => 
   assert.equal(lib.handbackTo({ from: 1 }, 2, 0), 0);
   assert.equal(lib.handbackTo({ from: 0 }, 1, 0), 0);
 });
+
+const lib2 = new Function('RES', `${pull('counterOffer')}\n${pull('handbackTo')}\n${pull('handbackDealFor')}\n${pull('counterStart')}\n${pull('sameOffer')}\nreturn {handbackDealFor, counterStart, sameOffer};`)(RES);
+
+test('the celebrating cats only go on a hand-back card that is actually shown', () => {
+  assert.equal(lib2.handbackDealFor({ from: 1 }, 0, 0), null);
+  assert.deepEqual(lib2.handbackDealFor({ from: 0 }, 1, 0), [0, 1]);
+});
+
+test('a counter mat opens with no more cards than the counterer holds', () => {
+  const o = { from: 0, to: [1], give: res({ yarn: 1 }), get: res({ fish: 3, nip: 1 }) };
+  const m = lib2.counterStart(o, res({ fish: 1 }));
+  assert.equal(m.give.fish, 1);
+  assert.equal(m.give.nip, 0);
+  assert.equal(m.get.yarn, 1);
+});
+
+test('an answer only goes through if the offer is still the one that was tapped', () => {
+  const a = { from: 0, to: [1], round: 0, give: res({ fish: 2 }), get: res({ yarn: 1 }) };
+  assert.equal(lib2.sameOffer(a, { ...a, to: [1] }), true);
+  assert.equal(lib2.sameOffer(a, { ...a, give: res({ fish: 3 }) }), false);
+  assert.equal(lib2.sameOffer(a, { ...a, round: 1 }), false);
+  assert.equal(lib2.sameOffer(a, null), false);
+});

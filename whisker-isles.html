@@ -182,7 +182,7 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 .card h3{font-size:1.02rem;margin-bottom:8px}
 @media (max-width: 920px){
   .app{grid-template-columns:1fr;padding:12px 16px 28px}
-  .panel{position:static;max-height:none;overflow:visible;padding:0}
+  .panel{position:relative;max-height:none;overflow:visible;padding:0}
 }
 /* phones: the map spans the full column, as wide as the cards below it, instead of being capped by the screen height */
 @media (max-width: 600px){
@@ -1592,9 +1592,14 @@ const RECOLOUR = {
 const hexRGB = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const rgbDist = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1], a[2]-b[2]);
 const MASKS = {}, TINTED = {};
-function catMasks(bid){
-  if(MASKS[bid]) return MASKS[bid];
-  return MASKS[bid] = new Promise((done, fail)=>{
+function catMasks(bid, win){
+  const mk = bid + (win ? '-win' : '');
+  if(MASKS[mk]) return MASKS[mk];
+  if(win) return MASKS[mk] = catMasks(bid).then(base=>catMasksOf(bid, true, base.collarCol));
+  return MASKS[mk] = catMasksOf(bid, false, null);
+}
+function catMasksOf(bid, win, collarCol){
+  return new Promise((done, fail)=>{
     const img = new Image();
     img.onload = ()=>{ try{
       const S2 = 256, N = S2*S2, c = document.createElement('canvas'); c.width = c.height = S2;
@@ -1607,9 +1612,19 @@ function catMasks(bid){
           if(maxR && Math.hypot(X-sx,Y-sy)>maxR) continue; if(d[p*4+3]<128 || !ok(at(X,Y))) continue;
           got.push(p); if(got.length>limit) break; st.push([X+1,Y],[X-1,Y],[X,Y+1],[X,Y-1]); }
         return got; };
-      for(const sx of [100,156]){ const seed = at(sx,cfg.collarY); flood(sx,cfg.collarY,q=>rgbDist(q,seed)<70,9000,0).forEach(p=>{ role[p]=4; ref[p]=seed; }); }
+      /* a fill much bigger than a collar has leaked into fur that's close to the collar's colour, so try further down */
+      const collarPts = sx => {
+        if(!win){ const seed = at(sx,cfg.collarY); return {seed, pts: flood(sx,cfg.collarY,q=>rgbDist(q,seed)<70,9000,0)}; }
+        for(let Y=150; Y<250; Y++){
+          if(d[(Y*S2+sx)*4+3]<128 || rgbDist(at(sx,Y), collarCol)>=45) continue;
+          const seed = at(sx,Y), pts = flood(sx,Y,q=>rgbDist(q,seed)<36,3001,0);
+          if(pts.length>=60 && pts.length<3000) return {seed, pts};
+        }
+        return null;
+      };
+      for(const sx of [100,156]){ const c = collarPts(sx); if(c) c.pts.forEach(p=>{ role[p]=4; ref[p]=c.seed; }); }
       const eyeC = [], coatRefs = cfg.coat.map(hexRGB);
-      for(const side of [0,1]){
+      for(const side of (win ? [] : [0,1])){
         const pts = []; for(let y=95;y<160;y++) for(let X=side?129:50; X<(side?206:127); X++){ const q=at(X,y); if(q[0]>245&&q[1]>245&&q[2]>245&&Math.abs(X-128)>14) pts.push([X,y]); }
         if(!pts.length) continue;
         const hx = Math.round(pts.reduce((a,p)=>a+p[0],0)/pts.length), hy = Math.round(pts.reduce((a,p)=>a+p[1],0)/pts.length); eyeC.push([hx,hy]);
@@ -1642,16 +1657,16 @@ function catMasks(bid){
       let a=cm; for(let k=0;k<2;k++){ const b=new Uint8Array(N); for(let p=0;p<N;p++){ if(a[p] && nb.every(([dx,dy])=>inside(a,p%S2+dx,((p/S2)|0)+dy))) b[p]=a[p]; } a=b; }
       for(let k=0;k<2;k++){ const b=a.slice(); for(let p=0;p<N;p++){ if(!a[p] && cm[p] && nb.some(([dx,dy])=>inside(a,p%S2+dx,((p/S2)|0)+dy))) b[p]=cm[p]; } a=b; }
       for(let p=0;p<N;p++) if(a[p]) role[p]=a[p];
-      done({id, role, ref});
+      done({id, role, ref, collarCol: win ? collarCol : at(100, cfg.collarY)});
     }catch(e){ fail(e); } };
-    img.onerror = fail; img.src = artSrc('cat-'+bid);
+    img.onerror = fail; img.src = artSrc('cat-'+bid+(win?'-win':''));
   });
 }
-const tintKey = (bid,t) => [bid,t.coat||'',t.mark||'',t.iris||'',t.collar||''].join('|');
+const tintKey = (bid,t,win) => [bid,t.coat||'',t.mark||'',t.iris||'',t.collar||''].join('|') + (win ? '|win' : '');
 const hasTint = t => !!(t && (t.coat||t.mark||t.iris||t.collar));
-function tintCat(bid, t){
-  const key = tintKey(bid,t); if(TINTED[key]) return TINTED[key];
-  return TINTED[key] = catMasks(bid).then(m=>{
+function tintCat(bid, t, win){
+  const key = tintKey(bid,t,win); if(TINTED[key]) return TINTED[key];
+  return TINTED[key] = catMasks(bid, win).then(m=>{
     const out = new ImageData(new Uint8ClampedArray(m.id.data), 256, 256), d = out.data, tgt = {1:t.coat, 2:t.mark, 3:t.iris, 4:t.collar};
     const PUPIL = [42,23,38];
     for(let p=0;p<65536;p++){ const r=m.role[p], c=tgt[r]; if(!r||!c) continue; const T=hexRGB(c), R=m.ref[p];
@@ -1662,10 +1677,10 @@ function tintCat(bid, t){
   });
 }
 /* the recoloured picture is made once and swapped into every <img> waiting for it */
-function tintedImg(bid, t){
-  const key = tintKey(bid,t), done = TINTED[key] && TINTED[key].url;
-  if(!done) tintCat(bid,t).then(url=>{ TINTED[key].url = url; document.querySelectorAll('img[data-ck]').forEach(i=>{ if(i.dataset.ck===key) i.src = url; }); }).catch(()=>{});
-  return `<img src="${done || artSrc('cat-'+bid)}" data-ck="${esc(key)}" alt="">`;
+function tintedImg(bid, t, win){
+  const key = tintKey(bid,t,win), done = TINTED[key] && TINTED[key].url;
+  if(!done) tintCat(bid,t,win).then(url=>{ TINTED[key].url = url; document.querySelectorAll('img[data-ck]').forEach(i=>{ if(i.dataset.ck===key) i.src = url; }); }).catch(()=>{});
+  return `<img src="${done || artSrc('cat-'+bid+(win?'-win':''))}" data-ck="${esc(key)}" alt="">`;
 }
 /* the paw art's fur is this blue-grey; it is shifted to the cat's coat keeping its shading */
 const PAW_BASE = {'paw-hold':[140,156,180], 'paw-back':[140,148,180], 'paw-thumb':[140,148,180], 'paw-open':[140,148,180], 'paw-up':[140,148,180], 'paw-sign':[140,148,180], 'paw-sign-treat':[140,148,180]}, PAW_FUR = ['#8c9cb4','#8c94b4','#747c9c','#74849c','#b4bcd4','#949cb4','#7c849c','#7c84a4','#acb4cc','#7484a4','#acb4d4','#8c94ac','#8494ac','#a4acc4','#a4accc','#acaccc','#a4b4cc','#7c7c9c','#848cac','#b4b4cc','#8c9cac','#9494ac','#8c8cac','#8c8ca4','#8c94a4','#747c94','#bcc4dc','#b4c4dc','#8c9cbc','#8c94bc','#8494b4','#949cb4'];
@@ -1729,7 +1744,8 @@ function resCard(r, n, size, text){
 /* a player's recoloured cat if they changed colours, otherwise their premade cat */
 function playerArt(x, mood){
   const bid = BREEDS[x.breed].id, t = linkedTint(x);
-  return t ? tintedImg(bid, t) : catArt(x.breed, mood);
+  const win = mood==='win' && ART.has('cat-'+bid+'-win');
+  return t ? tintedImg(bid, t, win) : catArt(x.breed, mood);
 }
 /* the collar is always the cat's piece colour, so a cat and its beds and yarn match; coat, markings and eyes are the player's own */
 function linkedTint(x){
@@ -2307,6 +2323,20 @@ function counterOffer(o, who, give, get, res){
 /* in person, after a trade is answered: hand the screen back to the turn's cat, unless they're the one holding it */
 function handbackTo(o, who, cur){
   return who===cur ? null : cur;
+}
+/* the happy cats go on the hand-back card only when there is one to show */
+function handbackDealFor(o, who, cur){
+  return handbackTo(o, who, cur)==null ? null : [o.from, who];
+}
+/* the counter mat opens from the counterer's side, never offering cards they don't hold */
+function counterStart(o, res){
+  const give = {}, get = {};
+  RES.forEach(r=>{ give[r] = Math.max(0, Math.min(o.get[r]||0, res[r]||0)); get[r] = give[r] > 0 ? 0 : (o.give[r]||0); });
+  return {give, get};
+}
+/* is this still the offer the cat tapped an answer on? */
+function sameOffer(a, b){
+  return !!a && !!b && a.from===b.from && (a.round||0)===(b.round||0) && RES.every(r=>(a.give[r]||0)===(b.give[r]||0) && (a.get[r]||0)===(b.get[r]||0));
 }
 function describe(g){ return RES.filter(r=>g[r]).map(r=>`${g[r]} ${RINFO[r].name}`).join(', '); }
 function flash(g){ ui.flash = {}; RES.forEach(r=>{ if(g[r]) ui.flash[r]=true; }); setTimeout(()=>{ ui.flash={}; },700); }
@@ -2960,6 +2990,12 @@ function playSwipe(sw){
   if(b.bottom<80 || b.top>innerHeight-80){ toMap(); setTimeout(()=>suckFx(sw), 550); } else suckFx(sw);
 }
 /* the card leaves the hand it was taken from and spirals into the Vacuum on the map, which opens wide and gulps it */
+/* a Vacuum swipe is secret: the card shows its back unless this screen belongs (online) to the thief or the cat it came from.
+   Pounce is called out loud, so it stays face up */
+function swipeFace(sw){
+  const knows = sw.via==='pounce' || (S.online && (ON.mine.includes(sw.by) || sw.from.some(i=>ON.mine.includes(i))));
+  return knows ? resCard(sw.r, null, 'sm') : cardBack('sm');
+}
 function suckFx(sw){
   const svg = $('#board'), hx = S && HEX[S.vac]; if(!svg || !hx || !svg.getScreenCTM){ swipeRelease(sw.id); return; }
   const m = svg.getScreenCTM(), pt = svg.createSVGPoint(); pt.x = hx.x; pt.y = hx.y;
@@ -3003,7 +3039,7 @@ function suckFx(sw){
   (sw.hits||[{from:sw.from[0], n:1}]).forEach(h=>{
     const s0 = startFor(h.from);
     for(let q=0; q<Math.min(3, h.n); q++){
-      const el = document.createElement('div'); el.className = 'sfx-card'; el.innerHTML = resCard(sw.r, null, 'sm');
+      const el = document.createElement('div'); el.className = 'sfx-card'; el.innerHTML = swipeFace(sw);
       root.appendChild(el);
       const x0 = clampX(s0.x), y0 = clampY(s0.y), dx = c.x-x0, dy = c.y-y0, dist = Math.hypot(dx,dy)||1, nx = -dy/dist, ny = dx/dist, N = 14, frames = [];
       const arc = Math.min(120, dist*.28) * (idx%2 ? -1 : 1);
@@ -3050,7 +3086,7 @@ function swipeOut(sw, root, from, nOut, own, nTaken, ms, gap){
   if(!tgt){ if(own) swipeLand(sw, nTaken); return; }
   const anims = [];
   for(let q=0; q<nOut; q++){
-    const el = document.createElement('div'); el.className = 'sfx-card'; el.innerHTML = resCard(sw.r, null, 'sm');
+    const el = document.createElement('div'); el.className = 'sfx-card'; el.innerHTML = swipeFace(sw);
     if(own) el.firstElementChild.style.setProperty('--cw', w+'px');
     root.appendChild(el);
     const dx = tgt.x-from.x, dy = tgt.y-from.y, N = 12, frames = [];
@@ -4866,6 +4902,7 @@ const G = {
     log(`${pname(who)} turns down a trade.`);
     o.to = to.filter(i=>i!==who); o.declined = (o.declined||[]).concat(who); o.seen = false;
     if(!o.to.length){
+      S.handbackDeal = null;
       if(!S.online){ S.handback=handbackTo(o, who, S.cur); S.handbackNote = o.declined.length>1 ? 'Nobody took the trade.' : `${pname(who)} said no thanks.`; }
       S.offer=null;
     }
@@ -4874,12 +4911,13 @@ const G = {
   /* counter: open the mat from the countering cat's side, starting from the offer they got */
   tradeCounter(){
     const o=S.offer; if(!o) return; const who = S.online ? offerTo(o).find(i=>ON.mine.includes(i)) : offerTo(o)[0]; if(!offerTo(o).includes(who)) return;
-    ui.modal={kind:'counter', who, give:{...o.get}, get:{...o.give}}; ui.hmm=Date.now()+900; render();
+    ui.modal={kind:'counter', who, ...counterStart(o, S.players[who].res)}; ui.hmm=Date.now()+900; render();
   },
   counterSend(){
     const m=ui.modal, o=S.offer; if(!m || m.kind!=='counter' || !o || !offerTo(o).includes(m.who)) return;
-    if(!total(m.give) && !total(m.get)) return;
-    S.offer = counterOffer(o, m.who, m.give, m.get, S.players[m.who].res);
+    const c = counterOffer(o, m.who, m.give, m.get, S.players[m.who].res);
+    if(!total(c.give) && !total(c.get)) return;
+    S.offer = c;
     log(`${pname(m.who)} counters ${pname(o.from)}'s offer.`);
     ui.modal=null; commit();
   },
@@ -4888,7 +4926,8 @@ const G = {
     const o=S.offer; if(!o || ui.offerFx) return; const who = S.online ? offerTo(o).find(i=>ON.mine.includes(i)) : offerTo(o)[0];
     if(reducedMotion()) return G.tradeDecline();
     ui.offerFx = {who, kind:'no'}; renderOverlay();
-    setTimeout(()=>{ ui.offerFx = null; G.tradeDecline(); }, 450);
+    const snap = JSON.parse(JSON.stringify(o));
+    setTimeout(()=>{ ui.offerFx = null; if(sameOffer(snap, S.offer)) G.tradeDecline(); else render(); }, 450);
   },
   offerYes(){
     const o=S.offer; if(!o || ui.offerFx) return; const who = S.online ? offerTo(o).find(i=>ON.mine.includes(i)) : offerTo(o)[0];
@@ -4901,7 +4940,8 @@ const G = {
       const there = mid(sides[side==='give'?'get':'give']);
       document.querySelectorAll(`.offer-mat .tm-side.${side} .tm-card`).forEach((c,n)=>{ const r = c.dataset.pile.split('-')[1]; flyIcon(r, mid(c), there, 150 + n*90 + k*60, .9); });
     });
-    setTimeout(()=>{ ui.offerFx = null; G.tradeAccept(); }, 1150);
+    const snap = JSON.parse(JSON.stringify(o));
+    setTimeout(()=>{ ui.offerFx = null; if(sameOffer(snap, S.offer)) G.tradeAccept(); else render(); }, 1150);
   },
   dealDone(){ ui.deal = null; renderOverlay(); },
   noTrade(i,on){ const q=S.players[i]; if(!q || !canAct(i)) return; q.noTrade=!!on; log(on ? `${pname(i)} isn't trading for now.` : `${pname(i)} is open to trades again.`); commit(); },
@@ -4912,7 +4952,7 @@ const G = {
     if(!RES.every(r=>a.res[r]>=o.give[r] && b.res[r]>=o.get[r])) return;
     RES.forEach(r=>{ a.res[r]+=o.get[r]-o.give[r]; b.res[r]+=o.give[r]-o.get[r]; });
     log(`${pname(o.from)} trades ${describe(o.give)||'nothing'} to ${pname(who)} for ${describe(o.get)||'nothing'}.`);
-    if(!S.online){ S.handback=handbackTo(o, who, S.cur); S.handbackNote=`${pname(who)} took the trade.`; S.handbackDeal=[o.from, who]; }
+    if(!S.online){ S.handback=handbackTo(o, who, S.cur); S.handbackNote=`${pname(who)} took the trade.`; S.handbackDeal=handbackDealFor(o, who, S.cur); }
     S.offer=null; commit();
   }
 };
