@@ -3254,19 +3254,26 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) stopFla
 /* back on the tab: if the connection dropped while it was away, show the loading cat and rejoin straight away */
 function wakeOnline(){
   if(document.hidden || !ON.code || ON.status==='error' || ON.status==='idle') return;
+  if(Date.now() - (ON.wokeAt||0) < 1500) return;   // visibilitychange and pageshow often both fire
+  ON.wokeAt = Date.now();
   if(ON.ws && ON.ws.readyState===0){ ON.offline = true; render(); return; }
+  const away = ON.hiddenAt ? Date.now() - ON.hiddenAt : 0; ON.hiddenAt = 0;
+  if(ON.ws && ON.ws.readyState===1 && away > 8000){
+    /* away for a while: the old connection is almost certainly dead, so skip the waiting and open a fresh one straight away */
+    ON.retry = 0; ON.offline = true; render(); connect(ON.code, true); return;
+  }
   if(ON.ws && ON.ws.readyState===1){
     /* a phone that slept leaves the connection looking open when it is really dead, so the page just sits there.
        Ask the game for the latest: any answer means it is fine; no answer shows the loading cat, then reconnects */
     const ws = ON.ws, mark = (ON.probe = {at: Date.now()});
     try{ ws.send(JSON.stringify({type:'hello', pid:ON.pid, name:ui.form.name||'', breed:ui.form.breed||0, auto:true})); }catch(e){ ON.retry = 0; ON.offline = true; render(); connect(ON.code, true); return; }
-    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.offline = true; render(); } }, 1200);
-    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.retry = 0; ON.probe = null; connect(ON.code, true); } }, 4500);
+    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.offline = true; render(); } }, 600);
+    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.retry = 0; ON.probe = null; connect(ON.code, true); } }, 1800);
     return;
   }
   ON.retry = 0; ON.offline = true; render(); connect(ON.code, true);
 }
-document.addEventListener('visibilitychange', wakeOnline);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ ON.hiddenAt = Date.now(); } else wakeOnline(); });
 addEventListener('pageshow', wakeOnline);
 addEventListener('focus', stopFlash);
 /* ---------- push notifications: "it's your turn" reaches a phone even when the browser is closed ----------
