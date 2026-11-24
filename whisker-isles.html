@@ -1529,6 +1529,8 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .chat-box.inline{position:static;transform:none;z-index:auto;width:100%;max-width:520px;max-height:none;margin:0 auto;box-sizing:border-box}
 .chat-box.inline .chat-x{display:none}
 .chat-box.inline .chat-list{padding-right:0;max-height:min(34vh,260px);min-height:110px}
+#chat-fab{position:fixed;right:14px;bottom:14px;z-index:176}
+#chat-fab .cat-mute{width:46px;height:46px}#chat-fab .cat-mute svg{width:24px;height:24px}
 .chat-slot{width:min(100%,520px);margin:18px auto 0;padding:0 14px;box-sizing:border-box}
 .chat-slot:empty{display:none}
 .chat-x{position:absolute;top:4px;right:6px;width:30px;height:30px;border:0;background:none;font-size:1.5rem;line-height:1;color:var(--plum-2);cursor:pointer;border-radius:50%}
@@ -4444,6 +4446,14 @@ function oddsChart(){
 
 /* ---------- overlays ---------- */
 let lastOverlay = '';
+/* a pop-up (a trade, a counter-offer, a barter) covers the chat button, so while one is up the chat button floats above it */
+function chatFabSync(overlayOn){
+  let f = document.getElementById('chat-fab');
+  const want = !!(overlayOn && S && S.online && chatOn());
+  if(!want){ if(f) f.remove(); return; }
+  if(!f){ f = document.createElement('div'); f.id = 'chat-fab'; document.body.appendChild(f); }
+  if(!f.firstChild) { f.innerHTML = chatBtnHTML(); chatBadge(); }
+}
 function renderOverlay(){
   const o = $('#overlay');
   if(S && S.phase==='over') recordResult();
@@ -4463,6 +4473,7 @@ function renderOverlay(){
     else if(ui.modal) html = modalHTML();
   } else if(ui.modal) html = modalHTML();
   const full = html ? `<div class="overlay" role="dialog" aria-modal="true">${html}</div>` : '';
+  chatFabSync(!!full);
   if(full===lastOverlay) return;
   /* the same pop-up re-drawn (a colour was tapped) keeps its scroll place; a different one starts at the top */
   const kindOf = h => { const m = h && h.match(/class="modal ([\w -]+)"/); return m ? m[1] : null; };
