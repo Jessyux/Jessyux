@@ -876,7 +876,16 @@ button.tm-card:hover{translate:0 -2px}
 @keyframes capHappy{0%,100%{transform:translateY(0) rotate(0)}35%{transform:translateY(-22px) rotate(-4deg) scale(1.04)}60%{transform:translateY(0) rotate(2deg)}80%{transform:translateY(-8px) rotate(0)}}
 @keyframes sayPop{0%{scale:.4}100%{scale:1}}
 @media (prefers-reduced-motion:reduce){.barter .captain,.barter .captain.happy{animation:none}}
-@media (max-width:480px){.modal.barter{margin-top:min(160px,26vh)}.modal.barter h2{margin-top:14px}.cap-say{font-size:.78rem;max-width:118px;right:calc(100% - 78px)}}
+@media (max-width:480px){.modal.barter{margin-top:min(176px,21vh)}.barter .captain{width:min(250px,66vw)}.modal.barter h2{margin-top:14px}
+  .modal.barter{padding:20px 20px 24px}
+  .modal.barter h2{margin:22px 0 6px;line-height:1.1}
+  .modal.barter>p{margin-bottom:6px}
+  .modal.barter .sec-label{margin:14px 0 6px}
+  .modal.barter .pick{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+  .modal.barter .pick button{flex:0 0 calc((100% - 20px)/3);min-height:66px;padding:7px 2px}
+  .modal.barter .actions{margin-top:18px;flex-wrap:nowrap;gap:12px}
+  .modal.barter .actions .btn{min-height:50px}
+  .modal.barter .actions .btn.primary{flex:1}.cap-say{font-size:.78rem;max-width:118px;right:calc(100% - 78px)}}
 .tp-card{width:min(380px,100%);position:relative;overflow:visible}
 .tp-card .portrait{width:120px;height:120px;margin:-70px auto 10px;background:var(--milk)}
 .tp-card h2{font-family:var(--display);font-weight:400;font-size:1.7rem;margin:0 0 4px}
