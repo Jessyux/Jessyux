@@ -218,7 +218,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .set-item span,.set-row span{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .set-item small,.set-row small{font-weight:700;color:var(--plum-2);font-size:.8rem;line-height:1.3}
 .set-row .bell{flex:none;min-height:40px}
-.mm-mute{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem;padding:4px 2px 8px;cursor:pointer}
+.mm-mute{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-weight:800;font-size:.85rem;padding:2px 8px 8px;cursor:pointer;white-space:nowrap}
 .mm-mute input{width:20px;height:20px;accent-color:var(--plum)}
 /* a phone: one tidy row under the nav for the game code, host tools and alerts, with the extra words dropped */
 @media (max-width:560px){
@@ -597,6 +597,9 @@ img.pic{object-fit:contain}
 .music-menu{width:min(340px,calc(100vw - 32px));display:grid;grid-template-columns:1fr 1fr;gap:2px 6px}
 .music-menu .cp-head{grid-column:1/-1}
 .mm-title{font-weight:900}
+.mm-help{grid-column:1/-1;margin:0 8px 8px;font-size:.8rem;font-weight:700;line-height:1.35;color:var(--plum-2)}
+.mm-how{border:0;background:none;padding:0;font:inherit;font-weight:900;color:var(--plum);text-decoration:underline;text-underline-offset:2px;cursor:pointer;min-height:24px}
+.mm-how:focus-visible{outline:3px solid var(--plum);outline-offset:2px;border-radius:4px}
 .mm-vol{grid-column:1/-1;display:grid;grid-template-columns:104px 1fr;align-items:center;gap:8px;padding:3px 8px;font-size:.85rem;font-weight:800}
 .mm-vol input{width:100%;margin:0;accent-color:var(--plum);height:24px}
 .mm-vol input:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
@@ -607,7 +610,7 @@ img.pic{object-fit:contain}
 .mm-dot{width:12px;height:12px;border-radius:50%;border:2.5px solid var(--plum);flex:none}
 .mm-row.on .mm-dot{background:var(--plum)}
 .cat-mute:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
-@media (max-width:920px){ .cat-hud{position:static;max-width:none;align-items:center;padding:2px 0 4px} .cat-row{justify-content:center} .cat-av,.cat-av .portrait{width:50px;height:50px} .cat-hud{gap:6px} .cat-row{gap:9px} .cat-mute{width:30px;height:30px} }
+@media (max-width:920px){ .cat-hud{position:static;max-width:none;align-items:center;padding:2px 0 4px} .cat-row{justify-content:center} .cat-av,.cat-av .portrait{width:50px;height:50px} .cat-hud{gap:6px} .cat-row{gap:9px} .cat-mute{width:44px;height:44px} .cat-mute svg{width:22px;height:22px} }
 
 /* ---------- odds chart ---------- */
 .odds svg{width:100%;height:auto;display:block}
@@ -3178,7 +3181,7 @@ function musPick(i){   // -1 turns the music off, 0 to 9 choose a track
 }
 function musMenuHTML(){
   const row = (i, label) => { const on = i<0 ? !MUS.on : (MUS.on && MUS.track===i); return `<button class="mm-row${on?' on':''}" role="radio" aria-checked="${on}" onclick="G.musicPick(${i})"><span class="mm-dot" aria-hidden="true"></span>${esc(label)}</button>`; };
-  return `<div class="cat-pop music-menu" role="radiogroup" aria-label="Sound and music"><div class="cp-head"><b class="mm-title">Sound and music</b><button class="cp-x" style="margin-left:auto" onclick="G.music()" aria-label="Close">\u00d7</button></div><label class="mm-vol"><span>Music volume</span><input type="range" min="0" max="100" value="${Math.round(MUS.vol*100)}" oninput="G.vol('mus',this.value)" aria-label="Music volume"></label><label class="mm-mute"><input type="checkbox" ${SND.muted?'checked':''} onchange="G.mute()"> Mute sound effects</label><label class="mm-vol"><span>Sound effects</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" oninput="G.vol('sfx',this.value)" onchange="sfx('pop')" aria-label="Sound effects volume"></label>${row(-1,'Music off')}${MUS_TR.map((t,i)=>row(i,t.name)).join('')}</div>`;
+  return `<div class="cat-pop music-menu" role="radiogroup" aria-label="Adjust audio settings"><div class="cp-head"><b class="mm-title">Adjust audio settings</b><button class="cp-x" style="margin-left:auto" onclick="G.music()" aria-label="Close">\u00d7</button></div><p class="mm-help">To hear sounds, install the web app and allow audio. <button class="mm-how" onclick="G.audioHelp()">Learn how</button></p><label class="mm-vol"><span>Sound effects</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" oninput="G.vol('sfx',this.value)" onchange="sfx('pop')" aria-label="Sound effects volume"></label><label class="mm-mute"><input type="checkbox" ${SND.muted?'checked':''} onchange="G.mute()"> Mute sound effects</label><label class="mm-vol"><span>Music</span><input type="range" min="0" max="100" value="${Math.round(MUS.vol*100)}" oninput="G.vol('mus',this.value)" aria-label="Music volume"></label><label class="mm-mute"><input type="checkbox" ${MUS.on?'':'checked'} onchange="G.musicPick(this.checked ? -1 : (MUS.track||0))"> Music off</label>${MUS_TR.map((t,i)=>row(i,t.name)).join('')}</div>`;
 }
 function musSync(inGame){ if(inGame && MUS.on) musStart(); else if(!inGame) musStop(); }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) musStop(); else musSync(!!$('#cat-hud')); });
@@ -3411,14 +3414,16 @@ const SHARE_IC = '<svg class="a2-ic" viewBox="0 0 24 24" width="22" height="22" 
 const PLUS_IC = '<svg class="a2-ic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 function a2hsHTML(){
   const code = ON.code || (S && S.code) || '';
-  return `<div class="modal a2hs"><div class="rules-head"><h2>Get turn alerts on iPhone</h2><button class="btn small" onclick="G.close()">Close</button></div>
-    <p><span class="chrome-dot" aria-hidden="true"></span> Best in <b>Chrome</b>. iPhone only sends alerts to apps on your Home Screen, which takes four taps:</p>
+  return `<div class="modal a2hs"><div class="rules-head"><h2>Install the app for sound and alerts</h2><button class="btn small" onclick="G.close()">Close</button></div>
+    <p><span class="chrome-dot" aria-hidden="true"></span> Best in <b>Chrome</b>. iPhone only sends alerts to apps on your Home Screen. It only takes a few taps:</p>
     <ol class="a2-steps">
       <li><span class="n">1</span><span>In Chrome, tap <b>Share</b> ${SHARE_IC} in the address bar at the top right.</span></li>
       <li><span class="n">2</span><span>Tap <b>View More</b>, scroll down and tap <b>Add to Home Screen</b> ${PLUS_IC}, then <b>Add</b>.</span></li>
       <li><span class="n">3</span><span>Open <b>Whisker Isles</b> from your Home Screen${code?` and join with the code <b>${esc(code)}</b>`:''}, then pick your cat. It moves to the Home Screen app with everything it holds.</span></li>
-      <li><span class="n">4</span><span>Tap <b>Notify me</b> and allow notifications.</span></li>
+      <li><span class="n">4</span><span>Tap <b>Notify me</b> in the lobby, or <b>Turn alerts</b> in Settings during a game, and allow notifications.</span></li>
+      <li><span class="n">5</span><span>For sound, turn your volume up and make sure the side switch isn't on silent. Sound starts after your first tap in the game.</span></li>
     </ol>
+    <p class="muted small">On Android, tap the menu <b>⋮</b> in Chrome, then <b>Install app</b> or <b>Add to Home screen</b>.</p>
     <p class="muted small">${IS_CHROME_IOS ? '' : 'In Safari instead? Tap Share at the bottom of the screen. '}After that, every Whisker Isles game on this phone can tell you when it's your turn, even with the browser closed.</p>
     ${code?`<p class="center"><button class="code-chip" onclick="G.copy('${esc(code)}', this, 'Game code copied')">Copy game code <b>${esc(code)}</b></button></p>`:''}
   </div>`;
@@ -5542,6 +5547,7 @@ const G = {
   },
   /* turns */
   catInfo(i){ ui.musicMenu = false; ui.catPop = (i==null || ui.catPop===i) ? null : i; if(ui.catPop!=null) sfx('pop'); renderCats(); },
+  audioHelp(){ ui.musicMenu = false; renderCats(); ui.modal = {kind:'a2hs'}; render(); },
   music(){ ui.musicMenu = !ui.musicMenu; if(ui.musicMenu) ui.catPop = null; renderCats(); if(ui.musicMenu){ const b = document.querySelector('.mm-row.on'); if(b) b.focus(); } else { const m = document.querySelector('.cat-music'); if(m) m.focus(); } },
   oddsPick(n){ ui.oddsSel = ui.oddsSel===n ? null : n; renderRollbar(); const c = document.querySelector(`.odds-col[aria-label^="${n}:"]`); if(c) c.focus(); },
   vol(k, v){   // sliders only change levels as they move, so the menu isn't redrawn under the finger
