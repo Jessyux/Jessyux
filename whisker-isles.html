@@ -1526,6 +1526,11 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .chat-n{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:var(--strawberry,#E0335A);color:#fff;border:2px solid var(--plum);font:900 .68rem/15px inherit;text-align:center}
 .chat-box{position:fixed;left:50%;bottom:58px;transform:translateX(-50%);z-index:175;width:min(94vw,360px);max-height:min(56vh,380px);display:flex;flex-direction:column;background:var(--milk);border:3px solid var(--plum);border-radius:22px;box-shadow:5px 5px 0 var(--plum);overflow:hidden;color:var(--plum);padding:10px 12px 12px}
 .chat-box[hidden]{display:none}
+.chat-box.inline{position:static;transform:none;z-index:auto;width:100%;max-width:520px;max-height:none;margin:0 auto;box-sizing:border-box}
+.chat-box.inline .chat-x{display:none}
+.chat-box.inline .chat-list{padding-right:0;max-height:min(34vh,260px);min-height:110px}
+.chat-slot{width:min(100%,520px);margin:18px auto 0;padding:0 14px;box-sizing:border-box}
+.chat-slot:empty{display:none}
 .chat-x{position:absolute;top:4px;right:6px;width:30px;height:30px;border:0;background:none;font-size:1.5rem;line-height:1;color:var(--plum-2);cursor:pointer;border-radius:50%}
 .chat-x:hover,.chat-x:focus-visible{background:rgba(58,35,65,.1)}
 .chat-list{list-style:none;margin:0;padding:4px 22px 8px 6px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;min-height:84px}
@@ -3198,6 +3203,23 @@ function chatBox(){
   }
   return box;
 }
+/* in the online lobby there is room on the page, so the chat is simply there, open, under the buttons. It lives in the page's #chat-slot
+   and is lifted out for each redraw (so what is being typed is kept) and put back after; in the game it goes back to the pop-up. */
+function chatInline(){ const b = document.getElementById('chat'); return !!(b && b.classList.contains('inline')); }
+function chatLift(){
+  const b = document.getElementById('chat'); if(!b || !b.classList.contains('inline')) return;
+  const a = document.activeElement; CHAT.keep = a && a.id==='chat-in' ? {s:a.selectionStart, e:a.selectionEnd} : null;
+  document.body.appendChild(b);
+}
+function chatDock(){
+  const slot = document.getElementById('chat-slot'), lobby = !S && ON.status==='lobby' && chatOn();
+  if(slot && lobby){
+    const b = chatBox(); b.classList.add('inline'); b.hidden = false; CHAT.open = true; CHAT.unread = 0; stopFlash();
+    slot.appendChild(b); chatDraw();
+    const l = document.getElementById('chat-list'); if(l) l.scrollTop = l.scrollHeight;
+    if(CHAT.keep){ const i = document.getElementById('chat-in'); if(i){ i.focus({preventScroll:true}); try{ i.setSelectionRange(CHAT.keep.s, CHAT.keep.e); }catch(e){} } CHAT.keep = null; }
+  } else { const b = document.getElementById('chat'); if(b && b.classList.contains('inline')){ b.classList.remove('inline'); b.hidden = true; CHAT.open = false; } }
+}
 function chatReset(){
   CHAT.open = false; CHAT.msgs = []; CHAT.unread = 0; CHAT.typing = {}; clearTimeout(CHAT.offT); clearTimeout(CHAT.peekT);
   const b = document.getElementById('chat'); if(b) b.remove();
@@ -3759,10 +3781,12 @@ function syncNetWait(){
 function render(){
   syncNetWait();
   const root = $('#root');
+  chatLift();
   if(!S){
     root.innerHTML = ON.status==='lobby' ? lobbyScreen() : ON.status==='pick' ? pickScreen() : startScreen();
-    renderOverlay(); return;
+    chatDock(); renderOverlay(); return;
   }
+  chatDock();
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav"><div class="wi-left">${meLink()}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
     <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc('logo')}" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
@@ -4362,8 +4386,8 @@ document.addEventListener('click', e=>{
   if(handsUp() && !(e.target.closest && e.target.closest('.overlay'))) setHand(null, false);
 }, true);
 /* tapping anywhere off the chat box closes it (the chat button itself toggles it) */
-document.addEventListener('pointerdown', e=>{ if(!CHAT.open) return; if(e.target.closest && e.target.closest('.chat-box, .cat-chat, #chat-peek')) return; G.chat(); }, true);
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && CHAT.open){ G.chat(); return; } if(e.key==='Escape' && handsUp() && !ui.modal) setHand(null, false); });
+document.addEventListener('pointerdown', e=>{ if(!CHAT.open || chatInline()) return; if(e.target.closest && e.target.closest('.chat-box, .cat-chat, #chat-peek')) return; G.chat(); }, true);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && CHAT.open && !chatInline()){ G.chat(); return; } if(e.key==='Escape' && handsUp() && !ui.modal) setHand(null, false); });
 document.addEventListener('pointerdown', e=>{
   const w = e.target.closest && e.target.closest('.build-wrap'); if(!w || !w.querySelector('.need') || e.pointerType==='mouse') return;
   document.querySelectorAll('.build-wrap.show-need').forEach(x=>x.classList.remove('show-need'));
@@ -5097,7 +5121,7 @@ function lobbyScreen(){
       ${isHost ? `<button class="btn primary big start-cta" onclick="${n>=2?'G.hostStart()':"G.open('need2')"}">${n>=2?`Start with ${n} cats`:'Start game'}</button>`
         : `<button class="btn primary big start-cta ready-cta${mySeat&&mySeat.ready?' on':''}" aria-pressed="${!!(mySeat&&mySeat.ready)}" onclick="G.ready()">${mySeat&&mySeat.ready?'✓ Ready · tap to undo':'Ready'}</button>`}
     </div></div>
-    <div class="lobby-chat">${chatBtnHTML()}</div>
+    <div class="chat-slot" id="chat-slot"></div>
     <p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p>
   </main>`;
 }
@@ -5135,7 +5159,7 @@ const G = {
     G.toStart(); ui.seats = seats; ui.where = 'here'; ui.startErr = null; ui.badSeat = null; render();
   },
   chat(){
-    if(!chatOn()) return;
+    if(!chatOn() || chatInline()) return;
     CHAT.open = !CHAT.open;
     const box = chatBox(); box.hidden = !CHAT.open;
     const peek = document.getElementById('chat-peek'); if(peek) peek.classList.remove('show');
