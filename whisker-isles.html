@@ -145,7 +145,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-me img{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--plum);box-shadow:2px 2px 0 var(--plum);object-fit:cover;background:#fff;display:block;transition:transform .2s cubic-bezier(.3,1.4,.5,1)}
 .wi-me:hover img{transform:rotate(-6deg) scale(1.06)}
 .wi-me:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
-.wi-brand img{width:auto;height:42px;max-width:150px;border:0;border-radius:0;box-shadow:none;background:none;object-fit:contain;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.35))}   /* a white sticker, as tall as the buttons beside it */
+.wi-brand img{width:auto;height:42px;max-width:150px;border:0;border-radius:0;box-shadow:none;background:none;object-fit:contain;filter:none}   /* a white sticker, as tall as the buttons beside it */
 .wi-brand:hover img{transform:none}
 .app .topbar .wi-me.wi-brand img{width:auto;height:42px;max-width:170px}
 .app > .topbar{margin-bottom:-10px}   /* the map sits closer to the header */
@@ -1069,6 +1069,7 @@ body{overflow-x:clip}
 .sea{background:linear-gradient(#C6C4F6,#B9B6F0 55%,#AAA6E8);padding:12px 16px 78px;
   -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x;
           mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x}
+.start-top .wi-acts{margin-left:auto}
 .start-top{display:flex;justify-content:space-between;gap:8px;max-width:1080px;margin:0 auto;position:relative;z-index:1}
 .sea .hero-frame{width:min(660px,100%);margin:-34px auto 0}
 .sea .hero-art{border:0;border-radius:0;box-shadow:none;width:100%;
@@ -5289,7 +5290,7 @@ function startScreen(){
       </section>`;
   return `<main class="start${where==='here'?' start-here':''}">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game"><div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -5407,7 +5408,7 @@ function pickScreen(){
   const tag = c => c.open ? '<small>Needs a phone</small>' : c.online ? '<small>Playing on another device</small>' : '<small>Continue here</small>';
   return `<main class="start pick-screen">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game"><div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
