@@ -2678,7 +2678,7 @@ function askNotify(){ try{ if('Notification' in window && Notification.permissio
 function chime(){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
-    const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
+    const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state!=='running') c.resume().catch(()=>{});
     [[784,0],[1047,.16]].forEach(([f,t])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
       const at=c.currentTime+t; g.gain.setValueAtTime(0.0001,at); g.gain.exponentialRampToValueAtTime(Math.max(.0002,.18*SND.vol),at+.02); g.gain.exponentialRampToValueAtTime(.0001,at+.35); o.start(at); o.stop(at+.4); });
   }catch(e){}
@@ -2688,7 +2688,7 @@ const volOf = (k, d) => { const v = parseFloat(store.get(k)); return isFinite(v)
 const SND = {muted: !!store.get('whisker-isles-mute'), vol: volOf('whisker-isles-sfx-vol', 1)};
 function sfxCtx(){
   const C = window.AudioContext || window.webkitAudioContext; if(!C) return null;
-  const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
+  const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state!=='running') c.resume().catch(()=>{});
   return c;
 }
 /* one note: frequency (optionally gliding to another), start offset, length, wave, loudness */
@@ -2859,7 +2859,18 @@ function musMenuHTML(){
 }
 function musSync(inGame){ if(inGame && MUS.on) musStart(); else if(!inGame) musStop(); }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) musStop(); else musSync(!!$('#cat-hud')); });
-['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev, ()=>{ if(MUS.timer && ALERT.ctx && ALERT.ctx.state==='suspended') ALERT.ctx.resume(); }, {passive:true}));
+/* phones only let sound start from a real tap, and on iPhone a finger's pointerdown doesn't count (touchend and pointerup do).
+   A home-screen app also comes back from another app with its sound "interrupted", so every tap wakes it up again */
+function audioUnlock(){
+  try{
+    const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+    const c = ALERT.ctx || (ALERT.ctx = new C());
+    if(c.state!=='running') c.resume().catch(()=>{});
+    if(!ALERT.primed){ ALERT.primed = true; const b = c.createBuffer(1,1,22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); }
+  }catch(e){}
+}
+['touchend','pointerup','click','keydown'].forEach(ev=>document.addEventListener(ev, audioUnlock, {passive:true, capture:true}));
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && ALERT.ctx && ALERT.ctx.state!=='running') ALERT.ctx.resume().catch(()=>{}); });
 function toast(title, body){
   let el = $('#wi-toast');
   if(!el){ el = document.createElement('div'); el.id = 'wi-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
@@ -2967,7 +2978,7 @@ function swipeCheck(){
 function slurp(){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
-    const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state==='suspended') c.resume();
+    const c = ALERT.ctx || (ALERT.ctx = new C()); if(c.state!=='running') c.resume().catch(()=>{});
     const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
     o.type = 'triangle'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(760, t+.55); o.frequency.exponentialRampToValueAtTime(110, t+.85);
     g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(.0002,.08*SND.vol), t+.12); g.gain.exponentialRampToValueAtTime(.0001, t+.9);
@@ -3822,7 +3833,14 @@ function placeDock(){
   const el = $('#dock'), svg = $('#board'); if(!el) return;
   const wide = innerWidth > 920 && svg && !el.classList.contains('gone') && svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width;
   el.classList.toggle('on-board', !!wide);
-  if(!wide){ ['left','width','bottom','height'].forEach(k=>el.style[k]=''); return; }
+  if(!wide){
+    ['left','width','height'].forEach(k=>el.style[k]='');
+    /* iPhone Safari can leave bottom:0 where the screen's bottom used to be (after the keyboard closes or the bars slide),
+       so the paws float halfway up. Pin them to the bottom of what's actually on screen instead */
+    const vv = window.visualViewport, gap = vv && vv.scale < 1.05 ? Math.round(innerHeight - (vv.offsetTop + vv.height)) : 0;
+    el.style.bottom = Math.abs(gap) > 2 ? gap + 'px' : '';
+    return;
+  }
   const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
   const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2, inset = 5.5*k;
   el.style.left = (fl+inset)+'px'; el.style.width = (fw-2*inset)+'px';
@@ -3830,6 +3848,9 @@ function placeDock(){
   el.style.setProperty('--rad', (38*k)+'px');
 }
 addEventListener('resize', placeDock);
+if(window.visualViewport){ visualViewport.addEventListener('resize', placeDock); visualViewport.addEventListener('scroll', placeDock); }
+addEventListener('focusout', ()=>setTimeout(placeDock, 350));   // the keyboard has closed: measure again once it's gone
+addEventListener('pageshow', placeDock);
 addEventListener('resize', placeLogo);
 addEventListener('resize', placeCats);
 /* the desk and the table stand on the floor of the room, just under the window: the room picture is cropped to fill the box,
