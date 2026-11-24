@@ -485,12 +485,13 @@ img.pic{object-fit:contain}
 .tool-row{display:flex;gap:10px;pointer-events:auto}
 .cat-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;pointer-events:auto}
 .cat-av{position:relative;width:62px;height:62px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;font:inherit;color:var(--plum)}
-.cat-av .portrait{width:62px;height:62px;border-width:3px;box-shadow:2px 2px 0 var(--plum);transition:transform .15s}
+.cat-av .portrait{width:62px;height:62px;border:0;border-radius:0;overflow:visible;background:none;transition:transform .15s,filter .15s;
+  filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.3))}   /* a sticker, like Captain Whiskers */
+.cat-av .portrait img,.cat-av .portrait svg{object-fit:contain;object-position:50% 50%}
 .cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
-.cat-av.cur .portrait{box-shadow:0 0 0 4px var(--butter),2px 2px 0 var(--plum)}
-.cat-av.open .portrait{box-shadow:0 0 0 4px #fff,2px 2px 0 var(--plum)}
+.cat-av.cur .portrait{filter:drop-shadow(3px 0 0 var(--butter)) drop-shadow(-3px 0 0 var(--butter)) drop-shadow(0 3px 0 var(--butter)) drop-shadow(0 -3px 0 var(--butter)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}
 .cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
-.cat-av.pending .portrait{filter:grayscale(.8) opacity(.65);border-style:dashed}
+.cat-av.pending .portrait{opacity:.55;filter:grayscale(.8) drop-shadow(0 0 0 #fff) drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff)}
 .cat-av.away .portrait{opacity:.6}
 .av-roll{position:absolute;left:50%;top:-12px;transform:translateX(-50%);min-width:28px;height:28px;padding:0 6px;box-sizing:border-box;border-radius:9px;background:var(--butter);border:2.5px solid var(--plum);box-shadow:1px 2px 0 var(--plum);font-family:var(--display);font-size:1.05rem;line-height:23px;text-align:center;color:var(--plum);z-index:2}
 .av-roll.wait{background:#fff;color:var(--plum-2)}
