@@ -1458,6 +1458,7 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .corner-go .btn{width:100%;padding-left:.6em;padding-right:.6em}
 @media (max-width:480px){.corner-go{gap:10px;padding:0 14px}.corner-go .btn{font-size:.95rem;min-height:52px}}
 .crew-online{margin-top:0}
+.corner-go.solo{grid-template-columns:minmax(0,320px);justify-content:center}
 </style>
 </head><body>
 <div id="boot" role="status" aria-live="polite" aria-label="Loading Whisker Isles">
@@ -4398,6 +4399,7 @@ function modalHTML(){
   if(m.kind==='host') return hostToolsHTML();
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
+  if(m.kind==='need2') return `<div class="modal"><h2>Waiting for a friend</h2><p>Requires at least 2 players to start the game. Share the game code and ask a friend to join.</p><div class="actions center"><button class="btn primary" autofocus onclick="G.close()">Got it</button></div></div>`;
   if(m.kind==='goonline') return `<div class="modal"><h2>Play online?</h2>
     <p>Every cat needs its own phone. This game gets a cat code: you carry on as ${esc(S.players[S.cur].name)}, and each friend opens the code and picks one of the other cats, keeping its name and everything it holds.</p>
     <p class="muted small">The game waits until every cat has a phone. You can move it back to one screen any time.</p>
@@ -4832,9 +4834,9 @@ function lobbyScreen(){
       <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" data-tip="${isHost?'Play in person instead':'Only the host can change the game type'}" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""></button>
       <ul class="nooks ring" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
-    <div class="corner-go">
-      <button class="btn big online-cta" onclick="G.toStart()">Leave</button>
-      ${isHost ? `<button class="btn primary big start-cta" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Invite a friend'}</button>`
+    <div class="corner-go${isHost && n<2 ? ' solo' : ''}">
+      ${isHost && n<2 ? '' : `<button class="btn big online-cta" onclick="G.toStart()">Leave</button>`}
+      ${isHost ? `<button class="btn primary big start-cta" onclick="${n>=2?'G.hostStart()':"G.open('need2')"}">${n>=2?`Start with ${n} cats`:'Start game'}</button>`
         : `<button class="btn primary big start-cta" disabled>Host starts soon…</button>`}
     </div></div>
     <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
