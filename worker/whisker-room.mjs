@@ -35,12 +35,9 @@ import { cleanChat, chatReady, chatPush } from './whisker-chat.mjs';
 import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom, leaveSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
-const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker',
-  'comfy','dozy','fuzzy','plush','cuddly','mellow','sweet','sugar','peachy','lucky','happy','dreamy','cloudy','starry','merry','jolly','cheeky','bubbly','snug','soft',
-  'warm','calm','perky','zippy','wiggly','giggly','teeny','rosy','lemon','mango','cherry','plum','butter','twinkly','silky','frosty','sandy','breezy','dusky','glowy'];
-const NOUN = ['tuna','mochi','biscuit','noodle','muffin','sardine','pudding','dumpling','waffle','pretzel','bean','toffee','button','pickle','sprout','crumpet','nugget','salmon','pancake','tofu',
-  'bagel','scone','cupcake','donut','cookie','jelly','peach','berry','olive','taco','bun','latte','kipper','prawn','shrimp','trout','minnow','yarn','pillow','blanket',
-  'mitten','sock','slipper','teacup','acorn','clover','daisy','tulip','petal','fern','puddle','bubble','cloud','star','moon','comet','paw','whisk','bell','ribbon'];
+// cat words only: how a cat looks or acts, then a cat thing
+const ADJ = ['sleepy','fluffy','purry','snoozy','zoomy','cosy','comfy','fuzzy','furry','silky','plush','cuddly','tabby','ginger','calico','stripy','spotty','sleek','slinky','sneaky','pouncy','bouncy','curious','dozy','drowsy','lazy','sassy','grumpy','cheeky','chonky','chubby','tiny','floofy','velvet','whiskery','silly','playful','frisky','perky','nimble','purring','napping','stretchy','scruffy','tufty','smoky','snuggly','snoozing','hissy','meowy'];
+const NOUN = ['paw','whisker','mitten','beans','kitten','tuna','sardine','salmon','kipper','prawn','mouse','yarn','catnip','tail','nose','claw','purr','meow','pounce','nap','cushion','basket','blanket','pillow','box','bell','collar','ribbon','feather','string','sunbeam','biscuit','loaf','kitty','moggy','furball','fluff','tummy','tuft','treat','milk','cream','saucer','perch','nook','zoomies','chirp','trill','mew','den'];
 // new codes are two words; older games keep the number on the end
 const CODE_RE = /^[a-z]+-[a-z]+(-\d{2})?$/;
 const key = s => String(s || '').trim().toLowerCase();
