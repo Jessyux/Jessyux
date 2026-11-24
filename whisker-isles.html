@@ -3866,7 +3866,7 @@ function syncNetWait(){
   if(el) el.remove();
   NETWAIT.kind = kind; NETWAIT.t0 = Date.now();
   el = document.createElement('div'); el.id = 'netwait'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite');
-  el.innerHTML = `<img class="b-logo" src="${artSrc('logo')}" alt="Whisker Isles"><div class="b-cats" aria-hidden="true"><img id="nw-cat" src="${artSrc('cat-ginger-groom-1')}" alt=""></div><div class="b-track" aria-hidden="true"><span class="b-yarn"><img src="${artSrc('res-yarn')}" alt=""></span></div><p class="b-say" id="nw-say"></p>`;
+  el.innerHTML = `<img class="b-logo" src="${artSrc('logo')}" alt="Whisker Isles"><div class="b-cats" aria-hidden="true"><img id="nw-cat" src="${artSrc(EMOTES_ON ? 'cat-ginger-groom-1' : 'cat-ginger')}" alt=""></div><div class="b-track" aria-hidden="true"><span class="b-yarn"><img src="${artSrc('res-yarn')}" alt=""></span></div><p class="b-say" id="nw-say"></p>`;
   document.body.appendChild(el);
   const lines = kind==='resume' ? ['Finding your way back...', 'Catching up with the game...', 'Still looking, hang tight...'] : kind==='join' ? ['Sniffing out the game...', 'Knocking on the door...', 'Still looking, hang tight...'] : ['Making a code...', 'Fluffing a fresh room...', 'Still working on it, hang tight...'];
   const tick = ()=>{ const say = document.getElementById('nw-say'); if(!say) return; const s = (Date.now()-NETWAIT.t0)/1000; say.textContent = lines[s<3 ? 0 : s<8 ? 1 : 2]; };
@@ -4962,7 +4962,8 @@ function rulesHTML(){
     <div class="award-card zoom">${awardSVG('zoomiest',72)}<div><b>Zoomiest cat</b><span class="plus">+2 points</span><small>For the first cat to play 3 Zoomies. Playing more Zoomies steals it.</small></div></div>
   </div></section>
 
-  <div class="actions"><button class="btn primary" onclick="G.close()">Back to the game</button></div></div></div>`;
+  <div class="actions"><button class="btn primary" onclick="G.close()">Back to the game</button></div>
+  <p class="small" style="text-align:center;margin-top:14px"><button class="btn small" onclick="G.diag()">${store.get('wi-debug')==='1' ? 'Hide' : 'Show'} diagnostics (for bug reports)</button></p></div></div>`;
 }
 
 /* ---------- start and lobby screens ---------- */
@@ -5581,6 +5582,7 @@ const G = {
     setTimeout(()=>{ ui.offerFx = null; if(sameOffer(snap, S.offer)) G.tradeAccept(); else render(); }, 1150);
   },
   dealDone(){ ui.deal = null; renderOverlay(); },
+  diag(){ store.set('wi-debug', store.get('wi-debug')==='1' ? '' : '1'); location.reload(); },
   emote(to, kind){
     if(!EMOTES_ON) return;
     const from = emoteFrom(); if(from==null || !S.players[to]) return;
@@ -5622,7 +5624,7 @@ document.addEventListener('keydown', e=>{
 });
 
 /* add ?debug to the address to see how long each part of the screen takes to draw (for tracking down a screen that hangs) */
-if(/[?&]debug/.test(location.search)){
+if(/[?&]debug/.test(location.search) || store.get('wi-debug')==='1'){
   const box = document.createElement('pre');
   box.style.cssText = 'position:fixed;left:6px;right:6px;top:6px;z-index:99999;margin:0;max-height:46vh;overflow:auto;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:12px;padding:8px;font:700 11px/1.25 ui-monospace,monospace;white-space:pre-wrap;pointer-events:none;opacity:.94';
   document.body.appendChild(box);
