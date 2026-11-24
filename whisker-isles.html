@@ -1687,8 +1687,8 @@ document.addEventListener('visibilitychange', ()=>awayCover(document.hidden));
 addEventListener('pagehide', ()=>awayCover(true));
 addEventListener('pageshow', ()=>awayCover(false));
 addEventListener('focus', ()=>awayCover(false));
-/* Tap, hiss and groom are switched off for now (false) while the game is made steadier on phones. Nothing is deleted: set to true to bring them back. */
-const EMOTES_ON = false;
+/* Tap, hiss and groom: set to false to switch them off (the buttons, their pictures and the loading cat's poses) without deleting anything. */
+const EMOTES_ON = true;
 /* ---------- optional illustrations from ./assets ---------- */
 const ART = new Set();
 const ART_FILES = [
