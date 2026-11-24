@@ -145,6 +145,14 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-me img{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--plum);box-shadow:2px 2px 0 var(--plum);object-fit:cover;background:#fff;display:block;transition:transform .2s cubic-bezier(.3,1.4,.5,1)}
 .wi-me:hover img{transform:rotate(-6deg) scale(1.06)}
 .wi-me:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
+.wi-brand img{width:auto;height:42px;max-width:150px;border:0;border-radius:0;box-shadow:none;background:none;object-fit:contain;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.35))}   /* a white sticker, as tall as the buttons beside it */
+.wi-brand:hover img{transform:none}
+.app .topbar .wi-me.wi-brand img{width:auto;height:42px;max-width:170px}
+.app > .topbar{margin-bottom:-10px}   /* the map sits closer to the header */
+@media (max-width:920px){ .app .topbar .wi-me.wi-brand img{height:40px} }   /* the buttons are 40 high on phones */
+.credit .cr-me{display:inline-flex;align-items:center;gap:6px;text-decoration:none;vertical-align:middle}
+.credit .cr-me img{width:22px;height:22px;border-radius:50%;border:2px solid var(--plum);object-fit:cover;background:#fff;display:block}
+.credit .cr-me:hover{text-decoration:underline}
 .wi-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .wi-acts{display:flex;align-items:center;gap:2px;background:var(--milk);border:2.5px solid var(--plum);border-radius:999px;box-shadow:2px 2px 0 var(--plum);padding:3px}
 .wi-act{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--plum);font:inherit;font-weight:800;font-size:.86rem;line-height:1;padding:7px 12px;border-radius:999px;text-decoration:none;cursor:pointer;white-space:nowrap;transition:background .15s}
@@ -232,6 +240,15 @@ a.btn{color:var(--plum);text-decoration:none}
 }
 .board-wrap{position:relative;min-width:0}
 #board{width:100%;height:auto;display:block}
+/* the wide island (5 or more cats) keeps the classic map's height and grows sideways: the map scrolls across */
+.board-scroll.wide{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;border-radius:var(--mapr,30px);scrollbar-width:thin}
+.board-scroll.wide #board{width:var(--mapw,200%);max-width:none;flex:none}
+#map-hint{position:absolute;z-index:4;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;background:var(--cream);color:var(--plum);border:2.5px solid var(--plum);border-radius:999px;box-shadow:2px 3px 0 var(--plum);padding:7px 14px;font-weight:900;font-size:.88rem;transition:opacity .4s}
+#map-hint.out{opacity:0}
+#map-hint .mh-a{display:inline-block;animation:mh-nudge 1.1s ease-in-out infinite alternate}
+#map-hint .mh-a.r{animation-direction:alternate-reverse}
+@keyframes mh-nudge{from{transform:translateX(-3px)}to{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){#map-hint .mh-a{animation:none}}
 .board-wrap{display:flex;flex-direction:column;gap:12px}
 .panel{display:flex;flex-direction:column;gap:14px;min-width:0;position:sticky;top:12px;max-height:calc(100vh - 24px - var(--dockv,0px));overflow:auto;padding:0 8px 8px 0;align-self:start}
 .panel>*{flex-shrink:0}
@@ -248,7 +265,7 @@ html,*{scrollbar-width:thin;scrollbar-color:#EAD9EE transparent}
 .card{background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:14px 16px}
 .card h3{font-size:1.02rem;margin-bottom:8px}
 @media (max-width: 920px){
-  .app{grid-template-columns:1fr;padding:12px 16px 28px}
+  .app{grid-template-columns:1fr;padding:10px 16px 28px}
   .panel{position:relative;max-height:none;overflow:visible;padding:0}
 }
 /* phones: the map spans the full column, as wide as the cards below it, instead of being capped by the screen height */
@@ -770,7 +787,7 @@ svg :focus{outline:none}
 .rb-turn{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 14px;border-bottom:2.5px solid var(--plum)}
 .rb-turn .turn{grid-template-columns:58px auto;gap:10px;flex:none}
 .rb-turn{border-radius:var(--r-md)}
-.rb-turn .portrait{width:58px;height:58px;border:0;border-radius:0;background:none;overflow:visible;margin:-4px 0;filter:drop-shadow(3px 0 0 var(--pc)) drop-shadow(-3px 0 0 var(--pc)) drop-shadow(0 3px 0 var(--pc)) drop-shadow(0 -3px 0 var(--pc)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}   /* a sticker in the cat's colour, like the avatars on the map */
+.rb-turn .portrait{width:58px;height:58px;border:0;border-radius:0;background:none;overflow:visible;margin:-4px 0;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.3))}   /* a white sticker, like the avatars on the map */
 .rb-turn .portrait img,.rb-turn .portrait svg{object-fit:contain;object-position:50% 50%}
 .rb-turn .turn .who{font-size:1.15rem}
 .rb-turn .turn .sub{font-size:.84rem}
@@ -2254,11 +2271,18 @@ function boatSpot(d){
   if(need > 0){ x += nx*need; y += ny*need; }
   return { x, y };
 }
+const CLASSIC_VBW = 614.7;   // the classic map's drawn width in board units (what the wide map is scaled against)
 let GEO_R = -1, HEX, V, E, HEXV, HEXN, DOCK_EDGES;
 function buildGeo(radius){
   if(GEO_R===radius) return;
   GEO_R = radius; HEX=[]; V=[]; E=[];
   const vIndex = new Map(), eIndex = new Map();
+  if(radius>=4){
+    /* the wide island: the same five rows as the classic one, but 7, 8, 7, 8, 7 hexes across (37 tiles) for 5 cats, so the map keeps its height and only grows sideways.
+       Radius 4 is 5 cats; every cat after that adds one more hex to each row (5 more tiles) */
+    const e = radius-4, qs = {'-2':[-2,4], '-1':[-3,4], '0':[-3,3], '1':[-4,3], '2':[-4,2]};
+    for(let r=-2;r<=2;r++) for(let q=qs[r][0];q<=qs[r][1]+e;q++) HEX.push({q,r,x:HR*SQ3*(q+r/2), y:HR*1.5*r});
+  } else
   for(let r=-radius;r<=radius;r++) for(let q=-radius;q<=radius;q++){ if(Math.abs(q+r)<=radius) HEX.push({q,r,x:HR*SQ3*(q+r/2), y:HR*1.5*r}); }
   HEXV = HEX.map(()=>[]);
   HEX.forEach((h,hi)=>{
@@ -2282,7 +2306,7 @@ function buildGeo(radius){
   const coast = E.map((e,i)=>({i,e})).filter(o=>o.e.hexes.length===1)
     .map(o=>{ const mx=(V[o.e.a].x+V[o.e.b].x)/2, my=(V[o.e.a].y+V[o.e.b].y)/2; return {i:o.i, ang:Math.atan2(my,mx)}; })
     .sort((a,b)=>a.ang-b.ang).map(o=>o.i);
-  const n = radius===2 ? 9 : 13;
+  const n = radius===2 ? 9 : radius===3 ? 13 : 13+(radius-4);   // a port or so more for every column the island grows by
   DOCK_EDGES = Array.from({length:n},(_,k)=>coast[Math.round(k*coast.length/n)]);
 }
 
@@ -2294,22 +2318,24 @@ const ui = { mode:null, modal:null, flash:{}, rolling:false, seats:null, view:'h
 
 function makeBoard(radius){
   buildGeo(radius);
-  const big = radius===3;
-  const per = big ? 7 : null;
+  const big = radius>=3;
+  const more = radius>=4 ? radius-4 : 0, per = big ? 7+more : null;   // each cat past the fifth adds a column: one more of every resource
   const types = big
     ? shuffle([...RES.flatMap(r=>Array(per).fill(r)), 'nap','nap'])
     : shuffle(['litter','litter','litter','yarn','yarn','yarn','nip','nip','nip','nip','nib','nib','nib','nib','fish','fish','fish','fish','nap']);
   const base = [2,3,3,4,4,5,5,6,6,8,8,9,9,10,10,11,11,12];
-  const tokens = big ? [...base, ...base.slice(1)] : base;   // 35 tokens for 35 producing tiles
+  /* 35 tokens for 35 producing tiles, and 5 more of the good numbers for each column the island grows by */
+  const EXTRA = [5,9,4,10,3,11,5,9,4,10,6,8,3,11,5,9,4,10,3,11,5,9,4,10,3];   // few 6s and 8s, so they can still sit apart on a crowded map
+  const tokens = big ? [...base, ...base.slice(1), ...EXTRA.slice(0, 5*more)] : base;
   let nums;
-  for(let tries=0;tries<800;tries++){
+  for(let tries=0;tries<3000;tries++){
     const pool = shuffle([...tokens]);
     nums = types.map(t=>t==='nap'?0:pool.pop());
     const hot = i => nums[i]===6||nums[i]===8;
     if(!HEX.some((_,i)=>hot(i)&&HEXN[i].some(j=>hot(j)))) break;
   }
   const docks = big
-    ? shuffle([...Array(6).fill('any'), ...RES, ...shuffle([...RES]).slice(0,2)])
+    ? shuffle([...Array(6+more).fill('any'), ...RES, ...shuffle([...RES]).slice(0,2)])
     : shuffle(['any','any','any','any', ...RES]);
   return { radius, tiles: types.map((t,i)=>({type:t,num:nums[i]})), docks: DOCK_EDGES.map((e,i)=>({e,type:docks[i]})) };
 }
@@ -2327,9 +2353,9 @@ function newGame(seats, opts){
   opts = opts || {};
   seats = fixColors(seats);
   const n = seats.length;
-  const radius = n > MAX_CLASSIC ? 3 : 2;
+  const radius = n > MAX_CLASSIC ? 4 + (n - MAX_CLASSIC - 1) : 2;   // 5 cats: 8 hexes across; each cat after that adds a column   // 3 is the older round Big Island, still here for games saved before the wide map
   const board = makeBoard(radius);
-  const big = radius===3;
+  const big = radius>=3;
   const deck = shuffle([...Array(big?20:14).fill('zoomies'),...Array(big?6:5).fill('trophy'),
     ...Array(big?3:2).fill('spree'),...Array(big?3:2).fill('gift'),...Array(big?3:2).fill('pounce')]);
   S = {
@@ -3986,8 +4012,8 @@ function render(){
   chatDock();
   if(!root.querySelector('.app')) root.innerHTML = `<div class="app">
     <header class="topbar wi-nav"><div class="wi-left">${meLink()}${S.online?`<button class="wi-copy m-only" onclick="G.copy('${esc(S.code)}', this, 'Code ${esc(S.code)} copied')" aria-label="Copy game code ${esc(S.code)}" title="Copy game code"><span>${esc(S.code)}</span>${navIcon('copy')}</button>`:''}<span id="tools-left" class="wi-left"></span></div><h1 class="vh">Whisker Isles</h1><div class="wi-right" id="tools"></div></header>
-    <div class="board-wrap">${ART.has('logo') ? `<img class="map-logo" id="map-logo" src="${artSrc(innerWidth<=920 ? 'logo-stack' : 'logo')}" onerror="this.onerror=null;this.src=artSrc('logo')" alt="">` : ''}<svg id="board" role="application" aria-label="Game board"></svg><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
-    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div><p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p></aside>
+    <div class="board-wrap"><div class="board-scroll" id="board-scroll"><svg id="board" role="application" aria-label="Game board"></svg></div><div class="cat-hud" id="cat-hud"></div><div class="cat-tools" id="cat-tools"></div></div>
+    <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div>${creditHTML()}</aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}<span class="cc-lbl">Code </span><b>${esc(S.code)}</b></button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host<span class="cc-lbl"> tools</span></button>` : ''}${S.online ? bellBtn() : ''}`;
   const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
@@ -4072,9 +4098,8 @@ function renderCats(){
 }
 /* the avatars sit in the top left corner of the map's drawn frame, clear of the logo (the svg is letterboxed) */
 function placeCats(){
-  const hud = $('#cat-hud'), svg = $('#board'); if(!hud || !svg || !svg.viewBox || !svg.viewBox.baseVal || !svg.viewBox.baseVal.width) return;
-  const wrap = hud.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
-  const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2, lg = $('#map-logo'), lw = lg ? lg.getBoundingClientRect().width : 0;
+  const hud = $('#cat-hud'), F = hud && mapFrame(); if(!hud || !F) return;
+  const wrap = hud.parentElement.getBoundingClientRect(), fw = F.fw, fh = F.fh, fl = F.fl, ft = F.ft, lg = $('#map-logo'), lw = lg ? lg.getBoundingClientRect().width : 0;
   hud.style.left = (fl - wrap.left + 14) + 'px'; hud.style.top = (ft - wrap.top + 12) + 'px';
   hud.style.setProperty('--room', Math.max(110, fw - lw - 40) + 'px');
   const tl = $('#cat-tools'); if(tl){ tl.classList.toggle('fixed', innerWidth<=920); tl.style.left = (fl - wrap.left + fw/2) + 'px'; tl.style.top = (ft + fh - wrap.top - 10) + 'px'; tl.style.bottom = ''; }   // pinned from the top: a cat's card opening below the map can't push them down
@@ -4111,12 +4136,10 @@ function awardPop(kind, p){
   }, 1900);
 }
 /* each cat's roll for who goes first */
+/* each cat's roll for first shows on its avatar on the map, so the card only says when there is a tie */
 function firstRollsHTML(){
   const F = S.setup.first;
-  return `<ul class="first-rolls" aria-label="Rolls for who goes first">${S.players.map((q,i)=>{
-    const out = !F.live.includes(i), r = F.rolls[i];
-    return `<li class="${i===S.cur?'now':''}${out?' out':''}"><span class="dot" style="background:${pcol(q)}"></span>${esc(q.name)} <b>${r==null?(out?'':'…'):r}</b></li>`;
-  }).join('')}</ul>${F.tie?'<p class="small muted">A tie! The tied cats roll again.</p>':''}`;
+  return F.tie ? '<p class="small muted">A tie! The tied cats roll again.</p>' : '';
 }
 function renderRollbar(){
   const el = $('#rollbar'); if(!el) return;
@@ -4216,7 +4239,9 @@ function settingsHTML(){
     ${online ? item('quit', 'Quit game', 'Your progress will be lost', "G.open('leave')") : ''}
   </div></div>`;
 }
-function meLink(){ return `<a class="wi-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
+function meLink(){ return ART.has('logo') ? `<span class="wi-me wi-brand"><img src="${artSrc('logo')}" alt="Whisker Isles"></span>` : `<span class="wi-me wi-brand"><span>Whisker Isles</span></span>`; }
+/* the designer's credit, with their picture */
+function creditHTML(){ return `<p class="credit">Designed by <a class="cr-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener"><img src="/img/jessy-avatar.webp" alt="" width="22" height="22">JessyUX</a></p>`; }
 function renderBoard(){
   const svg = $('#board');
   if(ui.shuffled && svg){ ui.shuffled = false; if(!reduceMotion) svg.animate([{transform:'scale(.94) rotate(-3deg)',opacity:.2},{transform:'scale(1.02) rotate(1deg)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'ease-out'}); }
@@ -4227,9 +4252,13 @@ function renderBoard(){
   S.board.docks.forEach(d=>{ const sp = boatSpot(d);
     x0 = Math.min(x0, sp.x+BOAT.left-7); x1 = Math.max(x1, sp.x+BOAT.right+7); y0 = Math.min(y0, sp.y-BOAT.sy-6); y1 = Math.max(y1, sp.y+BOAT.bot+7); });
   // keep the logo off the top boats; on wide screens the paws, tabs and music button sit on the map's bottom edge, so keep them off the bottom boats too
-  ui.boardWide = innerWidth > 920; y0 -= 28; y1 += ui.boardWide ? 116 : 10;
+  ui.boardWide = innerWidth > 920; y0 -= 8; y1 += ui.boardWide ? 116 : 10;
   const minX = x0, minY = y0, w = x1-x0, h = y1-y0;
   svg.setAttribute('viewBox', `${minX} ${minY} ${w} ${h}`);
+  /* the wide island is drawn at the classic map's scale, so it is as tall as the classic map and wider than the screen */
+  const sc = $('#board-scroll'), wideMap = R>=4;
+  if(sc){ sc.classList.toggle('wide', wideMap); svg.style.setProperty('--mapw', wideMap ? (w/CLASSIC_VBW*100).toFixed(1)+'%' : ''); sc.style.setProperty('--mapr', (38*svg.getBoundingClientRect().height/h||30)+'px');
+    if(wideMap && ui.mapGid!==S.gid){ ui.mapGid = S.gid; requestAnimationFrame(()=>{ sc.scrollLeft = 0; placeDock(); mapHint(sc); }); } }
   let out = `<defs><linearGradient id="pier-fade" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity="1"/></linearGradient>
     <mask id="pier-mask" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#pier-fade)"/></mask><pattern id="waves" width="60" height="26" patternUnits="userSpaceOnUse"><path d="M0 13q15-10 30 0t30 0" fill="none" stroke="#B2A5F0" stroke-width="3" stroke-linecap="round"/></pattern></defs>
   <rect x="${minX+3}" y="${minY+3}" width="${w-6}" height="${h-6}" rx="38" fill="#C7BDF7" stroke="#3A2341" stroke-width="5"/>
@@ -4520,17 +4549,36 @@ function renderDock(){
 /* on a wide screen the paws rise from the bottom edge of the map: match the dock to the map's drawn frame,
    which is letterboxed inside the svg */
 /* the logo sits on the top right of the map's drawn frame, half over its edge (the svg is letterboxed, so measure the frame) */
+/* a note over the middle of a wide map, once per game, until the map is dragged (or a few seconds pass) */
+function mapHint(sc){
+  const old = $('#map-hint'); if(old) old.remove();
+  const F = mapFrame(), wrap = sc.parentElement; if(!F || !wrap) return;
+  const w = wrap.getBoundingClientRect(), el = document.createElement('div');
+  el.id = 'map-hint'; el.setAttribute('aria-hidden','true');
+  el.innerHTML = '<span class="mh-a">←</span> Drag the map sideways <span class="mh-a r">→</span>';
+  el.style.left = (F.fl + F.fw/2 - w.left) + 'px'; el.style.top = (F.ft + F.fh/2 - w.top) + 'px';
+  wrap.appendChild(el);
+  const gone = ()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 400); sc.removeEventListener('scroll', gone); };
+  sc.addEventListener('scroll', gone, {once:true}); setTimeout(gone, 7000);
+}
+/* where the map's drawn frame is on screen. The svg is letterboxed, and on the wide island it is wider than the screen
+   and scrolls, so the frame is the part you can see */
+function mapFrame(){
+  const svg = $('#board'), sc = $('#board-scroll'); if(!svg || !svg.viewBox || !svg.viewBox.baseVal || !svg.viewBox.baseVal.width) return null;
+  const r = svg.getBoundingClientRect(), c = sc ? sc.getBoundingClientRect() : r, vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
+  const fw = Math.min(vb.width*k, c.width), fh = vb.height*k;
+  return { fl: c.left + (c.width-fw)/2, ft: r.top + (r.height-fh)/2, fw, fh, k, svg };
+}
 function placeLogo(){
-  const lg = $('#map-logo'), svg = $('#board'); if(!lg || !svg || !svg.viewBox || !svg.viewBox.baseVal || !svg.viewBox.baseVal.width) return;
-  const wrap = lg.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
-  const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2;
+  const lg = $('#map-logo'), F = lg && mapFrame(); if(!lg || !F) return;
+  const wrap = lg.parentElement.getBoundingClientRect(), fw = F.fw, fl = F.fl, ft = F.ft;
   lg.style.top = (ft - wrap.top) + 'px';
   if(innerWidth<=920){ lg.style.right = ''; lg.style.left = (fl - wrap.left) + 'px'; }
   else { lg.style.left = ''; lg.style.right = (wrap.right - (fl + fw)) + 'px'; }
 }
 function placeDock(){
   const el = $('#dock'), svg = $('#board'); if(!el) return;
-  const wide = innerWidth > 920 && svg && !el.classList.contains('gone') && svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width;
+  const F = mapFrame(), wide = innerWidth > 920 && svg && !el.classList.contains('gone') && !!F;
   el.classList.toggle('on-board', !!wide);
   if(!wide){
     ['left','width','height'].forEach(k=>el.style[k]='');
@@ -4548,8 +4596,7 @@ function placeDock(){
     }
     return;
   }
-  const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
-  const fw = vb.width*k, fh = vb.height*k, fl = r.left + (r.width-fw)/2, ft = r.top + (r.height-fh)/2, inset = 5.5*k;
+  const k = F.k, fw = F.fw, fh = F.fh, fl = F.fl, ft = F.ft, inset = 5.5*k;
   el.style.left = (fl+inset)+'px'; el.style.width = (fw-2*inset)+'px';
   el.style.bottom = (innerHeight-(ft+fh))+'px'; el.style.height = Math.min(340, fh-inset)+'px';
   el.style.setProperty('--rad', (38*k)+'px');
@@ -5263,7 +5310,7 @@ function startScreen(){
       ${where==='here' ? '' : lbCard}
     </div>
     <div class="lobby-chat" id="peek-chat">${chatOn() && !ON.ws ? chatBtnHTML() : ''}</div>
-    <p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p>
+    ${creditHTML()}
     ${window.WI_OFFLINE ? '<p class="online-note">Playing with friends on their own phones turns on once Whisker Isles is live on whisker.jessyux.com.</p>' : ''}
    </main>`;
 }
@@ -5395,7 +5442,7 @@ function lobbyScreen(){
         : `<button class="btn primary big start-cta ready-cta${mySeat&&mySeat.ready?' on':''}" aria-pressed="${!!(mySeat&&mySeat.ready)}" onclick="G.ready()">${mySeat&&mySeat.ready?'✓ Ready · tap to undo':'Ready'}</button>`}
     </div></div>
     <div class="chat-slot" id="chat-slot"></div>
-    <p class="credit">Designed by <a href="https://jessyux.com/" target="_blank" rel="noopener">JessyUX</a></p>
+    ${creditHTML()}
   </main>`;
 }
 
