@@ -3049,15 +3049,27 @@ function connect(code, auto){
   try{ ws = new WebSocket(`${proto}://${location.host}${API}/ws/${code}`); }
   catch(e){ ON.status='idle'; ON.err = `Couldn't reach the game server.`; render(); return; }
   ON.ws = ws;
-  ws.onopen = () => { ON.retry=0; ws.send(JSON.stringify({type:'hello', pid:ON.pid, name:ui.form.name, breed:ui.form.breed, auto:!!auto})); };
-  ws.onmessage = ev => { let m; try{ m=JSON.parse(ev.data); }catch(e){ return; } onMsg(m); };
+  ws.onopen = () => { ON.retry=0; heartbeat(ws); ws.send(JSON.stringify({type:'hello', pid:ON.pid, name:ui.form.name, breed:ui.form.breed, auto:!!auto})); };
+  ws.onmessage = ev => { ON.heard = Date.now(); if(ev.data==='pong') return; let m; try{ m=JSON.parse(ev.data); }catch(e){ return; } onMsg(m); };
   ws.onclose = () => {
+    if(ON.beat){ clearInterval(ON.beat); ON.beat=null; }
     if(ON.ws!==ws || !ON.code || ON.status==='error' || ON.status==='idle') return;
     ON.retry++;
     if(ON.retry>6){ ON.status='error'; ON.err=`Lost the connection to the game. Check your internet and rejoin with code ${ON.code}.`; render(); return; }
     ON.offline=true; render();
     setTimeout(()=>{ if(ON.code && ON.ws===ws) connect(ON.code, true); }, 800*ON.retry);
   };
+}
+/* heartbeat: a ping every 25s keeps phones and Wi-Fi from dropping a quiet connection (the server answers without
+   waking the room). Nothing heard for 70s means the line is dead: close it so onclose reconnects */
+function heartbeat(ws){
+  if(ON.beat) clearInterval(ON.beat);
+  ON.heard = Date.now();
+  ON.beat = setInterval(()=>{
+    if(ON.ws!==ws || ws.readyState!==1){ clearInterval(ON.beat); ON.beat=null; return; }
+    if(Date.now()-ON.heard > 70000){ try{ ws.close(); }catch(e){} return; }
+    try{ ws.send('ping'); }catch(e){}
+  }, 25000);
 }
 /* ---------- alerts: it's your turn, the game started, a friend joined ----------
    Always a toast in the page. When the tab is hidden or unfocused it also flashes the tab title, plays a short

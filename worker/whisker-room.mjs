@@ -32,6 +32,7 @@ import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
 import { cleanChat, chatReady, chatPush } from './whisker-chat.mjs';
+import { sweep, MAX_SOCKETS, NEW_PER_HOUR, PING, PONG } from './whisker-limits.mjs';
 import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom, leaveSeat } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
@@ -48,11 +49,31 @@ function json(status, body) {
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const newCode = (num) => `${pick(ADJ)}-${pick(NOUN)}` + (num ? `-${String(Math.floor(Math.random() * 90) + 10)}` : '');
 
+async function sha256hex(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* caps how many game codes one address makes an hour, so a script can't fill storage with empty rooms.
+   Uses the leaderboard's rate table (IPs only as a salted hash, rows gone after 2 hours). No database, no cap. */
+async function tooManyNew(request, env) {
+  const db = env.WHISKER_DB;
+  if (!db) return false;
+  const now = Date.now(), hour = 3600 * 1000;
+  const hash = 'new:' + await sha256hex((request.headers.get('cf-connecting-ip') || 'local') + (env.WHISKER_SALT || ''));
+  await db.prepare('DELETE FROM rate WHERE at < ?').bind(now - 2 * hour).run();
+  const { count } = await db.prepare('SELECT COUNT(*) AS count FROM rate WHERE hash = ? AND at > ?').bind(hash, now - hour).first();
+  if (count >= NEW_PER_HOUR) return true;
+  await db.prepare('INSERT INTO rate (hash, at) VALUES (?, ?)').bind(hash, now).run();
+  return false;
+}
+
 /* routes under /api/whisker-isles: POST /new makes a code, GET /ws/<code> opens the room */
 export async function whiskerIsles(request, env, pathname) {
   if (!env.ROOMS) return json(503, { error: 'Online games are not set up here.' });
   if (pathname === '/api/whisker-isles/new') {
     if (request.method !== 'POST') return json(405, { error: 'Not allowed.' });
+    if (await tooManyNew(request, env)) return json(429, { error: 'That\'s a lot of new games for one hour. Try again a little later, or continue a game you already have.' });
     // two words first; if those keep landing on games that already exist, add a number like the older codes
     for (let i = 0; i < 16; i++) {
       const code = newCode(i >= 10);
@@ -79,11 +100,33 @@ export async function whiskerIsles(request, env, pathname) {
 }
 
 export class WhiskerRoom extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    // heartbeat: the page's ping is answered here without waking the room, so phones keep the connection open for free
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG));
+  }
   async room() {
-    if (this._room === undefined) this._room = (await this.ctx.storage.get('room')) || null;
+    if (this._room === undefined) {
+      this._room = (await this.ctx.storage.get('room')) || null;
+      // rooms saved before the idle sweep existed get their alarm the first time they are opened
+      if (this._room && (await this.ctx.storage.getAlarm()) == null) await this.schedule(this._room);
+    }
     return this._room;
   }
-  async put(room) { room.updated = Date.now(); this._room = room; await this.ctx.storage.put('room', room); }
+  async put(room) { room.updated = Date.now(); this._room = room; await this.ctx.storage.put('room', room); await this.schedule(room); }
+
+  /* idle sweep: a room untouched for 60 days is deleted (worker/whisker-limits.mjs) */
+  async schedule(room) {
+    const s = sweep(room, Date.now(), 0);
+    await this.ctx.storage.setAlarm(s.action === 'wait' ? s.at : Date.now());
+  }
+  async alarm() {
+    const room = await this.room();
+    const s = sweep(room, Date.now(), this.ctx.getWebSockets().length);
+    if (s.action === 'wait') { await this.ctx.storage.setAlarm(s.at); return; }
+    if (s.action === 'delete') console.log(`room ${room.code} idle, deleted`);
+    await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); this._room = null;
+  }
 
   async fetch(request) {
     const url = new URL(request.url);
@@ -102,10 +145,11 @@ export class WhiskerRoom extends DurableObject {
         this.send(w, { type: 'error', deleted: true, message: 'The host deleted this game.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'deleted'); } catch (e) { /* closed */ }
       }
-      await this.ctx.storage.deleteAll(); this._room = null; this._chat = [];
+      await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); this._room = null; this._chat = [];
       return json(200, { ok: true });
     }
     if (url.pathname === '/ws') {
+      if (this.ctx.getWebSockets().length >= MAX_SOCKETS) return json(503, { error: 'This game has too many connections open. Close a tab and try again.' });
       const pair = new WebSocketPair(), [client, server] = Object.values(pair);
       this.ctx.acceptWebSocket(server);
       server.serializeAttachment({ pid: null });
@@ -354,7 +398,7 @@ export class WhiskerRoom extends DurableObject {
         else this.send(w, { type: 'error', detached: true, message: 'The host moved the game back to one screen.' });
         w.serializeAttachment({ pid: null }); try { w.close(1000, 'detached'); } catch (e) { /* closed */ }
       }
-      await this.ctx.storage.deleteAll(); this._room = null; this._chat = []; return;
+      await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); this._room = null; this._chat = []; return;
     }
     if (m.type === 'start') {
       if (room.started || room.host !== me || room.seats.length < 2 || !validState(m.state, room.seats.length)) return;

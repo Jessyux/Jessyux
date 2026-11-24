@@ -51,3 +51,21 @@ Commit first (the archive uses HEAD). Ask before deploying and before committing
 - Keep backups: when rewriting a page (or a worker module), leave the previous version as `<name>.before-<change>.<ext>` rather than deleting it, and show visual rewrites in the browser pane first. Jessy often asks to go back to an earlier look, and these backups are how. Backups are committed alongside the change.
 - Don't commit the untracked raw generation files in `assets-source/emotes/` (`raw-*`, `chk*`). Add `assets-source/<topic>/` folders explicitly rather than `git add -A`.
 - Testing online play locally needs two origins for two players (`localhost:8795` and `127.0.0.1:8795`), since each stores its device id in its own localStorage. The browser pane runs at phone width by default, which is the layout to check first. Timers and animations pause in a background tab, so make sure the tab you test is the fronted one.
+
+# jessyux repo
+
+## Whisker Isles deploy rule (read before any deploy)
+
+**Always commit and push before deploying Whisker Isles. Deploy only from `whisker-isles`, after pulling.**
+
+1. `git checkout whisker-isles && git pull origin whisker-isles`
+2. Make the change, run `node --test tests/*.cjs tests/*.mjs`
+3. `git commit` and `git push origin whisker-isles`, and confirm `git status` shows nothing ahead or uncommitted
+4. Only then: `node build-game.mjs && npx --yes wrangler@4 deploy`
+
+**Why:** `wrangler deploy` uploads whatever files are on the machine, not what's on GitHub. On 24 Nov 2026 a session deployed commits that were never pushed. A later session then deployed from GitHub, which was a day behind, and wiped chat, rematch and the loading fix off the live game until it was rolled back.
+
+- Never deploy from another branch, a worktree that isn't up to date with `origin/whisker-isles`, or uncommitted files.
+- If a push is rejected because GitHub has newer commits, merge them in and test again before deploying. Never force-push.
+- After deploying, report the Cloudflare version ID and the commit SHA it was built from.
+- Live site: `whisker.jessyux.com` (Worker `whisker-isles`). To undo a bad deploy: `npx wrangler deployments list --name whisker-isles`, then `npx wrangler rollback <previous version id> --name whisker-isles`.
