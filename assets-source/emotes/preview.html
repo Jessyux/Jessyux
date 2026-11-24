@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ginger emotes</title>
+<style>body{margin:0;background:#C9A9E6;font-family:system-ui;display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:24px}
+.c{text-align:center;color:#3b1f3f;font-weight:800}.c img{width:200px;height:200px;display:block;filter:drop-shadow(0 0 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)}
+.c.b img{animation:bob .7s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-6px) rotate(-2deg)}}</style>
+<div class="c b"><img id="groom" src="cat-ginger-groom-1.png"><br>Groom</div>
+<div class="c b"><img id="hiss" src="cat-ginger-hiss-1.png"><br>Hiss</div>
+<div class="c b"><img id="tap" src="cat-ginger-tap-1.png"><br>Tap</div>
+<script>['groom','hiss','tap'].forEach(k=>{let n=1;setInterval(()=>{n=3-n;document.getElementById(k).src=`cat-ginger-${k}-${n}.png`},350)})</script>
