@@ -3077,8 +3077,13 @@ function audioUnlock(){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
     mediaChannel();
-    let c = ALERT.ctx || (ALERT.ctx = new C());
-    if(c.state==='closed'){ audioFresh(C); c = ALERT.ctx; }
+    /* a sound context made before the first tap (the game starts the music on its own) can stay stuck on an iPhone home-screen app,
+       so the first tap swaps it for one made inside the tap itself */
+    let c = ALERT.ctx;
+    if(!c){ c = ALERT.ctx = new C(); }
+    else if(!ALERT.tapCtx && c.state!=='running'){ audioFresh(C); c = ALERT.ctx; }
+    else if(c.state==='closed'){ audioFresh(C); c = ALERT.ctx; }
+    ALERT.tapCtx = true;
     if(c.state!=='running'){
       c.resume().catch(()=>{});
       clearTimeout(ALERT.wakeT);
