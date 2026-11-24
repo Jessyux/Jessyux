@@ -3046,16 +3046,52 @@ function musSync(inGame){ if(inGame && MUS.on) musStart(); else if(!inGame) musS
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) musStop(); else musSync(!!$('#cat-hud')); });
 /* phones only let sound start from a real tap, and on iPhone a finger's pointerdown doesn't count (touchend and pointerup do).
    A home-screen app also comes back from another app with its sound "interrupted", so every tap wakes it up again */
+/* iPhone browsers (Safari, and Chrome on iPhone, which is Safari underneath) keep Web Audio on the "ringer" channel, so the silent switch or a
+   home-screen app mutes it. Telling the page it is playing media, and keeping a silent clip going, moves it to the media channel. */
+const IOS_LIKE = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+function mediaChannel(){
+  try{ if(navigator.audioSession && navigator.audioSession.type!=='playback') navigator.audioSession.type = 'playback'; }catch(e){}
+  if(!IOS_LIKE || ALERT.hush) return;
+  try{
+    const n = 8000, v = new DataView(new ArrayBuffer(44 + n*2)), w = (o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
+    w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVEfmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+    const el = new Audio(URL.createObjectURL(new Blob([v.buffer], {type:'audio/wav'}))); el.loop = true; el.setAttribute('playsinline',''); el.volume = 1;
+    ALERT.hush = el; el.play().catch(()=>{ ALERT.hush = null; });
+  }catch(e){}
+}
+/* a sound context that will not wake up after a tap (some phones leave it "suspended" or "interrupted") is swapped for a fresh one */
+function audioFresh(C){
+  const old = ALERT.ctx;
+  if(MUS.timer){ clearInterval(MUS.timer); MUS.timer = null; }
+  MUS.bus = null; MUS.crackle = null; ALERT.primed = false;
+  ALERT.ctx = new C();
+  if(old){ try{ old.close().catch(()=>{}); }catch(e){} }
+  try{ ALERT.ctx.resume().catch(()=>{}); }catch(e){}
+  audioPrime(ALERT.ctx); musSync(!!$('#cat-hud'));
+}
+function audioPrime(c){
+  if(ALERT.primed) return; ALERT.primed = true;
+  try{ const b = c.createBuffer(1,1,22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); }catch(e){}
+}
 function audioUnlock(){
   try{
     const C = window.AudioContext || window.webkitAudioContext; if(!C) return;
-    const c = ALERT.ctx || (ALERT.ctx = new C());
-    if(c.state!=='running') c.resume().catch(()=>{});
-    if(!ALERT.primed){ ALERT.primed = true; const b = c.createBuffer(1,1,22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); }
+    mediaChannel();
+    let c = ALERT.ctx || (ALERT.ctx = new C());
+    if(c.state==='closed'){ audioFresh(C); c = ALERT.ctx; }
+    if(c.state!=='running'){
+      c.resume().catch(()=>{});
+      clearTimeout(ALERT.wakeT);
+      ALERT.wakeT = setTimeout(()=>{
+        if(ALERT.ctx!==c || c.state==='running' || document.hidden || Date.now()-(ALERT.freshAt||0) < 4000) return;
+        ALERT.freshAt = Date.now(); audioFresh(C);
+      }, 700);
+    }
+    audioPrime(c);
   }catch(e){}
 }
 ['touchend','pointerup','click','keydown'].forEach(ev=>document.addEventListener(ev, audioUnlock, {passive:true, capture:true}));
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && ALERT.ctx && ALERT.ctx.state!=='running') ALERT.ctx.resume().catch(()=>{}); });
+document.addEventListener('visibilitychange', ()=>{ if(ALERT.hush){ if(document.hidden) ALERT.hush.pause(); else ALERT.hush.play().catch(()=>{}); } if(!document.hidden && ALERT.ctx && ALERT.ctx.state!=='running') ALERT.ctx.resume().catch(()=>{}); });
 /* ---------- chat: friends talk during an online game. Live only: it is never saved, and is forgotten when the game ends ---------- */
 const CHAT = {open:false, msgs:[], unread:0, typing:{}, sentAt:0, offT:null, peekT:null};
 function chatOn(){ return !!(S && S.online && ON.lobby && ON.ws); }
