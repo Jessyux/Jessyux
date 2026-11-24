@@ -1612,7 +1612,7 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .chat-box.inline{position:static;transform:none;z-index:auto;width:100%;max-width:520px;max-height:none;margin:0 auto;box-sizing:border-box}
 .chat-box.inline .chat-x{display:none}
 .chat-box.inline .chat-list{padding-right:0;max-height:min(34vh,260px);min-height:110px}
-#chat-fab{position:fixed;right:14px;bottom:14px;z-index:176}
+body.chat-over .cat-tools{z-index:174}   /* above the dimmed pop-up, below the chat box (175) */
 #chat-fab .cat-mute{width:46px;height:46px}#chat-fab .cat-mute svg{width:24px;height:24px}
 .chat-slot{width:min(100%,520px);margin:18px auto 0;padding:0 14px;box-sizing:border-box}
 .chat-slot:empty{display:none}
@@ -4779,13 +4779,11 @@ function oddsChart(){
 
 /* ---------- overlays ---------- */
 let lastOverlay = '';
-/* a pop-up (a trade, a counter-offer, a barter) covers the chat button, so while one is up the chat button floats above it */
+/* a pop-up (a trade, a counter-offer, a barter) dims the page, so while one is up the chat button in the row at the bottom of the map
+   is lifted above it: the same chat, still where it always is, instead of a second floating button */
 function chatFabSync(overlayOn){
-  let f = document.getElementById('chat-fab');
-  const want = !!(overlayOn && S && S.online && chatOn());
-  if(!want){ if(f) f.remove(); return; }
-  if(!f){ f = document.createElement('div'); f.id = 'chat-fab'; document.body.appendChild(f); }
-  if(!f.firstChild) { f.innerHTML = chatBtnHTML(); chatBadge(); }
+  const f = document.getElementById('chat-fab'); if(f) f.remove();
+  document.body.classList.toggle('chat-over', !!(overlayOn && S && S.online && chatOn()));
 }
 function renderOverlay(){
   const o = $('#overlay');
