@@ -52,7 +52,8 @@ const BOARD_TTL = 30;
 const boardKey = (request) => new Request(new URL('/api/leaderboard', request.url).toString());
 async function cachedBoard(request, db) {
   const cache = globalThis.caches && caches.default;
-  if (cache) { const hit = await cache.match(boardKey(request)); if (hit) return hit; }
+  // a cached copy goes back out as no-store: the zone's Browser Cache TTL would otherwise turn max-age=30 into hours
+  if (cache) { const hit = await cache.match(boardKey(request)); if (hit) return json(200, await hit.json()); }
   const res = json(200, { rows: await listBoard(db) });
   if (cache) {
     const copy = new Response(res.clone().body, res);
