@@ -6,6 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Jessy's portfolio repo (jessyux.com) with a second product in it: **Whisker Isles**, a cat-themed Catan-style board game at whisker.jessyux.com. This worktree is the `whisker-isles` branch, and the game is its own Cloudflare Worker (configured in `wrangler.jsonc`). The portfolio is a separate Worker deployed from the `accessibility-playground` branch, so a deploy from either branch never touches the other. Do not deploy the game from any other branch.
 
+## Every session: start and finish
+
+Run these checks only when Jessy says "Whisker Isles" at the start of the chat. Any other chat skips them.
+
+**Start, before any change:**
+
+1. Confirm you are in the whisker-isles worktree, on branch `whisker-isles`.
+2. `git fetch origin whisker-isles`, then `git status -sb`.
+3. Tell Jessy in one line: in sync, GitHub ahead (list the commits), or this folder ahead. If behind, pull before editing. If the branches have diverged, stop and ask.
+
+**Finish, in the last message of any session that changed files:**
+
+- Commits made (SHA and subject), and the test result.
+- Pushed? `origin/whisker-isles` SHA against local HEAD.
+- Deployed? The Cloudflare version ID and the SHA it was built from, or "not deployed".
+- Live against GitHub: in sync, or what live is missing.
+- Anything left uncommitted or untracked.
+
 ## Commands
 
 ```powershell
