@@ -171,6 +171,16 @@ a.btn{color:var(--plum);text-decoration:none}
 .app .topbar .wi-acts{flex:1;min-width:0}
 .app .topbar .wi-act{flex:1;justify-content:center}
 @media (max-width:920px){ .app .topbar.wi-nav{grid-template-columns:auto minmax(0,1fr);gap:10px} .app .topbar.wi-nav.stacked{grid-template-columns:minmax(0,1fr)} .app .topbar .wi-right{padding-right:0} .app .topbar{padding-bottom:10px} }
+/* on a phone the nav pill sits right beside the avatar; the code chip and host tools drop to a row below */
+@media (max-width:920px){
+  .app .topbar.wi-nav.stacked{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"me acts" "extras extras";align-items:center}
+  .app .topbar.wi-nav.stacked .wi-left{display:contents}
+  .app .topbar.wi-nav.stacked .wi-me{grid-area:me}
+  .app .topbar.wi-nav.stacked #tools-left{grid-area:extras;display:flex;flex-wrap:wrap;gap:8px}
+  .app .topbar.wi-nav.stacked #tools-left:empty{display:none}
+  .app .topbar.wi-nav.stacked .wi-right{grid-area:acts}
+}
+@media (max-width:560px){ .app .topbar .wi-me span{display:none} .app .topbar .wi-me{padding-right:0} }
 .board-wrap{position:relative;min-width:0}
 #board{width:100%;height:auto;display:block}
 .board-wrap{display:flex;flex-direction:column;gap:12px}
@@ -1442,7 +1452,7 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 @keyframes bootRoll{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#boot .b-logo,#boot .b-cats img,#boot .b-yarn{animation:none}#boot{transition:none}}
 /* waiting for the game server (joining, making a code, reconnecting): same look as the start-up screen, so it never looks frozen */
-#netwait{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background-color:rgba(255,239,244,.94);background-image:radial-gradient(#F9D3E0 1.6px, transparent 1.7px);background-size:22px 22px;color:#3A2341;padding:24px;text-align:center;animation:nwIn .3s ease .35s both}
+#netwait{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background-color:rgba(255,239,244,.94);background-image:radial-gradient(#F9D3E0 1.6px, transparent 1.7px);background-size:22px 22px;color:#3A2341;padding:24px;text-align:center;animation:nwIn .15s ease both}
 @keyframes nwIn{from{opacity:0}to{opacity:1}}
 @keyframes nwSlide{0%,100%{left:6%}50%{left:94%}}
 #netwait .b-logo{width:min(300px,70vw);height:auto;display:block;animation:bootBob 2.4s ease-in-out infinite;filter:drop-shadow(0 4px 0 rgba(58,35,65,.18))}
@@ -1490,11 +1500,11 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .chat-box[hidden]{display:none}
 .chat-x{position:absolute;top:4px;right:6px;width:30px;height:30px;border:0;background:none;font-size:1.5rem;line-height:1;color:var(--plum-2);cursor:pointer;border-radius:50%}
 .chat-x:hover,.chat-x:focus-visible{background:rgba(58,35,65,.1)}
-.chat-list{list-style:none;margin:0;padding:0 22px 0 0;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;min-height:84px}
+.chat-list{list-style:none;margin:0;padding:4px 22px 8px 6px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;min-height:84px}
 .cm{display:flex;gap:9px;align-items:flex-start}
 .cm-av{flex:none;display:block}
 /* the cat (no circle) and its name are one sticker: one white edge round both, one shadow */
-.cm-stk{flex:none;display:flex;flex-direction:column;align-items:center;min-width:54px;max-width:96px;padding-top:2px;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(1px 3px 0 rgba(58,35,65,.3))}
+.cm-stk{flex:none;display:flex;flex-direction:column;align-items:center;min-width:54px;max-width:96px;padding:2px 3px 5px;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(1px 3px 0 rgba(58,35,65,.3))}
 .cm-stk .portrait,.ct-avs .portrait{border:0;border-radius:0;background:none;overflow:visible;box-shadow:none;filter:none}
 .cm-stk .portrait img,.cm-stk .portrait svg,.ct-avs .portrait img,.ct-avs .portrait svg{object-fit:contain;object-position:50% 50%}
 .cm-stk .portrait{width:44px;height:44px}
@@ -1504,6 +1514,10 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 /* the message sits in a box in its sender's colour; yours on the right, everyone else's on the left */
 .cm p{margin:0;min-width:0;align-self:center;font-weight:800;font-size:.98rem;line-height:1.35;overflow-wrap:anywhere;color:color-mix(in srgb,var(--c,#7A5A85) 55%,#3A2341);padding:7px 12px;border:2.5px solid var(--plum);border-radius:16px 16px 16px 5px;background:color-mix(in srgb,var(--c,#fff) 20%,#fff);box-shadow:2px 2px 0 var(--c,var(--plum))}
 .cm.mine p{border-radius:16px 16px 5px 16px}
+.cm-col{display:flex;flex-direction:column;min-width:0;align-self:center}
+.cm-col p{align-self:auto}
+.cm.mine .cm-col{align-items:flex-end}
+.cm-time{display:block;margin:4px 6px 0;font-size:.62rem;font-weight:800;line-height:1.2;letter-spacing:.01em;color:var(--plum-2)}
 .cm-empty{text-align:center;color:var(--plum-2);font-weight:800;font-size:.88rem;padding:18px 8px}
 .chat-typing{display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:800;color:var(--plum-2)}
 .chat-typing:not(:empty){min-height:30px;padding-top:4px}
@@ -3056,9 +3070,16 @@ function chatBadge(){
   const n = b.querySelector('.chat-n'); if(n) n.remove();
   if(CHAT.unread) b.insertAdjacentHTML('beforeend', `<span class="chat-n" aria-hidden="true">${CHAT.unread>9?'9+':CHAT.unread}</span>`);
 }
+/* a small "3:42 pm · 24 Nov" under each message */
+function chatWhen(t){
+  if(!t) return '';
+  const d = new Date(t); if(isNaN(d)) return '';
+  const tm = d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}), dt = d.toLocaleDateString([], {day:'numeric', month:'short'});
+  return `<time class="cm-time" datetime="${d.toISOString()}">${tm} · ${dt}</time>`;
+}
 function chatMsgHTML(m){
   const w = chatSeat(m.from), name = w ? w.p.name : 'A cat';
-  return `<li class="cm${w && w.mine?' mine':''}"${w?` style="--c:${pcol(w.p)}"`:''}><span class="cm-stk">${w?`<span class="cm-av" aria-hidden="true">${portrait(w.p)}</span>`:''}<b>${esc(name)}</b></span><p>${esc(m.text)}</p></li>`;
+  return `<li class="cm${w && w.mine?' mine':''}"${w?` style="--c:${pcol(w.p)}"`:''}><span class="cm-stk">${w?`<span class="cm-av" aria-hidden="true">${portrait(w.p)}</span>`:''}<b>${esc(name)}</b></span><span class="cm-col"><p>${esc(m.text)}</p>${chatWhen(m.t)}</span></li>`;
 }
 function chatDraw(){
   chatBadge();
@@ -4238,6 +4259,8 @@ document.addEventListener('click', e=>{
   if(h){ const k = h.dataset.hand; if(!e.target.closest('.dock-tab') && !(ui.handUp||{})[k]){ e.preventDefault(); e.stopPropagation(); setHand(k, true); } return; }
   if(handsUp() && !(e.target.closest && e.target.closest('.overlay'))) setHand(null, false);
 }, true);
+/* tapping anywhere off the chat box closes it (the chat button itself toggles it) */
+document.addEventListener('pointerdown', e=>{ if(!CHAT.open) return; if(e.target.closest && e.target.closest('.chat-box, .cat-chat, #chat-peek')) return; G.chat(); }, true);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && CHAT.open){ G.chat(); return; } if(e.key==='Escape' && handsUp() && !ui.modal) setHand(null, false); });
 document.addEventListener('pointerdown', e=>{
   const w = e.target.closest && e.target.closest('.build-wrap'); if(!w || !w.querySelector('.need') || e.pointerType==='mouse') return;
@@ -5076,7 +5099,7 @@ const G = {
     el.animate([{opacity:1},{opacity:0}],{duration:200,fill:'forwards'}).onfinish = ()=>el.remove();
     firstRoll({from}); },
   setupAway(){ ui.setupSeen = setupKey(); const el = document.getElementById('setup-prompt'); if(el) el.remove(); const r = $('#rollbar'); if(r){ r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); } },
-  rejoin(code){ ui.form.code = code; G.join(); },
+  rejoin(code){ ui.form.code = code; ON.err = null; G.join(); },
   /* a game moved online from this phone: Continue opens it by its code */
   resumeOnline(code, id){ const g = savesIndex().find(x=>x.id===id); if(!ui.form.name.trim() && g) ui.form.name = g.cats[0]; G.rejoin(code); },
   async goOnline(){
@@ -5126,7 +5149,7 @@ const G = {
   unlist(code){ if(!confirm(`Remove ${code} from your list? The game carries on for everyone else, and you can rejoin with the code and your name.`)) return; forgetGame(code); render(); },
   forgetSave(id){ const g = savesIndex().find(x=>x.id===id); if(!g || !confirm(`Delete the saved game with ${listNames(g.cats)}? You can't get it back.`)) return; deleteSave(id); if(ui.openSave===id) ui.openSave=null; render(); },
   openSave(id, on){ ui.openSave = on ? id : (ui.openSave===id ? null : ui.openSave); },
-  join(){ askNotify(); ON.status='connecting'; connect(ui.form.code); },
+  join(){ ON.status='connecting'; render(); setTimeout(askNotify, 0); connect(ui.form.code); },
   editMine(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(s && s.ready){ toast('Uncheck ready before editing', 'Tap Ready again to unlock your cat.'); return; } G.open('mycat'); },
   ready(){ const s = ON.lobby && ON.lobby.seats.find(x=>x.pid===ON.me); if(!s || !ON.ws) return; s.ready = !s.ready; if(s.ready && ui.modal) ui.modal=null; ON.ws.send(JSON.stringify({type:'ready', ready:s.ready})); ui.refocus='.ready-btn'; render(); },
   lobbyBreed(i){ ui.refocus='.breeds [aria-checked="true"]'; if(ON.ws) ON.ws.send(JSON.stringify({type:'breed', breed:i})); ui.form.breed=i; store.set('whisker-isles-breed', String(i)); },
