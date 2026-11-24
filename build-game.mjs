@@ -31,14 +31,15 @@ copy('whisker-manifest.webmanifest', 'manifest.webmanifest');
 // most art is inlined in ART_DATA; anything the page would fetch from assets/ instead is copied if it exists
 let html = readFileSync(resolve(ROOT, 'whisker-isles.html'), 'utf8');
 
-// The page is mostly pictures written into it (about 2.4 MB). The ones only needed once a game is going (the happy faces and the
-// tap, hiss and groom poses) become separate files named by their content, so a phone loads the first screen sooner and keeps them
+// The page is mostly pictures written into it (about 2.4 MB). Every picture the first screen does not need becomes a separate file named by their content, so a phone loads the first screen sooner and keeps them
 // for good (see _headers). The page then holds their address instead of the picture.
 const artMatch = html.match(/const ART_DATA = (\{.*?\});\n/s);
 const art = JSON.parse(artMatch[1]);
+// the pictures the first screen needs stay inside the page: the list is ART_CORE in the page
+const core = new Set([...html.match(/const ART_CORE = \[([^\]]*)\]/)[1].matchAll(/'([\w-]+)'/g)].map((m) => m[1]));
 let moved = 0, movedBytes = 0;
 for (const [name, uri] of Object.entries(art)) {
-  if (!/^cat-.+-(win|(tap|hiss|groom)-[12])$/.test(name)) continue;
+  if (core.has(name)) continue;
   const m = /^data:image\/webp;base64,(.+)$/.exec(uri); if (!m) continue;
   const buf = Buffer.from(m[1], 'base64');
   const file = `assets/${name}.${createHash('sha1').update(buf).digest('hex').slice(0, 8)}.webp`;
