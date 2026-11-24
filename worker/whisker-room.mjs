@@ -12,6 +12,7 @@
 //   convert {cats, you, state} host, right after hello in a new room: bring a game played on one screen online. The host
 //                              plays cats[you]; every other cat is an open seat that a friend takes by joining with its
 //                              name. The game waits until every cat has a device.
+//   again {}                   anyone seated, once the game is over: back to the lobby with the same cats and code
 //   release {pid}              host only: free a friend's cat (pid is the seat's public id) so someone else can take it
 //   detach {base, state}       host only: move the game back to one screen; everyone else is disconnected and the room closes
 // Server to client:
@@ -25,7 +26,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
 import { moveAlerts, startAlerts } from './whisker-notify.mjs';
-import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList } from './whisker-seat.mjs';
+import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom } from './whisker-seat.mjs';
 
 const MAX_SEATS = 10, MAX_STATE = 400_000, MAX_NAME = 14;
 const ADJ = ['sleepy','fluffy','sunny','tiny','bouncy','cosy','purry','silly','snoozy','zoomy','velvet','misty','pebble','honey','maple','minty','cocoa','toasty','sparkly','whisker'];
@@ -265,6 +266,10 @@ export class WhiskerRoom extends DurableObject {
       room.seats = r.seats; ensureSids(room.seats);
       room.started = true; room.state = m.state; room.ver = 1;
       await this.put(room); this.broadcast(room, true); return;
+    }
+    if (m.type === 'again') {
+      if (!room.seats.some(s => s.pid === me) || !rematchRoom(room)) return;
+      await this.put(room); this.broadcast(room, false); return;
     }
     if (m.type === 'release') {
       if (!room.started) return;

@@ -121,3 +121,13 @@ export function takeOverByName(room, newPid, name) {
   if (room.push && room.push[oldPid]) delete room.push[oldPid];   // the old device no longer gets this cat's alerts
   return { ok: true, seat: same, oldPid };
 }
+
+/* Play again: a finished game goes back to its lobby. The same code, the same cats with their names, colours
+   and looks, the same host; only the game is cleared and everyone's ready tick is lifted. Returns false when
+   there is nothing to do (not started, or not finished), so a second tap from another player changes nothing. */
+export function rematchRoom(room) {
+  if (!room || !room.started || !room.state || room.state.phase !== 'over') return false;
+  room.started = false; room.state = null; room.ver = (room.ver || 0) + 1;
+  for (const s of room.seats) s.ready = false;
+  return true;
+}

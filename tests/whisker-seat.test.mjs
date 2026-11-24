@@ -167,3 +167,26 @@ test('a cat picked from the list on a new device moves there by name', () => {
   assert.equal(t.ok, true); assert.equal(t.oldPid, 'secret-a');
   assert.equal(room.seats[0].pid, 'home-screen'); assert.equal(room.host, 'home-screen');
 });
+
+test('rematch puts a finished room back in the lobby with every cat, name and colour kept', () => {
+  assert.equal(typeof seat.rematchRoom, 'function');
+  const tint = { coat: '#fff', mark: '', iris: '', collar: '' };
+  const room = { code: 'sleepy-tuna-42', host: 'a', started: true, ver: 40, state: { phase: 'over', players: [{}, {}] },
+    seats: [{ pid: 'a', sid: 'pa', name: 'Mochi', breed: 1, color: 3, tint, ready: true }, { pid: 'b', sid: 'pb', name: 'Bean', breed: 2, color: 5, ready: true }] };
+  assert.equal(seat.rematchRoom(room), true);
+  assert.equal(room.started, false);
+  assert.equal(room.state, null);
+  assert.equal(room.code, 'sleepy-tuna-42');
+  assert.equal(room.host, 'a');
+  assert.ok(room.ver > 40, 'the version keeps climbing');
+  assert.deepEqual(room.seats.map(s => [s.name, s.breed, s.color, s.ready]), [['Mochi', 1, 3, false], ['Bean', 2, 5, false]]);
+  assert.deepEqual(room.seats[0].tint, tint);
+});
+
+test('rematch only works on a finished game, and a second tap changes nothing', () => {
+  const live = { started: true, ver: 3, state: { phase: 'play' }, seats: [{ pid: 'a' }] };
+  assert.equal(seat.rematchRoom(live), false);
+  assert.equal(live.started, true);
+  const lobby = { started: false, ver: 3, state: null, seats: [] };
+  assert.equal(seat.rematchRoom(lobby), false);
+});

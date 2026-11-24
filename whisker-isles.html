@@ -1,4 +1,12 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* online setup and lobby wear the same room and the same big buttons as the in-person screen */
+.code-entry{cursor:default;width:min(100%,460px);padding:8px 14px}
+.code-entry .code-in{width:100%;box-sizing:border-box;font-family:var(--display);font-size:clamp(1.15rem,5.4vw,1.9rem);text-align:center;color:var(--plum);background:#FFF7DA;border:2.5px dashed var(--plum-2);border-radius:14px;padding:4px 8px}
+.code-entry .code-in::placeholder{color:#B9A6BF}
+.cozy-online .hint.alert{margin:6px auto 0;max-width:46ch}
+.crew-online .field{margin-top:0}
+.crew-lobby{margin-top:18px}
+</style>
 <title>Whisker Isles</title>
 <link rel="stylesheet" href="/a11y/home-float.css">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -1443,6 +1451,13 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 #netwait .b-say{margin:0;font-weight:900;font-size:1rem;color:#6B4F73}
 @media (prefers-reduced-motion:reduce){#netwait,#netwait .b-logo,#netwait .b-cats img,#netwait .b-yarn,#netwait .b-yarn img{animation:none}}
 
+
+/* the big buttons sit half on the room's bottom frame and half off it */
+.corner-frame{position:relative;margin-bottom:58px}
+.corner-go{position:absolute;left:0;right:0;bottom:0;transform:translateY(50%);z-index:6;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 26px;align-items:end}
+.corner-go .btn{width:100%;padding-left:.6em;padding-right:.6em}
+@media (max-width:480px){.corner-go{gap:10px;padding:0 14px}.corner-go .btn{font-size:.95rem;min-height:52px}}
+.crew-online{margin-top:0}
 </style>
 </head><body>
 <div id="boot" role="status" aria-live="polite" aria-label="Loading Whisker Isles">
@@ -3398,7 +3413,10 @@ function onMsg(m){
     }
     if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
-    if(!m.lobby.started){ ON.status='lobby'; S=null; render(); return; }
+    if(!m.lobby.started){
+      if(S){ document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); ui.hideWin = false; ui.modal = null; ui.deal = null; ui.emoteSeen = undefined; ui.lastSwipe = null; $('#root').innerHTML=''; window.scrollTo(0,0); }
+      ON.status='lobby'; S=null; render(); return;
+    }
   }
   if(m.state){ applyRemote(m.state, m.ver); }
   else render();
@@ -4369,7 +4387,7 @@ function winHTML(){
     <h2>${S.online&&ON.mine.includes(w)?'You win!':pname(w)+' wins!'}</h2><p>The comfiest cat on Whisker Isles.</p>
     <div class="scores">${order.map(({i,place,pts})=>`<div><span>${ORD[place-1]||place+'th'} ${pname(i)}</span><b>${vp(i,true)} points${pts?` <small class="lb-earn">+${pts} leaderboard</small>`:''}</b></div>`).join('')}</div>
     ${winBoard()}
-    <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn small" onclick="G.open('board')">Leaderboard</button><button class="btn primary" onclick="G.toStart()">Play again</button></div></div>`;
+    <div class="actions center"><button class="btn small" onclick="G.hideWin()">Look at the board</button><button class="btn small" onclick="G.open('board')">Leaderboard</button><button class="btn primary" onclick="G.playAgain()">Play again</button></div></div>`;
 }
 function modalHTML(){
   const m = ui.modal;
@@ -4614,26 +4632,31 @@ function startScreen(){
         ${games}
       </section>`;
   const inviteCode = !window.WI_OFFLINE && linkCode() ? normCode(linkCode()) : '', invited = !!inviteCode && ui.form.code===inviteCode;
-  const online = window.WI_OFFLINE ? '' : `<section class="card mode${invited?' invited':''}">
-        ${invited ? `<h2>You're invited!</h2>
-        <p class="muted">Join this game: <b class="invite-code">${esc(inviteCode)}</b></p>` : `<h2>Play online with friends</h2>
-        <p class="muted">Everyone plays on their own phone or laptop.</p>`}
-        <label class="field">Your name<input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="e.g. Mochi" oninput="G.formName(this.value)"></label>
-        <div class="field">Your cat</div>
+  /* online setup lives in the cat corner room, like the lobby it leads to: your cat and name on a pillow, the game code on the wall */
+  const online = window.WI_OFFLINE ? '' : `<div class="corner-frame"><section class="cozy cozy-online${invited?' invited':''}" style="--corner:url(${artSrc('lobby-corner')})" aria-labelledby="on-h">
+        <div class="cozy-bar">
+          <div class="bar-title"><h2 id="on-h">${invited ? "You're invited!" : 'The cat corner'}</h2><p>${invited ? 'Pick your name and cat, then join.' : 'Pick your name and cat, then make a game or join a friend\'s.'}</p></div>
+        </div>
+        ${invited ? `<div class="code-pill code-entry"><span class="code-label">Joining game</span><span class="code-row"><span class="code-txt">${esc(inviteCode)}</span></span></div>`
+          : `<div class="code-pill code-entry"><label class="code-label" for="on-code">Have a code? Type it here</label><input id="on-code" class="code-in" value="${esc(ui.form.code)}" placeholder="sleepy-tuna-42" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();G.join()}"></div>`}
+        ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
+        <button class="room-prop" onclick="G.where('here')" data-tip="Play in person instead" aria-label="Play in person instead"><img src="${artSrc('table-game')}" alt=""></button>
+        <ul class="nooks ring" aria-label="Your cat"><li class="nook seat-nook me" data-pr="0" style="--pillow:#FFE9A8">
+          <span class="nook-cat">${portrait({name:ui.form.name, breed:ui.form.breed, color:ui.form.breed})}</span>
+          <span class="pillow" aria-hidden="true"></span>
+          <input id="on-name" maxlength="14" value="${esc(ui.form.name)}" placeholder="Your name" autocomplete="off" spellcheck="false" aria-label="Your name" oninput="G.formName(this.value)">
+        </li></ul>
+      </section>
+        <div class="corner-go">
+          ${invited ? `<button class="btn big online-cta" onclick="G.skipInvite()">Make a different game</button>
+          <button class="btn primary big start-cta" ${busy?'disabled':''} onclick="G.join()">${ON.status==='connecting'?'Joining…':'Join the game'}</button>`
+          : `<button class="btn big online-cta" ${busy?'disabled':''} onclick="G.join()">${ON.status==='connecting'?'Joining…':'Join with code'}</button>
+          <button class="btn primary big start-cta" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>`}
+        </div></div>
+      <section class="card crew crew-rest crew-online" aria-label="Pick your cat">
+        <div class="field">Pick your cat</div>
         ${breedPicker(ui.form.breed, [], 'G.formBreed')}
         ${games}
-        ${invited ? `<div class="online-actions invited">
-          <button class="btn primary big" ${busy?'disabled':''} onclick="G.join()">${ON.status==='connecting'?'Joining…':'Join '+esc(inviteCode)}</button>
-        </div>
-        <p class="where-swap"><button class="btn small" onclick="G.skipInvite()">Make a different game</button></p>` : `<div class="online-actions">
-          <button class="btn primary" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>
-          <span class="or">or</span>
-          <form class="join" onsubmit="event.preventDefault();G.join()">
-            <input id="on-code" value="${esc(ui.form.code)}" placeholder="Code" aria-label="Game code" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="G.formCode(this.value)">
-            <button class="btn" ${busy?'disabled':''}>${ON.status==='connecting'?'Joining…':'Join'}</button>
-          </form>
-        </div>
-        <p class="where-swap">${swap}</p>`}
       </section>`;
   const lbCard = `      <section class="card lb-card" aria-labelledby="lb-h">
         <div class="crew-head"><h2 id="lb-h">Leaderboard</h2><span class="muted">Win 3, 2nd 2, 3rd 1</span></div>
@@ -4647,7 +4670,7 @@ function startScreen(){
       ${heroHTML()}
     </div>
     <div class="raft">
-      ${ON.err?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
+      ${ON.err && where!=='online'?`<p class="hint alert" role="alert">${esc(ON.err)}</p>`:''}
       ${!where ? choose : ''}
       ${where==='here' ? `<section class="cozy cozy-here" style="--corner:url(${artSrc('lobby-here')})" aria-labelledby="crew-h">
         <div class="cozy-bar">
@@ -4797,7 +4820,7 @@ function lobbyScreen(){
   const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" data-tip="Click to copy invite link" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
     <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${homeAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}</div></nav>
-    <section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
+    <div class="corner-frame"><section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-bar">
         <h2>The cat corner</h2><span class="cat-count">${n} ${n===1?'cat':'cats'}${n>MAX_CLASSIC?' · Big Island':''}</span>
         ${bellBtn()}
@@ -4809,11 +4832,11 @@ function lobbyScreen(){
       <button class="room-prop${isHost?'':' locked'}" onclick="G.lobbyToPerson()" data-tip="${isHost?'Play in person instead':'Only the host can change the game type'}" aria-label="${isHost?'Leave this lobby and play in person instead':'Only the host can change the game type'}"><img src="${artSrc('table-game')}" alt=""></button>
       <ul class="nooks ring" aria-label="Cats in the lobby">${cats}${invite}</ul>
     </section>
-    <div class="online-actions lobby-go">
-      <button class="btn" onclick="G.toStart()">Leave</button>
-      ${isHost ? `<button class="btn primary" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Invite a friend to start'}</button>`
-        : `<span class="muted">Host starts soon…</span>`}
-    </div>
+    <div class="corner-go">
+      <button class="btn big online-cta" onclick="G.toStart()">Leave</button>
+      ${isHost ? `<button class="btn primary big start-cta" ${n>=2?'':'disabled'} onclick="G.hostStart()">${n>=2?`Start with ${n} cats`:'Invite a friend'}</button>`
+        : `<button class="btn primary big start-cta" disabled>Host starts soon…</button>`}
+    </div></div>
     <p class="credit">Designed by <a href="https://jessyux.com/">JessyUX</a></p>
   </main>`;
 }
@@ -4839,11 +4862,22 @@ const G = {
     newGame(seats, {online:false}); S.sid = newSid(); S.created = Date.now(); S.playedMs = 0; S.lastAt = S.created; save(); render(); window.scrollTo(0,0);
   },
   resume(id){ S = loadSave(id); if(!S){ render(); return; } ui.lastSwipe = S.swipe ? S.swipe.id : null; S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
+  /* the same cats, names and looks go straight into a new game: the setup screen in person, the online lobby (same code) online */
+  playAgain(){
+    if(!S) return G.toStart();
+    if(S.online){
+      if(ON.ws && ON.ws.readyState===1){ ON.ws.send(JSON.stringify({type:'again'})); toast('Whisker Isles', 'Back to the lobby...'); }
+      else toast('Not connected', 'Hang on while it reconnects, then tap Play again.');
+      return;
+    }
+    const seats = S.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint?JSON.parse(JSON.stringify(p.tint)):undefined}));
+    G.toStart(); ui.seats = seats; ui.where = 'here'; ui.startErr = null; ui.badSeat = null; render();
+  },
   toStart(){
     fetchBoard();
     if(S && S.online) leaveOnline(); else if(S) save();
     if(!S && ['lobby','pick'].includes(ON.status)) leaveOnline();
-    S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
+    document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); S=null; ui.modal=null; ui.mode=null; ui.hideWin=false; ON.err=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
   },
   seatName(i,v,el,ev){ if(el) v = nameFill(el, ev, n => ui.seats.some((x,j)=>j!==i && nameKey(x.name)===nameKey(n))); ui.seats[i].name=v; if(ui.badSeat===i){ ui.badSeat=null; $('#seat-name-'+i).removeAttribute('aria-invalid'); }
     /* the customise sheet's name field: keep its heading, note and the nook's name box in step */
@@ -4867,7 +4901,7 @@ const G = {
   seatRemove(i){ if(ui.seats.length<=2) return; ui.seats.splice(i,1); ui.badSeat=null; ui.startErr=null; render(); },
   /* online setup */
   lbSort(k){ ui.lbSort = k; render(); if(ui.modal) renderOverlay(); },
-  where(w){ ui.where = w; ON.err = null; render(); const h = document.querySelector(w==='here' ? '#crew-h' : '.mode h2'); if(h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); } },
+  where(w){ ui.where = w; ON.err = null; render(); const h = document.querySelector(w==='here' ? '#crew-h' : '#on-h'); if(h){ h.setAttribute('tabindex','-1'); h.focus({preventScroll:true}); } },
   formName(v){ ui.form.name=v; store.set('whisker-isles-name', v); },
   formBreed(i){ ui.form.breed=i; store.set('whisker-isles-breed', String(i)); render(); },
   formCode(v){ ui.form.code=v; },
