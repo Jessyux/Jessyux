@@ -574,6 +574,7 @@ img.pic{object-fit:contain}
 .cat-av .portrait img,.cat-av .portrait svg{object-fit:contain;object-position:50% 50%}
 .cat-av:hover .portrait,.cat-av.open .portrait{transform:translateY(-2px) scale(1.07)}
 .cat-av.cur .portrait{filter:drop-shadow(3px 0 0 var(--pc)) drop-shadow(-3px 0 0 var(--pc)) drop-shadow(0 3px 0 var(--pc)) drop-shadow(0 -3px 0 var(--pc)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}
+.cat-av.open .portrait{filter:drop-shadow(3px 0 0 var(--butter)) drop-shadow(-3px 0 0 var(--butter)) drop-shadow(0 3px 0 var(--butter)) drop-shadow(0 -3px 0 var(--butter)) drop-shadow(2px 4px 0 rgba(58,35,65,.3))}   /* the cat you tapped: a yellow sticker, whoever's turn it is */
 .cat-av:focus-visible{outline:3px solid var(--plum);outline-offset:3px}
 .cat-av.pending .portrait{opacity:.55;filter:grayscale(.8) drop-shadow(0 0 0 #fff) drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff)}
 .cat-av.away .portrait{opacity:.6}
@@ -581,7 +582,6 @@ img.pic{object-fit:contain}
 .av-roll.wait{background:#fff;color:var(--plum-2)}
 .av-roll.out{opacity:.55}
 .av-vp{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:999px;background:var(--pc,#fff);color:var(--pt,var(--plum));transition:background .15s,color .15s;border:2.5px solid var(--plum);font-family:var(--display);font-size:.95rem;line-height:21px;text-align:center;box-sizing:border-box}
-.cat-av.open .av-vp{background:var(--butter);color:var(--plum)}
 .cat-av.no-trade::after{content:"";position:absolute;left:-6px;top:-6px;width:21px;height:21px;border-radius:50%;box-sizing:border-box;border:2px solid var(--plum);background:linear-gradient(#fff,#fff) center/8px 2.5px no-repeat,var(--strawberry)}
 .cat-pop{pointer-events:auto;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:var(--milk);border:3px solid var(--plum);border-radius:var(--r-lg);box-shadow:4px 4px 0 var(--plum);padding:10px 12px 12px}
 .cp-head{display:flex;align-items:center;gap:10px}
@@ -1492,7 +1492,7 @@ button.code-chip{font:inherit;cursor:pointer}
 .cp-head{gap:12px}
 .cp-head .portrait{width:48px;height:48px;border-width:3px;box-shadow:2px 2px 0 var(--plum)}
 .cp-nm b{font-family:var(--display);font-weight:400;font-size:1.05rem}
-.cp-pts{display:grid;place-content:center;width:56px;height:56px;flex:none;border-radius:50%;border:2.5px solid var(--plum);background:var(--butter);
+.cp-pts{display:grid;place-content:center;width:56px;height:56px;flex:none;border-radius:50%;border:2.5px solid var(--plum);background:#fff;
   box-shadow:inset 0 0 0 3px rgba(255,255,255,.7),2px 2px 0 var(--plum);font-size:1.35rem;text-align:center}
 .cp-pts small{font-size:.6rem;margin-top:1px}
 .cp-x{display:grid;place-items:center;width:28px;height:28px;padding:0;border:2.5px solid var(--plum);border-radius:50%;background:var(--cream);font-size:1rem;color:var(--plum);box-shadow:1.5px 1.5px 0 var(--plum)}
@@ -2766,12 +2766,9 @@ function spinDice(done, final, startFrom){
   const layer = document.createElement('div'); layer.className = 'dice3d'; layer.setAttribute('aria-hidden','true');
   if((final[0]+final[1])===7) layer.classList.add('d3-seven');
   document.body.appendChild(layer);
-  const vw = innerWidth, vh = innerHeight, bd = $('#board'), br = bd ? bd.getBoundingClientRect() : null;
-  /* land on the part of the island that's on screen; if little of it shows, land mid-screen */
-  const top = br ? Math.max(br.top, 0) : 0, bot = br ? Math.min(br.bottom, vh) : 0;
-  const onIsle = br && bot-top >= 200;
-  const cx = onIsle ? Math.min(Math.max(br.left+br.width/2, 90), vw-90) : vw/2;
-  const cy = onIsle ? Math.min(Math.max((top+bot)/2, 100), vh-100) : vh/2;
+  const vw = innerWidth, vh = innerHeight;
+  /* the dice land in the middle of the screen, not the middle of the map: on the wide island the map runs off the screen, so its middle isn't where you are looking */
+  const cx = vw/2, cy = vh/2;
   const DUR = 2100;
   const anims = final.map((n,k)=>{
     const m = document.createElement('div'); m.className = 'd3-move';
@@ -3748,10 +3745,10 @@ function placePrompt(root, sel){
   const card = root && root.querySelector(sel || '.tp-card'), svg = $('#board'); if(!card) return;
   root.classList.remove('on-board');
   if(innerWidth <= 920 || !svg || !S || !svg.getBoundingClientRect().width) return;
-  const r = svg.getBoundingClientRect(), h = card.offsetHeight; if(h > innerHeight - 24) return;
+  const F = mapFrame(), h = card.offsetHeight; if(!F || h > innerHeight - 24) return;   // the visible part of the map: on the wide island the svg itself runs off the screen
   root.classList.add('on-board');
-  root.style.setProperty('--cx', (r.left + r.width/2)+'px');
-  root.style.setProperty('--cy', Math.max(12 + h/2, Math.min(innerHeight - 12 - h/2, r.top + r.height/2))+'px');
+  root.style.setProperty('--cx', (F.fl + F.fw/2)+'px');
+  root.style.setProperty('--cy', Math.max(12 + h/2, Math.min(innerHeight - 12 - h/2, F.ft + F.fh/2))+'px');
 }
 /* coming back to the app: a pop-up's slide-in can be left stuck at "invisible" by the phone while the app was asleep. Finish any
    such entrance at once so the card shows, and draw the turn pop-up if it was waiting for you */
@@ -4872,7 +4869,8 @@ function handoffHTML(){
    moods: {catIndex: 'happy' | 'away' | 'hmm' | 'out' | 'bob'} */
 function tradePerchHTML(left, right, moods){
   moods = moods || {};
-  const cat = (i, side) => { const md = moods[i] || ''; return `<span class="tm-cat ${side} ${md}" data-cat="${i}"><span class="tm-stick">${playerArt(S.players[i], md==='happy'?'win':undefined)}</span><b>${pname(i)}</b></span>`; };
+  /* the happy cats keep their plain picture, so the sticker outline hugs the cat (the celebration picture has confetti round it) */
+  const cat = (i, side) => { const md = moods[i] || ''; return `<span class="tm-cat ${side} ${md}" data-cat="${i}"><span class="tm-stick">${playerArt(S.players[i])}</span><b>${pname(i)}</b></span>`; };
   const shown = right.slice(0,3), more = right.length - shown.length;
   const rightHTML = shown.length ? shown.map(i=>cat(i,'r')).join('') : `<span class="tm-cat r tm-who"><span class="portrait">?</span><b>Pick a cat</b></span>`;
   return `<div class="tm-perch" aria-hidden="true">${cat(left,'l')}<span class="tm-rights">${rightHTML}${more>0?`<span class="tm-more">+${more}</span>`:''}</span></div>`;
