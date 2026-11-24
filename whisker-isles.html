@@ -3254,7 +3254,16 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) stopFla
 /* back on the tab: if the connection dropped while it was away, show the loading cat and rejoin straight away */
 function wakeOnline(){
   if(document.hidden || !ON.code || ON.status==='error' || ON.status==='idle') return;
-  if(ON.ws && ON.ws.readyState<=1) return;
+  if(ON.ws && ON.ws.readyState===0){ ON.offline = true; render(); return; }
+  if(ON.ws && ON.ws.readyState===1){
+    /* a phone that slept leaves the connection looking open when it is really dead, so the page just sits there.
+       Ask the game for the latest: any answer means it is fine; no answer shows the loading cat, then reconnects */
+    const ws = ON.ws, mark = (ON.probe = {at: Date.now()});
+    try{ ws.send(JSON.stringify({type:'hello', pid:ON.pid, name:ui.form.name||'', breed:ui.form.breed||0, auto:true})); }catch(e){ ON.retry = 0; ON.offline = true; render(); connect(ON.code, true); return; }
+    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.offline = true; render(); } }, 1200);
+    setTimeout(()=>{ if(ON.probe===mark && ON.ws===ws){ ON.retry = 0; ON.probe = null; connect(ON.code, true); } }, 4500);
+    return;
+  }
   ON.retry = 0; ON.offline = true; render(); connect(ON.code, true);
 }
 document.addEventListener('visibilitychange', wakeOnline);
@@ -3501,6 +3510,7 @@ function turnPromptSync(){
   const el = document.getElementById('turn-prompt');
   if(!turnPromptWanted()){ if(el && !el.classList.contains('leaving')) el.remove(); return; }
   if(el) return;
+  if(document.hidden) return;   // opened while the app is away it can stall half-drawn (a dim screen and no card); it is made when you are back
   const cp = P(), root = document.createElement('div');
   root.id = 'turn-prompt'; root.className = 'turn-prompt'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Your turn');
   root.innerHTML = `<div class="modal handoff tp-card">${portrait(cp)}<h2>Your turn, ${esc(cp.name)}!</h2><p>Roll the dice to start your turn.</p>
@@ -3515,6 +3525,7 @@ function turnPromptSync(){
   if(!reduceMotion) root.querySelector('.tp-card').animate([{transform:'scale(.6) translateY(30px)',opacity:0},{transform:'scale(1.05)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:420,easing:'cubic-bezier(.3,1.4,.5,1)'});
 }
 /* the pop-up shrinks and flies onto the dice in the turn card, then `after` runs */
+function card_started(el){ return el.style.background==='transparent'; }
 function turnPromptLeave(after){
   const el = document.getElementById('turn-prompt'); ui.turnSeen = turnKey();
   const target = document.querySelector('#rollbar .dice-row') || document.getElementById('rollbar');
@@ -3523,14 +3534,18 @@ function turnPromptLeave(after){
   if(target) target.scrollIntoView({behavior: reduceMotion?'auto':'smooth', block:'center'});
   const card = el.querySelector('.tp-card');
   const go = () => {
-    const done = () => { el.remove(); after && after(); };
+    if(!el.isConnected) return;
+    let fin = false;
+    const done = () => { if(fin) return; fin = true; el.remove(); after && after(); };
     if(reduceMotion || !target){ done(); return; }
     const cr = card.getBoundingClientRect(), tr = target.getBoundingClientRect();
     const dx = tr.left+tr.width/2-(cr.left+cr.width/2), dy = tr.top+tr.height/2-(cr.top+cr.height/2);
     el.style.background = 'transparent';
     card.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*.5}px,${dy*.5-40}px) scale(.55)`,opacity:1,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(.15)`,opacity:.2}],{duration:620,easing:'ease-in',fill:'forwards'}).onfinish = done;
+    setTimeout(done, 1500);   // if the phone never finishes the flight (the app was away), do not leave the screen dimmed
   };
   setTimeout(go, reduceMotion ? 0 : 280);
+  setTimeout(()=>{ if(el.isConnected && el.classList.contains('leaving') && !card_started(el)) { /* never started: finish it */ el.remove(); after && after(); } }, 2500);
 }
 /* ---------- setting up: a pop-up for the cat whose turn it is to roll for the starting spot ---------- */
 const setupKey = () => 'su:'+S.cur+':'+((S.setup && S.setup.first && S.setup.first.tie)||0);
@@ -3545,6 +3560,16 @@ function placePrompt(root, sel){
   root.style.setProperty('--cx', (r.left + r.width/2)+'px');
   root.style.setProperty('--cy', Math.max(12 + h/2, Math.min(innerHeight - 12 - h/2, r.top + r.height/2))+'px');
 }
+/* coming back to the app: a pop-up's slide-in can be left stuck at "invisible" by the phone while the app was asleep. Finish any
+   such entrance at once so the card shows, and draw the turn pop-up if it was waiting for you */
+function popRescue(){
+  if(document.hidden) return;
+  document.querySelectorAll('.tp-card, .overlay .modal, #setup-prompt .modal').forEach(c=>{ try{ c.getAnimations().forEach(a=>{ const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : null; if(t && t.iterations !== Infinity) a.finish(); }); }catch(e){} });
+  try{ if(S){ turnPromptSync(); setupPromptSync(); } }catch(e){}
+}
+function popSettle(){ [0,250,900,2200].forEach(t=>setTimeout(popRescue, t)); }
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) popSettle(); });
+addEventListener('focus', popSettle); addEventListener('pageshow', popSettle);
 addEventListener('resize', ()=>{ document.querySelectorAll('.turn-prompt').forEach(e=>placePrompt(e)); const o = document.querySelector('.overlay'); if(o) placePrompt(o, '.overlay > .modal.handoff'); });
 /* ---- Captain Whiskers: what you give floats onto his boat, what you get flies down to your resources hand ---- */
 function reducedMotion(){ return matchMedia('(prefers-reduced-motion: reduce)').matches; }
@@ -3578,6 +3603,7 @@ function setupPromptSync(){
   const want = !!(S && S.phase==='setup' && S.setup && S.setup.step==='roll' && S.setup.first && myTurn() && !ui.rolling && !ui.modal && ui.setupSeen!==setupKey() && !(ui.setupHold>Date.now()));
   if(!want){ if(el && !el.classList.contains('leaving')) el.remove(); return; }
   if(el) return;
+  if(document.hidden) return;
   const cp = P(), F = S.setup.first, root = document.createElement('div');
   root.id = 'setup-prompt'; root.className = 'turn-prompt'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Roll for the starting spot');
   root.innerHTML = `<div class="modal handoff tp-card">${portrait(cp)}<h2>${esc(cp.name)}, roll to start!</h2><p>${F.tie ? 'A tie! Roll again for the starting spot.' : 'Highest roll goes first, lowest goes last.'}</p>
@@ -3616,6 +3642,7 @@ function thumbsUp(i, sum){
   setTimeout(end, 2000);
 }
 function onMsg(m){
+  ON.probe = null;
   if(m.type==='lobby' && !ON.pushSent){ ON.pushSent = true; setTimeout(syncPush, 300); setTimeout(maybeA2HS, 1800); }
   ON.offline=false;
   /* the host moved the game back to one screen: it carries on here, on this phone */
