@@ -154,7 +154,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-act .short{display:none}
 .map-logo{position:absolute;z-index:3;height:66px;width:auto;margin:0 16px 0 0;transform:translateY(-46%) rotate(3deg);pointer-events:none;filter:drop-shadow(2px 3px 0 rgba(58,35,65,.25))}
 /* phones and tablets: the cats sit under the map, so the logo hangs off the map's top left corner, tilted like a sign */
-@media (max-width:920px){ .map-logo{height:84px;margin:0;z-index:30;transform:translate(-6px,-24%) rotate(-14deg);transform-origin:left center;filter:drop-shadow(2px 3px 0 rgba(58,35,65,.3))} }
+@media (max-width:920px){ .map-logo{height:84px;margin:0;z-index:3;transform:translate(-6px,-24%) rotate(-14deg);transform-origin:left center;filter:drop-shadow(2px 3px 0 rgba(58,35,65,.3))} }
 @media (max-width:560px){
   .wi-act{padding:7px 9px;gap:5px;font-size:.8rem}
   .wi-act .long{display:none}
@@ -4176,13 +4176,13 @@ function settingsHTML(){
   const item = (icon, label, note, on) => `<button class="set-item" onclick="${on}">${navIcon(icon)}<span><b>${label}</b>${note?`<small>${note}</small>`:''}</span></button>`;
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   const how = IS_IOS && !standalone ? 'On iPhone, first add Whisker Isles to your Home Screen (Share, then Add to Home Screen), open it from there, then turn alerts on.' : 'Get a notification when it is your turn, even with the app closed.';
-  return `<div class="modal settings"><h2>Settings</h2><div class="set-list">
+  return `<div class="modal settings"><div class="rules-head"><h2>Settings</h2><button class="btn small" onclick="G.close()">Close</button></div><div class="set-list">
     ${alerts ? `<div class="set-row">${BELL}<span><b>Turn alerts</b><small>${how}</small></span>${alerts}</div>` : ''}
     ${host ? item('board', 'Host tools', 'Manage cats and the game', "G.open('host')") : ''}
     ${S && !online && S.phase!=='over' ? item('online', 'Play online', 'Move this game onto everyone&#39;s own phone', "G.open('goonline')") : ''}
     ${S && !online ? item('newgame', 'New game', '', "G.open('newgame')") : ''}
     ${online ? item('quit', 'Quit game', 'Your progress will be lost', "G.open('leave')") : ''}
-  </div><div class="actions"><button class="btn primary" onclick="G.close()">Done</button></div></div>`;
+  </div></div>`;
 }
 function meLink(){ return `<a class="wi-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener" aria-label="About Jessy, the designer of this game"><img src="/img/jessy-avatar.webp" alt="" width="40" height="40"><span>JessyUX</span></a>`; }
 function renderBoard(){
