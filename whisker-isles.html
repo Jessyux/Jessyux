@@ -2374,6 +2374,17 @@ function newGame(seats, opts){
   log(`A new game begins on ${big?'Big Island':'Whisker Isles'}. Every cat rolls to see who goes first.`);
 }
 
+/* Games begun on the old round Big Island (radius 3) move to the wide island. The pieces can't carry over to a different map,
+   so the same cats start setup again on a freshly dealt board */
+function widenGame(old){
+  const keep = S;
+  newGame(old.players.map(p=>({name:p.name, breed:p.breed, color:p.color, tint:p.tint||null})), {online:!!old.online, code:old.code||null});
+  const g = S; S = keep;
+  ['sid','created','playedMs','lastAt'].forEach(k=>{ if(old[k]!=null) g[k] = old[k]; });
+  g.log.unshift('Whisker Isles now has a wider island for 5 or more cats, so everyone sets up again on the new map.');
+  return g;
+}
+const needsWiden = g => !!(g && g.board && g.board.radius===3);
 /* take-backs only last for the turn in play, so a saved game never carries them */
 /* ---------- leaderboard: kept on this device, one row per player name ---------- */
 const BOARD_KEY = 'whisker-isles-leaderboard', SCORED_KEY = 'whisker-isles-scored';
@@ -3885,6 +3896,8 @@ function onMsg(m){
   else render();
 }
 function applyRemote(state, ver){
+  let widened = false;
+  if(needsWiden(state)){ state = widenGame(state); widened = true; }
   const prevRoll = S && S.online ? S.rollN : null;
   const offerMine = o => !!o && offerTo(o).some(i=>ON.mine.includes(i));
   const had = !!(S && S.online), prevCur = had ? S.cur : null, hadOffer = had && offerMine(S.offer), wasDiscarding = had && discardSeat()>=0;
@@ -3930,6 +3943,7 @@ function applyRemote(state, ver){
   syncTurnGlow();
   if(ON.code) markGame(ON.code, S.phase==='over' ? 'over' : 'playing');
   buildGeo(S.board.radius);
+  if(widened){ if(ON.mine.length) pushState(); toast('A wider island', 'This game is set up again on the new map.'); }
   /* a card stuck as "Unwrapping" (older games bought it before the deal was fixed): deal it now from the jar */
   if(S.online && ON.mine.length && S.deck.length){
     let fixed = false;
@@ -5466,7 +5480,7 @@ const G = {
     ui.modal=null; ui.mode=null; ui.hideWin=false; $('#root').innerHTML='';
     newGame(seats, {online:false}); S.sid = newSid(); S.created = Date.now(); S.playedMs = 0; S.lastAt = S.created; save(); render(); window.scrollTo(0,0);
   },
-  resume(id){ S = loadSave(id); if(!S){ render(); return; } ui.lastSwipe = S.swipe ? S.swipe.id : null; S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); },
+  resume(id){ S = loadSave(id); if(!S){ render(); return; } const wid = needsWiden(S); if(wid){ S = widenGame(S); save(); } ui.lastSwipe = S.swipe ? S.swipe.id : null; S.lastAt = Date.now(); if(S.phase==='play' && !S.rolled) S.handoff = true; buildGeo(S.board.radius); ui.modal=null; $('#root').innerHTML=''; render(); window.scrollTo(0,0); if(wid) toast('A wider island', 'This game is set up again on the new map.'); },
   /* the same cats, names and looks go straight into a new game: the setup screen in person, the online lobby (same code) online */
   playAgain(){
     if(!S) return G.toStart();
