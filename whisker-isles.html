@@ -4283,8 +4283,14 @@ function placeDock(){
     ['left','width','height'].forEach(k=>el.style[k]='');
     /* iPhone Safari can leave bottom:0 where the screen's bottom used to be (after the keyboard closes or the bars slide),
        so the paws float halfway up. Pin them to the bottom of what's actually on screen instead */
-    const vv = window.visualViewport, gap = vv && vv.scale < 1.05 ? Math.round(innerHeight - (vv.offsetTop + vv.height)) : 0;
-    el.style.bottom = Math.abs(gap) > 2 ? gap + 'px' : '';
+    el.style.bottom = '';
+    const vv = window.visualViewport;
+    if(vv && vv.scale < 1.05 && !el.classList.contains('gone')){
+      /* measure where the paws really are against where the screen really ends, not what the page last thought the height was
+         (coming back to the tab, the page's height can be stale for a moment) */
+      const gap = Math.round(el.getBoundingClientRect().bottom - (vv.offsetTop + vv.height));
+      if(Math.abs(gap) > 2) el.style.bottom = gap + 'px';
+    }
     return;
   }
   const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width/vb.width, r.height/vb.height);
@@ -4297,6 +4303,12 @@ addEventListener('resize', placeDock);
 if(window.visualViewport){ visualViewport.addEventListener('resize', placeDock); visualViewport.addEventListener('scroll', placeDock); }
 addEventListener('focusout', ()=>setTimeout(placeDock, 350));   // the keyboard has closed: measure again once it's gone
 addEventListener('pageshow', placeDock);
+/* back on the tab or the app: the screen can take a moment to settle, so measure again a few times */
+function dockSettle(){ [0,120,400,1000,2200].forEach(t=>setTimeout(placeDock, t)); }
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) dockSettle(); });
+addEventListener('focus', dockSettle);
+addEventListener('pageshow', dockSettle);
+addEventListener('orientationchange', dockSettle);
 addEventListener('resize', placeLogo);
 addEventListener('resize', placeCats);
 /* the desk and the table stand on the floor of the room, just under the window: the room picture is cropped to fill the box,
