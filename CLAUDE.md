@@ -8,7 +8,7 @@ Jessy's portfolio repo (jessyux.com) with a second product in it: **Whisker Isle
 
 ## Every session: start and finish
 
-Run these checks only when Jessy says "Whisker Isles" at the start of the chat. Any other chat skips them.
+Run these checks when Jessy names Whisker Isles at the start of the chat. A chat that names no project skips them.
 
 **Start, before any change:**
 
@@ -45,7 +45,7 @@ D=$(mktemp -d) && git archive HEAD | tar -x -C "$D" && cd "$D" && node build-gam
 # preview on a phone, without touching the live domain: add  -c wrangler.preview.jsonc
 ```
 
-Commit first (the archive uses HEAD). Ask before deploying and before committing anything outside the request.
+**When Jessy says "Deploy", that also means commit and push, unless she says otherwise (for example "deploy only").** Do it in this order without asking again: pull (merge if GitHub is ahead, never force), run the tests, commit the work, push to `origin/whisker-isles`, then deploy from the clean copy. Stage named files only, not `git add -A`. Ask first only if the commit would include something outside what she asked for. End with the version ID and the SHA it was built from.
 
 ## Architecture
 
