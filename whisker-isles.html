@@ -5576,10 +5576,34 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && ui.modal && !['gift','pounce'].includes(ui.modal.kind)){ G.close(); }
 });
 
+/* add ?debug to the address to see how long each part of the screen takes to draw (for tracking down a screen that hangs) */
+if(/[?&]debug/.test(location.search)){
+  const box = document.createElement('pre');
+  box.style.cssText = 'position:fixed;left:6px;right:6px;top:6px;z-index:99999;margin:0;max-height:46vh;overflow:auto;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:12px;padding:8px;font:700 11px/1.25 ui-monospace,monospace;white-space:pre-wrap;pointer-events:none;opacity:.94';
+  document.body.appendChild(box);
+  let prev = ''; try{ prev = localStorage.getItem('wi-debug-last') || ''; }catch(e){}
+  const stat = {}, t00 = performance.now(); let last = performance.now(), worstGap = 0;
+  ['render','renderBoard','renderPanel','renderRollbar','renderCats','renderOverlay','turnPromptSync','setupPromptSync','playLogSounds','placeDock','applyRemote','onMsg','chatFabSync','syncTurnGlow','swipeCheck'].forEach(n=>{
+    const f = window[n]; if(typeof f !== 'function') return;
+    window[n] = function(){ const t = performance.now(); try{ return f.apply(this, arguments); } finally { const d = performance.now()-t, o = stat[n] || (stat[n] = {n:0, tot:0, max:0}); o.n++; o.tot += d; if(d > o.max) o.max = d; } };
+  });
+  setInterval(()=>{ const now = performance.now(); worstGap = Math.max(worstGap, now-last-250); last = now; }, 250);
+  setInterval(()=>{
+    const rows = Object.entries(stat).sort((a,b)=>b[1].tot-a[1].tot).map(([k,v])=>`${k}: ${v.n}x  total ${Math.round(v.tot)}ms  worst ${Math.round(v.max)}ms`);
+    const pr = document.getElementById('turn-prompt'), tc = pr && pr.querySelector('.tp-card'), cs = tc && getComputedStyle(tc);
+    box.textContent = (prev ? 'BEFORE THE LAST CRASH:' + String.fromCharCode(10) + prev + String.fromCharCode(10) + '---' + String.fromCharCode(10) : '') + `debug · ${BUILD} · up ${Math.round((performance.now()-t00)/1000)}s · worst freeze ${Math.round(worstGap)}ms
+status ${ON.status} · ws ${ON.ws ? ON.ws.readyState : '-'} · art ${ART.size} · prompt ${pr ? 'yes' : 'no'}${cs ? ' op ' + cs.opacity : ''}
+` + rows.join(String.fromCharCode(10));
+    try{ localStorage.setItem('wi-debug-last', box.textContent.split('---').pop().trim().slice(0,900)); }catch(e){}
+  }, 700);
+}
 /* boot: rejoin an online game from the link, or show the start screen */
 (function boot(){
   fetchBoard();
-  const q = linkCode();
+  /* add ?safe to a game's link to open the home screen without joining it (for a game that will not open) */
+  const safe = /[?&]safe/.test(location.search);
+  if(safe) try{ history.replaceState(null,'','/'); }catch(e){}
+  const q = safe ? null : linkCode();
   render();
   if(q && ui.form.name.trim()){ ON.status='connecting'; connect(q, true); }
   else if(q) peekStart(q);
