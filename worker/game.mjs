@@ -24,7 +24,7 @@ async function sha256hex(s) {
 async function leaderboard(request, env) {
   const db = env.WHISKER_DB;
   if (!db) return fail(503, 'The shared leaderboard isn\'t set up yet.');
-  if (request.method === 'GET') return json(200, { rows: await listBoard(db) });
+  if (request.method === 'GET') return cachedBoard(request, db);
   if (request.method !== 'POST') return fail(405, 'Not allowed.');
 
   const raw = await request.text();
@@ -42,7 +42,27 @@ async function leaderboard(request, env) {
   await db.prepare('INSERT INTO rate (hash, at) VALUES (?, ?)').bind(hash, now).run();
 
   const added = await recordGame(db, checked.value, now);
+  if (added) await forgetBoard(request);
   return json(added ? 201 : 200, { added, rows: await listBoard(db) });
+}
+
+/* the board is read far more than it changes: keep it in Cloudflare's edge cache for 30 seconds so each page view
+   doesn't query the database. A newly recorded game clears it, and the POST reply carries the fresh board anyway. */
+const BOARD_TTL = 30;
+const boardKey = (request) => new Request(new URL('/api/leaderboard', request.url).toString());
+async function cachedBoard(request, db) {
+  const cache = globalThis.caches && caches.default;
+  if (cache) { const hit = await cache.match(boardKey(request)); if (hit) return hit; }
+  const res = json(200, { rows: await listBoard(db) });
+  if (cache) {
+    const copy = new Response(res.clone().body, res);
+    copy.headers.set('cache-control', `public, max-age=${BOARD_TTL}`);
+    await cache.put(boardKey(request), copy);
+  }
+  return res;
+}
+async function forgetBoard(request) {
+  try { if (globalThis.caches && caches.default) await caches.default.delete(boardKey(request)); } catch (e) { /* cache is best effort */ }
 }
 
 export default {
