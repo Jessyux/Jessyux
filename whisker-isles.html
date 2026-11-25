@@ -703,6 +703,7 @@ svg :focus{outline:none}
 .pd-art{position:relative;container-type:inline-size;width:100%;aspect-ratio:1536/2752;min-height:100vh;min-height:100dvh;box-sizing:border-box;padding-bottom:calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;background:var(--bg) 0 0/100% 100% no-repeat,#FCD9AF}
 .pd-sc{position:relative;flex:none;overflow-x:clip;height:calc(128cqw*var(--vs,1))}
 .pd-head{position:absolute;left:0;right:0;top:calc(12cqw*var(--vs,1));display:flex;flex-direction:column;align-items:center;padding:0 10px;z-index:4;pointer-events:none}
+.pd-tt{display:inline-block;white-space:nowrap;vertical-align:top}
 .pd-title{position:relative;margin:0;box-sizing:border-box;height:3.5em;font-size:clamp(1.05rem,5.3cqw,1.85rem);line-height:1;padding:.58em 0 0;color:var(--plum);text-align:center;white-space:nowrap;border:solid transparent;border-width:0 2.75em;border-image:var(--ban) 0 28% fill / 0 2.75em 0 stretch;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 3px 2px rgba(58,35,65,.35))}
 .pd-sub{margin:7px 0 0;font-weight:900;color:var(--plum);background:rgba(255,248,235,.85);border-radius:999px;padding:2px 12px;font-size:clamp(.72rem,3.6cqw,1rem)}
 .pd-cap{position:absolute;right:1cqw;top:calc(66cqw*var(--vs,1));width:calc(27cqw*var(--k));animation:pdBob 3.2s ease-in-out infinite}
@@ -727,7 +728,7 @@ svg :focus{outline:none}
 @keyframes pdCheer{0%{transform:rotate(-8deg) translateY(0)}25%{transform:rotate(0) translateY(-3cqw)}50%{transform:rotate(8deg) translateY(0)}75%{transform:rotate(0) translateY(-3cqw)}100%{transform:rotate(-8deg) translateY(0)}}
 .pd-badge{position:absolute;left:45.5%;top:53%;width:14%;margin-left:-7%;pointer-events:none}
 .pd-medal{display:block;width:100%;height:auto;filter:drop-shadow(1px 2px 0 rgba(58,35,65,.35))}
-.pd-tag{position:absolute;left:50%;top:var(--ty);transform:translate(-50%,-50%);z-index:3;max-width:96%;padding:.12em .6em;border-radius:7px;background:var(--cream);border:2px solid var(--plum);border-bottom:4px solid var(--pc);color:var(--plum);font-weight:900;font-size:clamp(.55rem,3.1cqw,.95rem);line-height:1.15;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:1px 2px 0 rgba(58,35,65,.3)}
+.pd-tag{position:absolute;left:50%;top:var(--ty);transform:translate(-50%,-50%);z-index:3;max-width:90%;padding:.12em .6em;border-radius:7px;background:var(--cream);border:2px solid var(--plum);border-bottom:4px solid var(--pc);color:var(--plum);font-weight:900;font-size:clamp(.55rem,3.1cqw,.95rem);line-height:1.15;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:1px 2px 0 rgba(58,35,65,.3)}
 .pd-stks{position:absolute;left:45.6%;bottom:100%;transform:translateX(-50%);display:flex;gap:10px;margin-bottom:2px;animation:pdFloat 2.2s ease-in-out infinite;white-space:nowrap}
 @keyframes pdFloat{0%,100%{translate:0 0}50%{translate:0 -3px}}
 .pd-stk{display:block;font-weight:900;font-size:clamp(.95rem,5.4cqw,1.7rem);line-height:1.05;white-space:nowrap;paint-order:stroke fill;-webkit-text-stroke:.19em var(--plum);letter-spacing:.01em}
@@ -964,6 +965,8 @@ svg :focus{outline:none}
 .rb-turn .portrait{width:58px;height:58px;border:0;border-radius:0;background:none;overflow:visible;margin:-4px 0;filter:drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(2px 3px 0 rgba(58,35,65,.3))}   /* a white sticker, like the avatars on the map */
 .rb-turn .portrait img,.rb-turn .portrait svg{object-fit:contain;object-position:50% 50%}
 .rb-turn .turn .who{font-size:1.15rem}
+.rb-turn .turn{flex:1 1 0;min-width:0;grid-template-columns:58px minmax(0,1fr)}
+.rb-turn .who,.rb-turn .sub,.rb-turn .hint{overflow-wrap:anywhere}   /* a 14-letter name with no spaces wraps instead of running off the card */
 .rb-turn .turn .sub{font-size:.84rem}
 .rb-turn .hint{margin:0;flex:1 1 100%;font-size:.86rem;padding:6px 10px}
 .rb-play{padding:10px 14px 12px}
@@ -4266,8 +4269,20 @@ function syncNetWait(){
   /* the ginger cat grooms, hisses and gets a head tap in turn, flipping between each pose's two drawings */
   clearInterval(NETWAIT.f); NETWAIT.f = gingerFlip('nw-cat');
 }
+/* where this device is: the game (online or in person) or online lobby it is in, so reopening the app (from the home screen icon,
+   or after the phone closed the tab in the background) goes straight back there instead of the start screen */
+const HERE_KEY = 'whisker-isles-here', HERE = {ready:false, last:null};
+function hereNow(){
+  if(S) return S.viewOnly ? '' : S.online ? (ON.code ? 'online:'+ON.code : '') : (S.sid ? 'local:'+S.sid : '');
+  return ON.code && ['connecting','lobby','pick','playing'].includes(ON.status) ? 'online:'+ON.code : '';
+}
+function syncHere(){
+  if(!HERE.ready) return;   // the first draw is the start screen before boot decides where to go: don't forget the game yet
+  const v = hereNow(); if(v===HERE.last) return; HERE.last = v;
+  if(v) store.set(HERE_KEY, JSON.stringify({v, at:Date.now()})); else store.del(HERE_KEY);
+}
 function render(){
-  syncNetWait();
+  syncNetWait(); syncHere();
   const root = $('#root');
   chatLift();
   if(!S){
@@ -4436,7 +4451,7 @@ function renderRollbar(){
   const over = S.phase==='over' && S.winner>=0, wp = over ? S.players[S.winner] : null, storyOpen = over && ui.story==='open';
   el.classList.toggle('rb-open', storyOpen);
   if(over){
-    const wn = S.ended==='left' ? `${S.online&&ON.mine.includes(S.winner)?'You are':pname(S.winner)+' is'} the last cat on the island` : `${S.online&&ON.mine.includes(S.winner)?'You won':pname(S.winner)+' won'} with ${vp(S.winner,true)} points`;
+    const wn = S.ended==='left' ? `${S.online&&ON.mine.includes(S.winner)?'You are':pname(S.winner)+' is'} the last cat on the island` : `${S.online&&ON.mine.includes(S.winner)?'You':pname(S.winner)}<br>won with ${vp(S.winner,true)} points`;   /* the name, then the score on its own line */
     el.innerHTML = `<div class="rb-turn turn-card" style="--pc:${pcol(wp)}">
       <div class="turn">${portrait(wp,'win')}<div><div class="who">Game over</div><div class="sub">${wn}</div></div></div>
       ${storyOpen ? '' : `<div class="rb-over-acts"><button class="btn primary" onclick="G.storyToggle()" aria-expanded="false">View details</button><button class="btn" onclick="G.showWin()">Back to results</button></div>`}</div>
@@ -5402,9 +5417,10 @@ async function resultsCanvas(){
   const nine = (im, X, Y, w, h, cap)=>{ const sw = im.naturalWidth, sh = im.naturalHeight, cs = sw*cap, cd = cs*h/sh; x.drawImage(im, 0, 0, cs, sh, X, Y, cd, h); x.drawImage(im, cs, 0, sw-2*cs, sh, X+cd, Y, w-2*cd, h); x.drawImage(im, sw-cs, 0, cs, sh, X+w-cd, Y, cd, h); return cd; };
   const ban = await loadImg(artSrc('pd-ban'));
   const tt = me(w0) ? 'You win!' : nm({i:w0})+' wins!', tpx = W*.07; x.font = `900 ${tpx}px ${FONT}`;
-  const bh = tpx*3.5, bcap = ban ? ban.naturalWidth*.28*bh/ban.naturalHeight : 0, bw = x.measureText(tt).width + bcap*2, bx = W/2-bw/2, by = W*.12;
+  const bh = tpx*3.5, bcap = ban ? ban.naturalWidth*.28*bh/ban.naturalHeight : 0, tw0 = x.measureText(tt).width, room = W*.96 - bcap*2;
+  const tfit = Math.min(1, room/tw0), bw = Math.min(tw0, room) + bcap*2, bx = W/2-bw/2, by = W*.12;   /* a long name shrinks to fit the ribbon */
   if(ban) nine(ban, bx, by, bw, bh, .28);
-  x.fillStyle = PL; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(tt, W/2, by+bh*.31);
+  x.font = `900 ${tpx*tfit}px ${FONT}`; x.fillStyle = PL; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(tt, W/2, by+bh*.31);
   pill('The comfiest cat on Whisker Isles', W/2, by+bh-W*.042, W*.036, 'rgba(255,248,235,.9)', 'rgba(255,248,235,0)', W*.03, 0, false);
   /* Captain Whiskers in the sea */
   const cap = await loadImg(artSrc('captain-idle')); if(cap){ const cw = W*.27, cy = W*.63, chh = cw*cap.naturalHeight/cap.naturalWidth, cx0 = W-W*.01-cw; x.drawImage(cap, cx0, cy, cw, chh); }
@@ -5426,7 +5442,9 @@ async function resultsCanvas(){
     const med = await loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(medalSVG(k+1).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ')));
     if(med && ch){ const mw = cw*.14, mh = mw*84/60; x.drawImage(med, cx-cw*.456+cw*.455-mw/2, catTop+ch*.53, mw, mh); }
     /* name tag on the front of the basket */
-    pill(nm(o)+(me(o.i)?' (you)':''), cx, top0+dh*g.ty, W*.031, CR, PL, W*.012, 4, false);
+    { const tag = nm(o)+(me(o.i)?' (you)':''); let tpx = W*.031; x.font = `900 ${tpx}px ${FONT}`; const tw = x.measureText(tag).width, mx = sw*.92 - W*.024;
+      if(tw > mx) tpx *= mx/tw;   /* a long name gets a smaller tag, so it stays on its own tower and inside the picture */
+      pill(tag, Math.min(cx, W - (Math.min(tw, mx) + W*.024)/2 - W*.01), top0+dh*g.ty, tpx, CR, PL, W*.012, 4, false); }
     x.fillStyle = col; x.fillRect(0,0,0,0);
     /* floating stickers */
     const sy = catTop - 40, a = o.pts ? `+${o.pts} pts` : '', b = '';
@@ -5459,7 +5477,12 @@ async function shareResults(btn){
   }catch(e){ toast('Could not make the picture', 'Please try again.'); }
   if(btn){ btn.disabled = false; lb.textContent = label; }
 }
-function pdFit(){ const w = Math.min(innerWidth, Math.max(340, innerHeight*.558)); document.documentElement.style.setProperty('--vs', Math.max(1, innerHeight/(w*1.7917)).toFixed(3)); }
+/* a long winner's name shrinks to fit inside the banner, so the banner keeps its size */
+function pdTitleFit(){
+  document.querySelectorAll('.pd-tt').forEach(t=>{ const h = t.parentElement; t.style.fontSize = ''; if(!h || !h.clientWidth) return;
+    let k = 1; for(let n=0; n<12 && t.scrollWidth > h.clientWidth && k > .45; n++){ k -= .06; t.style.fontSize = k+'em'; } });
+}
+function pdFit(){ requestAnimationFrame(pdTitleFit); const w = Math.min(innerWidth, Math.max(340, innerHeight*.558)); document.documentElement.style.setProperty('--vs', Math.max(1, innerHeight/(w*1.7917)).toFixed(3)); }
 addEventListener('resize', pdFit);
 function podiumHTML(){ pdFit();/* cat sprites: 3 frames side by side (centre, arms up, arms wide) */
   const order = placings(), ORD = ['1st','2nd','3rd'], me = k => S.online && ON.mine.includes(k);
@@ -5476,7 +5499,7 @@ function podiumHTML(){ pdFit();/* cat sprites: 3 frames side by side (centre, ar
   const fan = (o,i) => { const p = S.players[o.i]; return `<div class="pd-fan${i%2===0?' lf':''}" style="--pc:${pcol(p)};--sp:url('${artSrc('pdc-'+BREEDS[p.breed].id)}')"><span class="pd-fav"><span class="pd-fs"></span></span><b>${nm(o)}</b><small>${ORD[o.place-1]||o.place+'th'}</small></div>`; };
   return `<div class="pd" style="--bg:url('${artSrc('pd-bg')}');--bgw:url('${artSrc('pd-bgw')}');--ban:url('${artSrc('pd-ban')}')"><div class="pd-in"><div class="pd-art">
     <div class="pd-sc">
-      <div class="pd-head"><h2 class="pd-title">${me(w)?'You win!':esc(pname(w))+' wins!'}</h2><p class="pd-sub">The comfiest cat on Whisker Isles</p></div>
+      <div class="pd-head"><h2 class="pd-title"><span class="pd-tt">${me(w)?'You win!':esc(pname(w))+' wins!'}</span></h2><p class="pd-sub">The comfiest cat on Whisker Isles</p></div>
       <div class="pd-cap" aria-hidden="true"><img src="${artSrc('captain-idle')}" alt=""></div>
       <div class="pd-stage">${slot(1)}${slot(0)}${slot(2)}</div>
     </div>
@@ -6403,12 +6426,20 @@ function demoWin(){
   /* add ?safe to a game's link to open the home screen without joining it (for a game that will not open) */
   const safe = /[?&]safe/.test(location.search);
   if(safe) try{ history.replaceState(null,'','/'); }catch(e){}
-  const q = safe ? null : linkCode();
-  if(/[?&]demo=win/.test(location.search)) return demoWin();
+  let q = safe ? null : linkCode();
+  if(/[?&]demo=win/.test(location.search)) return demoWin();   // the test screen never touches where this device really is
+  /* no game in the address: go back to the game this device was in, if any (a week at most) */
+  let here = null; try{ here = JSON.parse(store.get(HERE_KEY)); }catch(e){}
+  if(!q && !safe && here && here.v && Date.now() - (here.at||0) < 7*864e5){
+    const [kind, id] = String(here.v).split(/:(.*)/);
+    if(kind==='online' && CODE_RE.test(id) && myGames().some(g=>g.code===id)){ q = id; try{ history.replaceState(null,'','/'+id); }catch(e){} }
+    else if(kind==='local' && loadSave(id)){ HERE.ready = true; G.resume(id); return; }
+  }
   render();
   if(q && ui.form.name.trim()){ ON.status='connecting'; connect(q, true); }
   else if(q) peekStart(q);
   else if(q) setTimeout(()=>{ const c = document.querySelector('.mode.invited'); if(c && !scrollY) c.scrollIntoView({block:'start'}); }, 350);   // the page may redraw once more as the scores arrive
+  HERE.ready = true;   // from here on, every screen change updates where this device is
 })();
 </script>
 
