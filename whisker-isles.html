@@ -148,6 +148,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-brand img{width:auto;height:42px;max-width:150px;border:0;border-radius:0;box-shadow:none;background:none;object-fit:contain;filter:none}   /* a white sticker, as tall as the buttons beside it */
 .wi-brand:hover img{transform:none}
 .app .topbar .wi-me.wi-brand img{width:auto;height:42px;max-width:170px}
+.app .topbar .wi-me .lg-stack{display:none}
 .app > .topbar{margin-bottom:-10px}   /* the map sits closer to the header */
 @media (max-width:920px){ .app .topbar .wi-me.wi-brand img{height:40px} }   /* the buttons are 40 high on phones */
 .credit .cr-me{display:inline-flex;align-items:center;gap:6px;text-decoration:none;vertical-align:middle}
@@ -221,6 +222,13 @@ a.btn{color:var(--plum);text-decoration:none}
   .app .topbar .wi-act .long,.app .topbar .wi-act .short{display:none}
   .app .topbar .wi-act svg{width:19px;height:19px}
   .app .topbar .wi-me img{width:40px;height:40px}
+  /* the stacked logo (Isles under the "ker") sits in the top left corner, then copy code, with the buttons on the right */
+  .app .topbar.wi-nav .wi-left{display:contents}
+  .app .topbar .wi-me.wi-brand{order:0;flex:none;padding:0}
+  .app .topbar .wi-me.wi-brand .lg-flat{display:none}
+  .app .topbar .wi-me.wi-brand img.lg-stack{display:block;width:auto;height:54px;max-width:80px;margin:-4px 0 -6px}
+  .app .topbar .wi-copy{order:1}
+  .app .topbar .wi-right{order:2;flex:1 0 auto;justify-content:flex-end}
 }
 .modal.settings{max-width:420px}
 .set-list{display:flex;flex-direction:column;gap:10px;margin:6px 0 16px}
@@ -4273,7 +4281,7 @@ function settingsHTML(){
     ${online ? item('quit', 'Quit game', 'Your progress will be lost', "G.open('leave')") : ''}
   </div></div>`;
 }
-function meLink(){ return ART.has('logo') ? `<span class="wi-me wi-brand"><img src="${artSrc('logo')}" alt="Whisker Isles"></span>` : `<span class="wi-me wi-brand"><span>Whisker Isles</span></span>`; }
+function meLink(){ return ART.has('logo') ? `<span class="wi-me wi-brand"><img class="lg-flat" src="${artSrc('logo')}" alt="Whisker Isles">${ART.has('logo-stack')?`<img class="lg-stack" src="${artSrc('logo-stack')}" alt="" aria-hidden="true">`:''}</span>` : `<span class="wi-me wi-brand"><span>Whisker Isles</span></span>`; }
 /* the designer's credit, with their picture */
 function creditHTML(){ return `<p class="credit">Designed by <a class="cr-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener"><img src="/img/jessy-avatar.webp" alt="" width="22" height="22">JessyUX</a></p>`; }
 function renderBoard(){
