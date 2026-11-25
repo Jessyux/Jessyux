@@ -87,3 +87,13 @@ D=$(mktemp -d) && git archive HEAD | tar -x -C "$D" && cd "$D" && node build-gam
 - If a push is rejected because GitHub has newer commits, merge them in and test again before deploying. Never force-push.
 - After deploying, report the Cloudflare version ID and the commit SHA it was built from.
 - Live site: `whisker.jessyux.com` (Worker `whisker-isles`). To undo a bad deploy: `npx wrangler deployments list --name whisker-isles`, then `npx wrangler rollback <previous version id> --name whisker-isles`.
+
+## Starting a new chat about Whisker Isles
+
+The game is not in the JessyUX/portfolio folder or on `main`. A chat that opens in the main checkout will see no game files. Open the chat in this folder instead:
+
+`C:\Users\User\Documents\portfolio\portoflio 2026\.claude\worktrees\whisker-isles` (branch `whisker-isles`, file `whisker-isles.html`, live at whisker.jessyux.com).
+
+- In the Claude desktop app, start the new chat with this folder as the project folder.
+- If a chat starts anywhere else, say "Whisker Isles" in the first message. The chat should then switch to this folder and run the start checks above.
+- "Whisker Isles" means this git branch, never the published Artifact of the same name.
