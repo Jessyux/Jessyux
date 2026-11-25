@@ -2589,7 +2589,7 @@ function placings(){
   return out.map(o=>Object.assign(o, {pts: PLACE_PTS[o.place-1] || 0}));
 }
 function recordResult(){
-  if(!S || S.phase!=='over' || S.winner<0 || S.ended) return;
+  if(!S || S.phase!=='over' || S.winner<0 || S.ended || S.viewOnly) return;
   if(!S.gid) S.gid = Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   const id = S.gid;
   let done = []; try{ done = JSON.parse(store.get(SCORED_KEY)) || []; }catch(e){}
@@ -2645,14 +2645,14 @@ function recordHistory(){
   try{ const snap = JSON.parse(JSON.stringify(S)); snap.undo = []; snap.log = snap.log.slice(0,30); store.set(HIST_PFX+S.gid, JSON.stringify(snap)); }catch(e){}
   store.set(HIST_KEY, JSON.stringify(h.slice(0,MAX_HIST)));
 }
-function historyHTML(){
-  const h = histList(), ORD = ['1st','2nd','3rd'];
+function historyHTML(code){
+  const all = histList(), h = code ? all.filter(x=>x.code===code) : all, ORD = ['1st','2nd','3rd'];
   const rows = h.map(g=>{
     const res = g.res.map(r=>`<li><span class="hs-pl">${ORD[r.place-1]||r.place+'th'}</span><i class="hs-dot" style="background:${esc(r.c)}"></i><b>${esc(r.n)}</b><small>${r.vp} pts${r.pts?` · +${r.pts} leaderboard`:''}</small></li>`).join('');
     return `<li class="hist-row"><div class="hs-top"><b>${g.left?'Everyone else left':esc(g.winner)+' won'}</b><span class="muted small">${esc(fmtWhen(g.at))}${g.code?` · ${esc(g.code)}`:''}</span></div>
       ${res?`<ul class="hs-res">${res}</ul>`:`<p class="muted small">${esc(g.cats.join(', '))}</p>`}
-      ${store.get(HIST_PFX+g.id)?`<div class="hs-acts"><button class="btn small primary" onclick="G.histBoard('${esc(g.id)}')">See board</button></div>`:''}</li>`; }).join('');
-  return `<div class="modal hist-modal"><div class="rules-head"><h2>Lobby history</h2><button class="btn small" onclick="G.close()">Close</button></div>${rows?`<ul class="hist">${rows}</ul>`:'<p class="muted">No finished games yet. Each one shows up here after the win.</p>'}</div>`;
+      ${store.get(HIST_PFX+g.id)?`<div class="hs-acts"><button class="btn small primary" onclick="G.histWin('${esc(g.id)}')">See results</button> <button class="btn small" onclick="G.histBoard('${esc(g.id)}')">See board</button></div>`:''}</li>`; }).join('');
+  return `<div class="modal hist-modal"><div class="rules-head"><h2>${code?esc(code)+' history':'Lobby history'}</h2><button class="btn small" onclick="G.close()">Close</button></div>${rows?`<ul class="hist">${rows}</ul>`:code?`<p class="muted">No finished games from ${esc(code)} on this device yet. Each one shows up here after the win.</p><div class="hs-acts"><button class="btn small" onclick="G.open('history')">Show all games</button></div>`:'<p class="muted">No finished games yet. Each one shows up here after the win.</p>'}</div>`;
 }
 /* in-person games: each one is saved on its own (SAVES_PFX + id), with a small index for the list on the start screen.
    The index holds what the list shows: cats, when it began, when it was last played and how long it has been played. */
@@ -5461,7 +5461,7 @@ function modalHTML(){
   if(m.kind==='host') return hostToolsHTML();
   if(m.kind==='settings') return settingsHTML();
   if(m.kind==='leave') return leaveHTML();
-  if(m.kind==='history') return historyHTML();
+  if(m.kind==='history') return historyHTML(m.code);
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='need2') return `<div class="modal"><h2>Waiting for a friend</h2><p>Requires at least 2 players to start the game. Share the game code and ask a friend to join.</p><div class="actions center"><button class="btn primary" autofocus onclick="G.close()">Got it</button></div></div>`;
@@ -5652,8 +5652,8 @@ function myGamesList(busy){
   const g = myGames().sort((a,b)=>order[a.state]-order[b.state]);
   if(!g.length) return '';
   const tag = {playing:'In play', pending:'Lobby, not started', over:'Finished'};
-  const go = {playing:'Continue', pending:'Open lobby', over:'See result'};
-  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="G.rejoin('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button>${x.host ? `<button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)} for everyone">Delete</button>`
+  const go = {playing:'Continue', pending:'Open lobby', over:'See results'};
+  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="${x.state==='over'?'G.seeResult':'G.rejoin'}('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button><button class="btn small" onclick="G.gameHist('${esc(x.code)}')" aria-label="History for ${esc(x.code)}">History</button>${x.host ? `<button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)} for everyone">Delete</button>`
       : `<button class="btn small" onclick="G.unlist('${esc(x.code)}')" aria-label="Remove ${esc(x.code)} from my list">Remove from my list</button>`}</span></li>`).join('');
   return `<div class="my-games"><h3>Your online games</h3><ul>${rows}</ul></div>`;
 }
@@ -6124,6 +6124,7 @@ const G = {
   pushToggle(){ if(pushOn()) disablePush(); else enablePush(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
   mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); if(ui.mode && innerWidth<=920) toMap(); },
+  gameHist(code){ ui.modal = {kind:'history', code}; render(); },
   open(kind){
     if(kind==='bank') ui.modal={kind, give:null, get:null};
     else if(kind==='trade'){ const open = S.players.map((_,i)=>i).filter(i=>i!==S.cur && !S.players[i].noTrade); ui.modal={kind, partners: S.players.length===2 ? open : [], give:emptyRes(), get:emptyRes()}; }
@@ -6149,6 +6150,7 @@ const G = {
   showWin(){ ui.story=null; ui.hideWin=false; ui.cheered=S.log.length; render(); },
   winBoard(){ ui.hideWin=true; ui.modal={kind:'board'}; render(); },
   winLobby(){
+    if(S && S.viewOnly) return G.toStart();
     if(S && S.online){
       if(ON.lobbyReady){ ON.lobbyReady = false; return G.enterLobby(); }
       if(ON.ws && ON.ws.readyState===1){ ui.leaveWin = true; setTimeout(()=>{ ui.leaveWin = false; }, 4000); ON.ws.send(JSON.stringify({type:'again'})); toast('Whisker Isles', 'Back to the lobby...'); }
@@ -6158,6 +6160,15 @@ const G = {
     ui.hideWin=true; ui.modal={kind:'newgame'}; render();
   },
   enterLobby(){ ui.story = null; chatReset(); document.querySelectorAll('canvas.confetti').forEach(c=>c.remove()); ui.hideWin = false; ui.modal = null; ui.deal = null; ui.emoteSeen = undefined; ui.lastSwipe = null; $('#root').innerHTML=''; window.scrollTo(0,0); ON.status='lobby'; S=null; render(); },
+  /* a finished game from history: the winning screen again, from the saved snapshot */
+  histWin(id){
+    let g = null; try{ g = JSON.parse(store.get(HIST_PFX+id)); }catch(e){}
+    if(!g || !g.players) return;
+    g.viewOnly = true; g.online = false; g.handoff = false; g.handback = null; g.offer = null; delete g.code;
+    ui.modal = null; ui.mode = null; ui.story = null; S = g; buildGeo(S.board.radius); ui.hideWin = false; ui.cheered = S.log.length; $('#root').innerHTML=''; render(); window.scrollTo(0,0);
+  },
+  /* the button on a finished online game: the saved results if this phone has them, else open the game itself */
+  seeResult(code){ const g = histList().find(x=>x.code===code && store.get(HIST_PFX+x.id)); if(g) G.histWin(g.id); else G.rejoin(code); },
   histBoard(id){
     let g = null; try{ g = JSON.parse(store.get(HIST_PFX+id)); }catch(e){}
     if(!g || !g.players) return;
