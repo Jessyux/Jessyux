@@ -30,7 +30,7 @@
 //   oops {message}             a lobby change was refused; the connection stays
 import { DurableObject } from 'cloudflare:workers';
 import { sendPush, cleanSub } from './webpush.mjs';
-import { moveAlerts, startAlerts } from './whisker-notify.mjs';
+import { moveAlerts, startAlerts, chatAlerts } from './whisker-notify.mjs';
 import { cleanChat, chatReady, chatPush } from './whisker-chat.mjs';
 import { sweep, MAX_SOCKETS, NEW_PER_HOUR, PING, PONG } from './whisker-limits.mjs';
 import { takeOverByName, cleanTint, renameSeat, pickColor, ensureSids, publicLobby, convertSeats, openSeats, claimOpen, releaseSeat, pickList, rematchRoom, leaveSeat } from './whisker-seat.mjs';
@@ -378,6 +378,8 @@ export class WhiskerRoom extends DurableObject {
       const msg = { id: `${now}-${this._chatN}`, from, text, t: now, ...(seat ? {} : { guest: true }) };
       this._chat = chatPush(this._chat || [], msg);
       for (const w of this.ctx.getWebSockets()) { const a = w.deserializeAttachment() || {}; if (a.pid || a.gid) this.send(w, { type: 'chat', msg }); }
+      /* players with notifications on hear about it on a phone that is locked or on another app */
+      if (seat) this.notify(room, chatAlerts(room.seats, me, seat.name, text, room.code));
       return;
     }
     if (m.type === 'again') {

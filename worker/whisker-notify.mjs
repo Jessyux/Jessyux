@@ -43,3 +43,10 @@ export function startAlerts(seats, hostPid, code) {
     pid: s.pid, payload: { title: 'The game has started', body: 'Your cats are on the island.', url: '/' + code, tag: 'start-' + code },
   }));
 }
+
+/* a chat message: every other cat at the table hears about it (the service worker stays quiet if the game is on screen) */
+export function chatAlerts(seats, fromPid, fromName, text, code) {
+  const pids = [...new Set(seats.map((s) => s && s.pid).filter((p) => p && p !== fromPid))];
+  const t = String(text || ''), body = t.length > 88 ? t.slice(0, 87) + '…' : t;
+  return pids.map((pid) => ({ pid, payload: { title: `${name({ name: fromName })} in the chat`, body, url: '/' + code, tag: 'chat-' + code } }));
+}

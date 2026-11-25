@@ -74,3 +74,20 @@ test('an emote tells the target cat once, and not the sender or the same emote a
   assert.deepEqual(moveAlerts(st(), st({ emote: em(2, 0, 0) }), seats, 'x-y-11'), []);
   assert.match(moveAlerts(st(), st({ emote: { id: 3, from: 0, to: 1, kind: 'hiss' } }), seats, 'x-y-11')[0].payload.body, /hissed at you/);
 });
+
+test('a chat message reaches every other cat once, never the sender', async () => {
+  const { chatAlerts } = await import('../worker/whisker-notify.mjs');
+  const s = [{ pid: 'a', name: 'Mochi' }, { pid: 'b', name: 'Tofu' }, { pid: 'b', name: 'Tofu 2' }, { pid: 'c', name: 'Bean' }, { open: true }];
+  const r = chatAlerts(s, 'a', 'Mochi', 'gg everyone', 'cosy-bean-62');
+  assert.deepEqual(r.map((x) => x.pid), ['b', 'c']);
+  assert.equal(r[0].payload.title, 'Mochi in the chat');
+  assert.equal(r[0].payload.body, 'gg everyone');
+  assert.equal(r[0].payload.tag, 'chat-cosy-bean-62');
+  assert.equal(r[0].payload.url, '/cosy-bean-62');
+});
+
+test('a long chat message is cut short in the notification', async () => {
+  const { chatAlerts } = await import('../worker/whisker-notify.mjs');
+  const r = chatAlerts([{ pid: 'b' }], 'a', 'Mochi', 'x'.repeat(140), 'x-y-11');
+  assert.ok(r[0].payload.body.length <= 90);
+});

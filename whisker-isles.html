@@ -151,6 +151,7 @@ a.btn{color:var(--plum);text-decoration:none}
 .wi-me .lg-stack{display:none}   /* the stacked logo only shows in the phone game header */
 .app > .topbar{margin-bottom:-10px}   /* the map sits closer to the header */
 @media (max-width:920px){ .app .topbar .wi-me.wi-brand img{height:40px} }   /* the buttons are 40 high on phones */
+@media (min-width:921px){ .wi-brand img.lg-flat,.app .topbar .wi-me.wi-brand img.lg-flat{height:74px;max-width:260px;margin:-10px 0 -6px} }   /* desktop: a bigger logo; the negative margin keeps the bar the same height */
 .credit .cr-me{display:inline-flex;align-items:center;gap:6px;text-decoration:none;vertical-align:middle}
 .credit .cr-me img{width:22px;height:22px;border-radius:50%;border:2px solid var(--plum);object-fit:cover;background:#fff;display:block}
 .credit .cr-me:hover{text-decoration:underline}
@@ -756,12 +757,7 @@ svg :focus{outline:none}
 .hs-dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--plum);flex:none}
 .hs-res small{color:var(--plum-2);font-weight:800}
 .hs-acts{margin-top:8px}
-.story{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;pointer-events:none}
-.story>*{pointer-events:auto}
-.sty-card{width:min(520px,100%);max-height:78vh;overflow:auto;box-sizing:border-box;background:var(--cream);border:3px solid var(--plum);border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -4px 0 rgba(58,35,65,.18);padding:12px 14px calc(12px + env(safe-area-inset-bottom));animation:styUp .35s cubic-bezier(.2,.9,.3,1.1)}
 @keyframes styUp{from{transform:translateY(40%);opacity:0}}
-.sty-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.sty-head h2{margin:0;font-size:1.25rem;color:var(--plum)}
 .sty-stats{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px}
 .sty-stats li{background:#fff;border:2.5px solid var(--plum);border-radius:12px;padding:4px 6px;text-align:center}
 .sty-stats b{display:block;font-size:1.35rem;line-height:1.1;color:var(--plum)}
@@ -774,10 +770,30 @@ svg :focus{outline:none}
 .sty-ems{display:flex;gap:6px;margin-top:8px}
 .sty-em{flex:1;text-align:center;background:#EBE5FF;border:2.5px solid var(--plum);border-radius:999px;padding:3px 4px;font-weight:800;font-size:.75rem;color:var(--plum)}
 .sty-em b{font-size:1.1rem;margin-right:4px}
-.sty-acts{margin-top:12px}
-.story.min{bottom:calc(172px + env(safe-area-inset-bottom))}
-.sty-pill{font:inherit;font-weight:900;color:var(--plum);background:#FFE08A;border:3px solid var(--plum);border-radius:999px;padding:6px 18px;box-shadow:3px 3px 0 var(--plum);cursor:pointer}
-@media (prefers-reduced-motion:reduce){.sty-card{animation:none}}
+/* game over: the panel grows into "How the game went" as a sheet over the board on phones, and in place beside the board on wide screens */
+.rb-over-acts{flex:1 1 100%;display:flex;flex-direction:column;gap:8px}
+.rb-turn > .rb-over-acts{margin-top:8px}   /* + the row gap = 16px above View details */
+.rb-over-acts .btn{width:100%;justify-content:center}
+.rb-story-acts{padding:10px 14px 14px;flex:none}
+#rollbar.rb-open{position:fixed;z-index:40;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom));margin:0 auto;width:min(520px,calc(100% - 16px));max-height:78vh;max-height:78dvh;display:flex;flex-direction:column;animation:rbGrow .45s cubic-bezier(.2,.9,.3,1)}
+/* it grows upwards out of the folded panel, ears and all */
+@keyframes rbGrow{from{clip-path:inset(calc(100% - 170px) -24px -24px -24px)}to{clip-path:inset(-40px -24px -24px -24px)}}
+.rb-ears{display:none}
+#rollbar.rb-open .rb-ears{display:block;position:absolute;top:-19px;left:30px;right:38px;height:22px;z-index:2;pointer-events:none;background:var(--ear-l) left bottom/28px 22px no-repeat,var(--ear-r) right bottom/28px 22px no-repeat}
+.panel:has(#rollbar.rb-open)::before{display:none}
+#rollbar.rb-open .rb-turn{flex:none}
+.rb-story{flex:1 1 auto;min-height:0;overflow:auto;padding:10px 14px 4px;overscroll-behavior:contain}
+.sty-h{margin:0;font-size:1.25rem;color:var(--plum)}
+.sty-dur{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;background:#fff;border:2.5px solid var(--plum);border-radius:12px;padding:6px 10px;color:var(--plum);font-size:.9rem}
+.sty-dur b{font-size:1.15rem}
+.sty-dur .sty-ic{line-height:1;margin-top:1px}   /* the clock sits top left, level with the game length */
+.sty-dur small{display:block;font-weight:800;font-size:.72rem;color:var(--plum-2)}
+@media (min-width:921px){
+  #rollbar.rb-open{position:relative;left:auto;right:auto;bottom:auto;margin:0;width:auto;max-height:none;animation:none}
+  #rollbar.rb-open .rb-ears{display:none}.panel:has(#rollbar.rb-open)::before{display:block}   /* beside the board the panel stays put, so it keeps the panel's own ears */
+  .rb-story{max-height:min(62vh,640px)}
+}
+@media (prefers-reduced-motion:reduce){#rollbar.rb-open{animation:none}}
 .pd-cat{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pd-cat:focus-visible{outline:3px solid var(--plum);outline-offset:3px;border-radius:14px}
 .pd-emo{position:absolute;left:50%;bottom:calc(var(--cb) + 30%);transform:translate(-50%,6px) scale(.9);z-index:7;display:none;gap:4px;white-space:nowrap}
@@ -798,6 +814,7 @@ svg :focus{outline:none}
 @keyframes peGroom{50%{transform:scale(1.05,.95)}}
 .pd-hint{margin:auto auto 8px;width:fit-content;max-width:92%;text-align:center;font-weight:800;font-size:.75rem;color:var(--plum);background:rgba(255,248,235,.88);border-radius:999px;padding:1px 12px}
 @media (prefers-reduced-motion:reduce){.pd-cat.pe-tap,.pd-cat.pe-hiss,.pd-cat.pe-groom{animation:none}}
+.pd-chatrow{display:flex;justify-content:center;margin-top:10px}   /* the chat sits under the buttons at the bottom, like in the game */
 .pd-acts.pd-navrow{margin-top:0;display:flex;justify-content:center;align-items:flex-end;gap:1.2cqw;flex-wrap:nowrap;padding:0 1cqw}
 .pd-camp .pd-flame{width:calc(19cqw*var(--k))}
 .pd-nb{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;width:22.5cqw;flex:0 0 22.5cqw;-webkit-tap-highlight-color:transparent}
@@ -1977,7 +1994,10 @@ setTimeout(bootLift, 10000);
 ART_FILES.forEach(name=>{
   const im = new Image();
   const core = true;   /* the loading screen waits for every picture the game screen draws, so it never appears half-dressed and then re-draws */
-  im.onload = ()=>{ ART.add(name); if(core){ scheduleRender(); bootStep(); } else lateRender(); };
+  im.onload = ()=>{ ART.add(name);
+    /* the game header is drawn once, maybe before the logo arrived: put the logo in now (the stacked one shows top left on phones) */
+    if((name==='logo' || name==='logo-stack') && typeof meLink==='function') document.querySelectorAll('.wi-brand').forEach(el=>{ el.outerHTML = meLink(); });
+    if(core){ scheduleRender(); bootStep(); } else lateRender(); };
   im.onerror = ()=>{ if(core) bootStep(); };
   im.src = artSrc(name);
 });
@@ -3554,7 +3574,13 @@ function chatGot(msg){
   if(!(w && w.mine) && !CHAT.open){
     CHAT.unread++;
     chatPeek(w ? w.p.name : msg.guest ? 'New cat' : 'A cat', msg.text);
-    if(document.hidden || !document.hasFocus()){ stopFlash(); let on = false; const t = '● '+(w?w.p.name:'Chat'); document.title = t; ALERT.flash = setInterval(()=>{ on = !on; document.title = on ? ALERT.base : t; }, 1100); }
+    if(document.hidden || !document.hasFocus()){
+      stopFlash(); let on = false; const t = '● '+(w?w.p.name:'Chat'); document.title = t; ALERT.flash = setInterval(()=>{ on = !on; document.title = on ? ALERT.base : t; }, 1100);
+      /* away from the game (another tab or app): the same chime, buzz and notification as a turn, in the game, on the win scene and on the board after it.
+         With push on, the server sends the notification instead, so it doesn't come twice */
+      chime(); try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
+      try{ if(!pushOn() && 'Notification' in window && Notification.permission==='granted'){ const n = new Notification(`${w ? w.p.name : 'A cat'} in the chat`, {body: msg.text.slice(0,88), tag:'whisker-chat', icon:'/favicon.svg'}); n.onclick = () => { window.focus(); n.close(); G.chat(); }; } }catch(e){}
+    }
   }
   chatDraw();
 }
@@ -4407,15 +4433,14 @@ function renderRollbar(){
     canUndo() ? `<button class="btn${sz}" onclick="G.undo()" aria-label="Take back your last piece to place it again">Replace</button>` : '',
     S.phase==='setup' && S.setup.step==='done' && mt ? `<button class="btn${sz} primary" onclick="G.setupNext()">${S.setup.i+1>=S.setup.order.length?'Start the game':'Next cat'}</button>` : ''
   ].join('');
-  const over = S.phase==='over' && S.winner>=0, wp = over ? S.players[S.winner] : null;
+  const over = S.phase==='over' && S.winner>=0, wp = over ? S.players[S.winner] : null, storyOpen = over && ui.story==='open';
+  el.classList.toggle('rb-open', storyOpen);
   if(over){
     const wn = S.ended==='left' ? `${S.online&&ON.mine.includes(S.winner)?'You are':pname(S.winner)+' is'} the last cat on the island` : `${S.online&&ON.mine.includes(S.winner)?'You won':pname(S.winner)+' won'} with ${vp(S.winner,true)} points`;
     el.innerHTML = `<div class="rb-turn turn-card" style="--pc:${pcol(wp)}">
       <div class="turn">${portrait(wp,'win')}<div><div class="who">Game over</div><div class="sub">${wn}</div></div></div>
-      <div class="rb-acts"><button class="btn small primary" onclick="G.showWin()">Show results</button></div></div>
-      <details class="rb-more"${ui.moreOpen?' open':''} ontoggle="ui.moreOpen=this.open"><summary>Odds and what happened</summary><div class="rb-more-in">
-        <div class="rb-odds"><h3>Odds <small class="muted">${rolls} roll${rolls===1?'':'s'}</small></h3>${oddsChart()}</div>
-        <div class="rb-log"><h3>What happened</h3><ul class="log">${S.log.slice(0,30).map(l=>`<li>${l}</li>`).join('')}</ul></div></div></details>`;
+      ${storyOpen ? '' : `<div class="rb-over-acts"><button class="btn primary" onclick="G.storyToggle()" aria-expanded="false">View details</button><button class="btn" onclick="G.showWin()">Back to results</button></div>`}</div>
+      ${storyOpen ? `<i class="rb-ears" aria-hidden="true"></i><div class="rb-story">${storyBody()}</div><div class="rb-over-acts rb-story-acts"><button class="btn primary" onclick="G.storyToggle()" aria-expanded="true">View board</button><button class="btn" onclick="G.showWin()">Back to results</button></div>` : ''}`;
     return;
   }
   el.innerHTML = `
@@ -5032,32 +5057,35 @@ function chatFabSync(overlayOn){
   const f = document.getElementById('chat-fab'); if(f) f.remove();
   document.body.classList.toggle('chat-over', !!(overlayOn && S && S.online && chatOn()));
 }
-/* the story of the game: a sheet over the board once the win scene is put away; it folds down to a pill so the board can be seen */
-function storyHTML(){
-  const st = S.st || {}, n = S.players.length, rolls = S.hist.reduce((a,b)=>a+b,0);
-  const mins = st.t0 ? Math.max(1, Math.round(((st.t1 || Date.now()) - st.t0)/60000)) : 0;
+/* the story of the game: the game-over panel grows into it; "View board" folds it back down */
+/* how long a game took, in the two biggest units that fit: 25 min, 1 h 10 min, 2 days 3 h, 1 week 2 days, 2 months 1 week */
+function gameLength(ms){
+  const m = Math.max(1, Math.round(ms/60000)), H = 60, D = 24*H, W = 7*D, MO = 30*D;
+  const u = (n, one) => `${n} ${n===1 ? one : one+'s'}`;
+  if(m < H) return `${m} min`;
+  if(m < D) return m%H ? `${Math.floor(m/H)} h ${m%H} min` : `${m/H} h`;
+  if(m < W){ const d = Math.floor(m/D), h = Math.floor(m%D/H); return h ? `${u(d,'day')} ${h} h` : u(d,'day'); }
+  if(m < MO){ const w = Math.floor(m/W), d = Math.floor(m%W/D); return d ? `${u(w,'week')} ${u(d,'day')}` : u(w,'week'); }
+  const mo = Math.floor(m/MO), w = Math.floor(m%MO/W); return w ? `${u(mo,'month')} ${u(w,'week')}` : u(mo,'month');
+}
+function whenStamp(t){ try{ const d = new Date(t); return d.toLocaleDateString([], {weekday:'short', day:'numeric', month:'short'})+', '+d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }catch(e){ return ''; } }
+function storyBody(){
+  const st = S.st || {}, rolls = S.hist.reduce((a,b)=>a+b,0);
+  const t1 = st.t1 || (S.phase==='over' ? 0 : Date.now()), dur = st.t0 && t1 ? t1 - st.t0 : 0;
   const avg = rolls ? S.hist.reduce((a,c,k)=>a+c*k,0)/rolls : 0, sevens = S.hist[7]||0, exp7 = rolls/6;
   const top = arr => { if(!arr) return null; let b=-1, m=0, tie=false; arr.forEach((v,i)=>{ if(v>m){ m=v; b=i; tie=false; } else if(v===m && v>0) tie=true; }); return b>=0 ? {i:b, n:m, tie} : null; };
   const award = (icon, label, arr, unit) => { const t = top(arr); return `<li class="sty-aw"><span class="sty-ic">${icon}</span><span><b>${label}</b><small>${t ? esc(pname(t.i))+(t.tie?' (and friends)':'')+' · '+t.n+' '+unit+(t.n===1?'':'s') : 'Nobody this game'}</small></span></li>`; };
   const em = [['hiss','Hisses'],['tap','Taps'],['groom','Grooms']].map(([k,l])=>`<span class="sty-em"><b>${st[k]||0}</b>${l}</span>`).join('');
-  return `<div class="sty-card"><div class="sty-head"><h2>How the game went</h2><button class="btn small" onclick="G.storyToggle()" aria-label="Fold the story away to see the board">See board</button></div>
-    <div class="sty-body"><ul class="sty-stats">
-      ${mins?`<li><b>${mins}</b><small>minute${mins===1?'':'s'}</small></li>`:''}<li><b>${S.turn}</b><small>turns</small></li><li><b>${rolls}</b><small>dice rolls</small></li>
+  return `<h2 class="sty-h">How the game went</h2>
+    ${dur ? `<p class="sty-dur"><span class="sty-ic" aria-hidden="true">⏱️</span><span><b>${gameLength(dur)}</b><small>Started ${whenStamp(st.t0)}</small><small>Finished ${whenStamp(t1)}</small></span></p>` : ''}
+    <ul class="sty-stats"><li><b>${S.turn}</b><small>turns</small></li><li><b>${rolls}</b><small>dice rolls</small></li>
       <li><b>${rolls?avg.toFixed(1):'-'}</b><small>average roll (fair is 7.0)</small></li></ul>
-      <p class="sty-luck">${rolls?`Seven came up <b>${sevens}</b> time${sevens===1?'':'s'}; the odds said about <b>${Math.round(exp7)}</b>.`:''}</p>
-      ${oddsChart()}
-      <ul class="sty-awards">${award('🧹','Vacuum menace',st.vac,'send')}${award('⚓','Best haggler',st.bar,'barter')}${award('🤝','Deal maker',st.trd,'trade')}</ul>
-      <div class="sty-ems">${em}</div></div>
-    <div class="actions center sty-acts"><button class="btn small" onclick="G.storyToggle()">View board</button><button class="btn primary" onclick="G.winLobby()">Lobby</button></div></div>`;
+    <p class="sty-luck">${rolls?`Seven came up <b>${sevens}</b> time${sevens===1?'':'s'}; the odds said about <b>${Math.round(exp7)}</b>.`:''}</p>
+    ${oddsChart()}
+    <ul class="sty-awards">${award('🧹','Vacuum menace',st.vac,'send')}${award('⚓','Best haggler',st.bar,'barter')}${award('🤝','Deal maker',st.trd,'trade')}</ul>
+    <div class="sty-ems">${em}</div>`;
 }
-function syncStory(){
-  let el = document.getElementById('story');
-  const on = S && S.phase==='over' && ui.hideWin && ui.story && !ui.modal;
-  if(!on){ if(el) el.remove(); return; }
-  if(!el){ el = document.createElement('div'); el.id = 'story'; document.body.appendChild(el); }
-  el.className = ui.story==='open' ? 'story open' : 'story min';
-  el.innerHTML = ui.story==='open' ? storyHTML() : `<button class="sty-pill" onclick="G.storyToggle()">How the game went</button>`;
-}
+function syncStory(){ const el = document.getElementById('story'); if(el) el.remove(); }
 function renderOverlay(){
   const o = $('#overlay'); syncStory();
   if(S && S.phase==='over'){ recordResult(); recordHistory(); }
@@ -5416,7 +5444,7 @@ async function resultsCanvas(){
 }
 async function shareResults(btn){
   if(!S || S.phase!=='over') return;
-  const lb = btn ? (btn.querySelector('.pd-nbt') || btn) : null, label = lb ? lb.textContent : ''; if(btn){ btn.disabled = true; lb.textContent = 'Making picture...'; }
+  const lb = btn ? (btn.querySelector('.pd-nbt') || btn) : null, label = lb ? lb.textContent : ''; if(btn){ btn.disabled = true; lb.textContent = 'Sharing...'; }
   try{
     const c = await resultsCanvas(), blob = await new Promise(r=>c.toBlob(r,'image/png'));
     if(!blob) throw new Error('no picture');
@@ -5454,7 +5482,8 @@ function podiumHTML(){ pdFit();/* cat sprites: 3 frames side by side (centre, ar
     </div>
     ${S.online && ON.lobbyReady ? '<p class="pd-ready">A new game is ready in the lobby.</p>' : ''}
     <p class="pd-hint">Tap a winner to hiss, tap or groom them.</p>
-    <div class="pd-acts pd-navrow"><button type="button" class="pd-nb" onclick="G.hideWin()"><img src="${artSrc('pd-i-board')}" alt=""><span class="pd-tag pd-nbt">Board</span></button><button type="button" class="pd-nb" onclick="G.winBoard()"><img src="${artSrc('pd-i-leader')}" alt=""><span class="pd-tag pd-nbt">Leaderboard</span></button><button type="button" class="pd-nb" onclick="shareResults(this)"><img src="${artSrc('pd-i-share')}" alt=""><span class="pd-tag pd-nbt">Share</span></button><button type="button" class="pd-nb hot" onclick="G.winLobby()"><img src="${artSrc('pd-i-lobby')}" alt=""><span class="pd-tag pd-nbt">Lobby</span></button>${S.online&&chatOn()?chatBtnHTML():''}</div>
+    <div class="pd-acts pd-navrow"><button type="button" class="pd-nb" onclick="G.hideWin()"><img src="${artSrc('pd-i-board')}" alt=""><span class="pd-tag pd-nbt">Board</span></button><button type="button" class="pd-nb" onclick="G.winBoard()"><img src="${artSrc('pd-i-leader')}" alt=""><span class="pd-tag pd-nbt">Leaderboard</span></button><button type="button" class="pd-nb" onclick="shareResults(this)"><img src="${artSrc('pd-i-share')}" alt=""><span class="pd-tag pd-nbt">Share</span></button><button type="button" class="pd-nb hot" onclick="G.winLobby()"><img src="${artSrc('pd-i-lobby')}" alt=""><span class="pd-tag pd-nbt">Lobby</span></button></div>
+    ${S.online&&chatOn()?`<div class="pd-chatrow">${chatBtnHTML()}</div>`:''}
   </div></div></div>`;
 }
 function modalHTML(){
@@ -6151,7 +6180,7 @@ const G = {
     const c = document.querySelector(`.pd-cat[data-i="${i}"]`); if(!c) return;
     ui.pdOpen = i; c.closest('.pd-slot').classList.add('emo-open'); sfx('pop');
   },
-  storyToggle(){ ui.story = ui.story==='open' ? 'min' : 'open'; syncStory(); },
+  storyToggle(){ ui.story = ui.story==='open' ? 'min' : 'open'; renderRollbar(); if(ui.story==='open'){ const r = $('#rollbar .rb-story'); if(r) r.scrollTop = 0; } },
   showWin(){ ui.story=null; ui.hideWin=false; ui.cheered=S.log.length; render(); },
   winBoard(){ ui.hideWin=true; ui.modal={kind:'board'}; render(); },
   winLobby(){
@@ -6358,6 +6387,16 @@ status ${ON.status} · ws ${ON.ws ? ON.ws.readyState : '-'} · art ${ART.size} �
     try{ localStorage.setItem('wi-debug-last', box.textContent.split('---').pop().trim().slice(0,900)); }catch(e){}
   }, 700);
 }
+/* add ?demo=win to the address to open a pretend finished game and watch the win scene's animations.
+   It is view-only: nothing is saved, nothing goes on the leaderboard or into history */
+function demoWin(){
+  newGame([{name:'Naughty Cat',breed:7},{name:'Jessy',breed:0},{name:'The Lé Cat',breed:4}], {online:false});
+  [10,7,5].forEach((n,k)=>{ S.players[k].cards = Array(n).fill(0).map(()=>({t:'trophy'})); });
+  S.phase = 'over'; S.winner = 0; S.viewOnly = true; S.turn = 58;
+  S.hist = [0,0,2,4,6,8,9,11,7,6,4,2,1];
+  if(S.st){ S.st.t0 = Date.now() - 47*60000; S.st.t1 = Date.now(); S.st.hiss = 6; S.st.tap = 11; S.st.groom = 4; S.st.vac[2] = 3; S.st.trd[1] = 4; S.st.bar[0] = 2; }
+  ui.hideWin = false; ui.story = null; render();
+}
 /* boot: rejoin an online game from the link, or show the start screen */
 (function boot(){
   fetchBoard();
@@ -6365,6 +6404,7 @@ status ${ON.status} · ws ${ON.ws ? ON.ws.readyState : '-'} · art ${ART.size} �
   const safe = /[?&]safe/.test(location.search);
   if(safe) try{ history.replaceState(null,'','/'); }catch(e){}
   const q = safe ? null : linkCode();
+  if(/[?&]demo=win/.test(location.search)) return demoWin();
   render();
   if(q && ui.form.name.trim()){ ON.status='connecting'; connect(q, true); }
   else if(q) peekStart(q);
