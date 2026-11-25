@@ -194,7 +194,7 @@ a.btn{color:var(--plum);text-decoration:none}
 }
 @media (max-width:560px){ .app .topbar .wi-me span{display:none} .app .topbar .wi-me{padding-right:0} }
 .m-only{display:none!important}
-.wi-copy{height:40px;flex:0 1 auto;min-width:0;border-radius:999px;border:2.5px solid var(--plum);background:var(--butter-2,#FFF1C9);color:var(--plum);box-shadow:2px 2px 0 var(--plum);align-items:center;gap:4px;padding:0 9px 0 11px;font:inherit;font-weight:900;font-size:.74rem;letter-spacing:-.01em;cursor:pointer;box-sizing:border-box}
+.wi-copy{height:40px;flex:0 1 auto;min-width:0;border-radius:999px;border:2.5px dashed color-mix(in srgb,var(--plum) 50%,transparent);background:var(--cream);color:var(--plum);box-shadow:none;align-items:center;gap:4px;padding:0 9px 0 11px;font:inherit;font-weight:900;font-size:.74rem;letter-spacing:-.01em;cursor:pointer;box-sizing:border-box}
 .wi-copy span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wi-copy svg{width:15px;height:15px;flex:none}
 /* copy buttons: the copy icon turns into a tick for a moment */
@@ -203,6 +203,8 @@ a.btn{color:var(--plum);text-decoration:none}
 .cp svg+svg,.copied .cp svg:first-child{visibility:hidden}
 .copied .cp svg+svg{visibility:visible}
 .code-chip .cp{margin-left:.4em}
+.wi-copy.copied,.code-chip.copied{background:#BFEBB0}   /* just copied: light green, with a darker green tick */
+.wi-copy.copied .cp,.code-chip.copied .cp{color:#1F7A3A}
 .wi-copy:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
 /* phones: one row. Avatar and copy-code on the left, then Home, Rules and Settings as icons; everything else is in Settings */
 @media (max-width:768px){
