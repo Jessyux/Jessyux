@@ -1247,6 +1247,13 @@ body{overflow-x:clip}
   -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x;
           mask:linear-gradient(#000,#000) top/100% calc(100% - 39px) no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40'%3E%3Cpath d='M0 0h120v18c-15 0-15 14-30 14S75 18 60 18 45 32 30 32 15 18 0 18z'/%3E%3C/svg%3E") bottom/120px 40px repeat-x}
 .start-top .wi-acts{margin-left:auto}
+.wi-back{display:inline-flex;align-items:center;gap:6px;flex:none;height:40px;box-sizing:border-box;padding:0 12px 0 8px;border:2.5px solid var(--plum);border-radius:999px;background:var(--cream);box-shadow:2px 2px 0 var(--plum);color:var(--plum);font-weight:900;font-size:.9rem;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.wi-back svg{width:17px;height:17px;flex:none}
+.wi-back img{width:26px;height:26px;border-radius:50%;border:2px solid var(--plum);object-fit:cover;background:#fff;display:block}
+.wi-back:hover,.wi-back:focus-visible{background:var(--butter-2)}
+.wi-back:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
+.wi-lft{align-items:center}
+@media (max-width:440px){ .lobby-top .wi-back span{display:none} .lobby-top .wi-back{padding:0 6px} .lobby-top .wi-act .short{display:none} .lobby-top .wi-act{padding:7px 9px} .lobby-top .wi-act svg{width:19px;height:19px} }   /* the lobby bar also has the logo: on a small phone the link is the arrow and picture only */
 .start-top{display:flex;justify-content:space-between;gap:8px;max-width:1080px;margin:0 auto;position:relative;z-index:1}
 .sea .hero-frame{width:min(660px,100%);margin:-34px auto 0}
 .sea .hero-art{border:0;border-radius:0;box-shadow:none;width:100%;
@@ -1553,12 +1560,11 @@ button.code-chip{font:inherit;cursor:pointer}
 .lb-sort .btn.on{background:var(--peach);color:var(--plum)}
 .lb{border-collapse:separate;border-spacing:0 7px}
 .lb thead th{border-bottom:2.5px solid var(--plum);padding-bottom:.35em}
-.lb tbody td,.lb tbody th{border:0;border-block:2.5px solid var(--plum);background:#F1EAFB}
-.lb tbody tr:nth-child(4n+1) > *{background:var(--butter-2)}
-.lb tbody tr:nth-child(4n+3) > *{background:var(--mint-2)}
-.lb tbody tr:nth-child(4n) > *{background:var(--pink-2)}
-.lb tbody tr > :first-child{border-left:2.5px solid var(--plum);border-radius:999px 0 0 999px;padding-left:.45em}
-.lb tbody tr > :last-child{border-right:2.5px solid var(--plum);border-radius:0 999px 999px 0}
+/* rows: no outline, just a faded stripe on every other row so nothing gets clipped at the edges */
+.lb tbody td,.lb tbody th{border:0;background:transparent}
+.lb tbody tr:nth-child(odd) > *{background:rgba(228,218,248,.55)}
+.lb tbody tr > :first-child{border-radius:999px 0 0 999px;padding-left:.45em;overflow:visible}
+.lb tbody tr > :last-child{border-radius:0 999px 999px 0}
 .lb tbody tr:first-child{background:none}
 .lb td:first-child{position:relative;isolation:isolate}
 .lb-rank{position:relative;display:inline-grid;place-items:center;width:1.9em;height:1.9em;border-radius:50%;border:2px solid var(--plum);background:#fff;font-size:.82rem;color:var(--plum)}
@@ -4538,6 +4544,8 @@ function settingsHTML(){
   </div></div>`;
 }
 function meLink(){ return ART.has('logo') ? `<span class="wi-me wi-brand"><img class="lg-flat" src="${artSrc('logo')}" alt="Whisker Isles">${ART.has('logo-stack')?`<img class="lg-stack" src="${artSrc('logo-stack')}" alt="" aria-hidden="true">`:''}</span>` : `<span class="wi-me wi-brand"><span>Whisker Isles</span></span>`; }
+/* the way back to the portfolio, top left on the home, in-person, online lobby and cat select screens */
+function backLink(){ return `<a class="wi-back" href="https://jessyux.com/?from=game" aria-label="Back to JessyUX"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><img src="/img/jessy-avatar.webp" alt="" width="26" height="26"><span>JessyUX</span></a>`; }
 /* the designer's credit, with their picture */
 function creditHTML(){ return `<p class="credit">Designed by <a class="cr-me" href="https://jessyux.com/?from=game#about" target="_blank" rel="noopener"><img src="/img/jessy-avatar.webp" alt="" width="22" height="22">JessyUX</a></p>`; }
 function renderBoard(){
@@ -5791,7 +5799,7 @@ function startScreen(){
       </section>`;
   return `<main class="start${where==='here'?' start-here':''}">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game"><div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game">${backLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -5909,7 +5917,7 @@ function pickScreen(){
   const tag = c => c.open ? '<small>Needs a phone</small>' : c.online ? '<small>Playing on another device</small>' : '<small>Continue here</small>';
   return `<main class="start pick-screen">
     <div class="sea">
-      <nav class="wi-nav start-top" aria-label="Game"><div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
+      <nav class="wi-nav start-top" aria-label="Game">${backLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
       ${heroHTML()}
     </div>
     <div class="raft">
@@ -5937,7 +5945,7 @@ function lobbyScreen(){
   const ghosts = Array.from({length: Math.max(0, Math.min(ON.guests||0, MAX_CATS - n - 1))}, (_,k)=>`<li class="nook guest" data-pr="${200+k}" style="--pillow:${PILLOW[(n+k+1)%PILLOW.length]}"><span class="nook-cat">${ghostCat()}</span><span class="pillow" aria-hidden="true"></span><b>Joining<i class="ct-dots" aria-hidden="true"></i></b><span class="sr">Someone is joining and has not added a name yet</span></li>`).join('');
   const invite = n<MAX_CATS ? `<li class="nook empty" style="--pillow:${PILLOW[n%PILLOW.length]}"><span class="nook-cat"><button class="nook-invite" data-tip="Click to copy invite link" onclick="G.copy('${esc(link)}', this, 'Invite link copied to clipboard')" aria-label="Copy the invite link for a friend"><span class="ghost" aria-hidden="true">+</span></button></span><span class="pillow" aria-hidden="true"></span><b>${ui.invitePending?'Pending':'Invite'}</b></li>` : '';
   return `<main class="start lobby">
-    <nav class="wi-nav back-row lobby-top" aria-label="Game">${meLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
+    <nav class="wi-nav back-row lobby-top" aria-label="Game"><span class="wi-lft">${backLink()}${meLink()}</span><div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('board','Leaderboard','Scores',"fetchBoard();G.open('board')")}${navAct('history','Lobby history','History',"G.open('history')")}</div></nav>
     <div class="corner-frame"><section class="cozy" style="--corner:url(${artSrc('lobby-corner')})">
       <div class="cozy-bar">
         <h2>The cat corner</h2><span class="cat-count">${n} ${n===1?'cat':'cats'}${n>MAX_CLASSIC?' · Big Island':''}</span>
