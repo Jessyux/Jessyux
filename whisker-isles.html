@@ -4101,6 +4101,8 @@ function onMsg(m){
       const st = JSON.parse(JSON.stringify(S)); st.undo = []; st.online = true; st.code = ON.code; st.handoff = false; st.handback = null; st.handbackNote = null; delete st.lastAt;
       ui.wentOnline = true; ON.ws.send(JSON.stringify({type:'convert', cats:c.cats, you:c.you, state:st})); return;
     }
+    /* the game that just ended in this room (the server keeps it): a cat who was away still gets the result in Lobby history */
+    if(m.last && !S && m.last.phase==='over'){ const keep = S; try{ const wn = m.last.winner>=0 && m.last.players[m.last.winner] ? m.last.players[m.last.winner].name : ''; if(histList().some(x=>x.code===ON.code && x.winner===wn && Date.now()-x.at<432e5)) throw 0; S = m.last; S.gid = S.gid || ('room-'+(ON.code||'')+'-'+(S.created||S.sid||S.log.length)); S.online = true; recordHistory(); }catch(e){} S = keep; }
     if(ON.code) setGameHost(ON.code, !!ON.me && m.lobby.host===ON.me);
     if(ON.seat>=0){ const mine = m.lobby.seats[ON.seat]; if(mine.name!==ui.form.name){ ui.form.name = mine.name; store.set('whisker-isles-name', mine.name); } }
     if(!m.lobby.started){

@@ -169,6 +169,7 @@ export class WhiskerRoom extends DurableObject {
   lobbyMsg(room, withState, forPid, except) {
     const msg = { type: 'lobby', ...publicLobby(room, this.online(), forPid), guests: this.guests(except) };
     if (withState && room.started && forPid) { msg.state = room.state; msg.ver = room.ver; }
+    if (!room.started && room.last && forPid) msg.last = room.last;
     return msg;
   }
   broadcast(room, withState, except) {

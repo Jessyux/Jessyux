@@ -127,6 +127,7 @@ export function takeOverByName(room, newPid, name) {
    there is nothing to do (not started, or not finished), so a second tap from another player changes nothing. */
 export function rematchRoom(room) {
   if (!room || !room.started || !room.state || room.state.phase !== 'over') return false;
+  room.last = room.state;   // the finished game is kept, so a cat who was away can still see how it ended
   room.started = false; room.state = null; room.ver = (room.ver || 0) + 1;
   for (const s of room.seats) s.ready = false;
   return true;

@@ -221,3 +221,13 @@ test('leaveSeat takes every cat this device plays, and a non-host leaving keeps 
   assert.deepEqual(room.seats.map((s) => s.pid), ['a', 'c']);
   assert.equal(room.host, 'a');
 });
+
+import { rematchRoom as rematchKeep } from '../worker/whisker-seat.mjs';
+import test2 from 'node:test';
+import assert2 from 'node:assert/strict';
+test2('rematch keeps the finished game as room.last', () => {
+  const fin = { phase: 'over', winner: 0 };
+  const room = { started: true, state: fin, seats: [{ ready: true }], ver: 1 };
+  assert2.equal(rematchKeep(room), true);
+  assert2.equal(room.started, false); assert2.equal(room.state, null); assert2.equal(room.last, fin);
+});
