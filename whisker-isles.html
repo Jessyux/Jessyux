@@ -668,6 +668,12 @@ details[open] summary{margin-bottom:8px}
 .hot-v{cursor:pointer}
 .hot-v circle{fill:var(--butter);stroke:var(--plum);stroke-width:3;animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 .hot-v:hover circle,.hot-v:focus circle{fill:#fff}
+.hot-v[data-t] circle{animation:none}
+.hot-v[data-t] circle.hit{fill:transparent;stroke:none}   /* an upgrade spot keeps a steady yellow circle; the green arrow above it bobs to say "level up" */
+.hot-v .up-arrow polygon{fill:#4CC264;stroke:var(--plum);stroke-width:2.5;stroke-linejoin:round;animation:upArrow 1.1s ease-out infinite}
+.hot-v:hover .up-arrow polygon,.hot-v:focus .up-arrow polygon{fill:#7FE08F}
+@keyframes upArrow{0%{transform:translateY(5px);opacity:0}25%{opacity:1}75%{opacity:1}100%{transform:translateY(-5px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.hot-v .up-arrow polygon{animation:none}}
 .hot-e{cursor:pointer}
 .undo-hit{cursor:pointer}
 .undo-hit .hit{fill:transparent}
@@ -4397,7 +4403,7 @@ return `<image href="${artSrc('port-boat')}" x="${bx}" y="${by}" width="${BOAT.w
     out += `<g class="hot-v" data-v="${v}" tabindex="0" role="button" aria-label="Place a cat bed here"><circle cx="${V[v].x}" cy="${V[v].y}" r="9"/><circle class="hit" cx="${V[v].x}" cy="${V[v].y}" r="18"/></g>`;
   });
   if(mode==='tower') validTowers(p).forEach(v=>{
-    out += `<g class="hot-v" data-t="${v}" tabindex="0" role="button" aria-label="Upgrade to a cat tower"><circle cx="${V[v].x}" cy="${V[v].y-22}" r="8"/><circle class="hit" cx="${V[v].x}" cy="${V[v].y}" r="22"/></g>`;
+    out += `<g class="hot-v" data-t="${v}" tabindex="0" role="button" aria-label="Upgrade to a cat tower"><circle cx="${V[v].x}" cy="${V[v].y-22}" r="18"/><g class="up-arrow" transform="translate(${V[v].x} ${V[v].y-22}) scale(1.3)"><polygon points="0,-9 8,0 3,0 3,8 -3,8 -3,0 -8,0"/></g><circle class="hit" cx="${V[v].x}" cy="${V[v].y-18}" r="28"/></g>`;
   });
   if(mode==='path') validPaths(p, S.phase==='setup'?S.setup.lastBed:null).forEach(e=>{
     const a=V[E[e].a], b=V[E[e].b];
@@ -4414,7 +4420,7 @@ return `<image href="${artSrc('port-boat')}" x="${bx}" y="${by}" width="${BOAT.w
 const BUILD_CHIP = {bed:['Cat bed','ic-bed','Tap a glowing corner'], path:['Yarn path','ic-path','Tap a glowing edge'], tower:['Cat tower','ic-tower','Tap one of your cat beds']};
 function buildChipSync(){
   const wrap = $('.board-wrap'); if(!wrap) return;
-  let c = $('#build-chip'); const b = S && S.phase==='play' && innerWidth<=920 && BUILD_CHIP[ui.mode];
+  let c = $('#build-chip'); const b = S && S.phase==='play' && false && BUILD_CHIP[ui.mode];   /* no pop-up: the yellow spots on the map show what you are building */
   if(!b){ if(c) c.remove(); return; }
   if(!c){ c = document.createElement('div'); c.id = 'build-chip'; c.setAttribute('role','status'); wrap.appendChild(c); }
   c.innerHTML = `${icImg(b[1], pcol(S.players[S.cur]), 28)}<span><b>${b[0]} selected</b><small>${b[2]}</small></span><button type="button" onclick="G.mode(null)" aria-label="Cancel building">×</button>`;
