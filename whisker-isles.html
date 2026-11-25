@@ -1405,6 +1405,12 @@ button.code-chip{font:inherit;cursor:pointer}
 .builds > :nth-child(3n) .build,.builds > .build:nth-child(3n){background:#FBE7D6}
 .build::before{content:"";position:absolute;left:-6px;top:-5px;width:30px;height:11px;transform:rotate(-14deg);background:rgba(185,166,230,.65);border-left:2px dotted rgba(255,255,255,.7);border-right:2px dotted rgba(255,255,255,.7);pointer-events:none}
 .build:disabled::before{opacity:.5}
+#build-chip{position:absolute;z-index:6;left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);padding:6px 8px 6px 10px;border:2.5px solid var(--plum);border-radius:999px;background:var(--butter);box-shadow:2px 3px 0 var(--plum);color:var(--plum)}
+#build-chip span{display:grid;line-height:1.15;min-width:0}
+#build-chip b{font-family:var(--display);font-weight:400;font-size:.95rem;white-space:nowrap}
+#build-chip small{font-size:.72rem;font-weight:800;white-space:nowrap}
+#build-chip button{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--plum);background:#fff;color:var(--plum);font-size:1.05rem;line-height:1;padding:0;cursor:pointer}
+#build-chip img{flex:none}
 .build.active{background:var(--butter)}
 
 /* ---- hand-drawn panels: the outline, quilt band and stitch line are drawn on the panel's own layers and run
@@ -1612,7 +1618,8 @@ html:has(#boot),body:has(#boot){overflow:hidden}
 .chat-box.inline{position:static;transform:none;z-index:auto;width:100%;max-width:520px;max-height:none;margin:0 auto;box-sizing:border-box}
 .chat-box.inline .chat-x{display:none}
 .chat-box.inline .chat-list{padding-right:0;max-height:min(34vh,260px);min-height:110px}
-body.chat-over .cat-tools{z-index:174}   /* above the dimmed pop-up, below the chat box (175) */
+body.chat-over .cat-tools{z-index:174}
+body.chat-over .cat-tools .cat-music{display:none}   /* above the dimmed pop-up, below the chat box (175) */
 #chat-fab .cat-mute{width:46px;height:46px}#chat-fab .cat-mute svg{width:24px;height:24px}
 .chat-slot{width:min(100%,520px);margin:18px auto 0;padding:0 14px;box-sizing:border-box}
 .chat-slot:empty{display:none}
@@ -4396,7 +4403,16 @@ return `<image href="${artSrc('port-boat')}" x="${bx}" y="${by}" width="${BOAT.w
     out += `<g class="hot-h" data-h="${i}" tabindex="0" role="button" aria-label="Send the Vacuum to ${RINFO[S.board.tiles[i].type].tile}"><polygon points="${hexPoints(hx.x,hx.y,HR-8)}"/></g>`;
   });
   svg.innerHTML = out;
-  pieceHl();
+  pieceHl(); buildChipSync();
+}
+/* on a phone the build cards sit below the map. Tapping one scrolls up to the map, where a chip says what is selected (so it still looks picked) and lets you cancel */
+const BUILD_CHIP = {bed:['Cat bed','ic-bed','Tap a glowing corner'], path:['Yarn path','ic-path','Tap a glowing edge'], tower:['Cat tower','ic-tower','Tap one of your cat beds']};
+function buildChipSync(){
+  const wrap = $('.board-wrap'); if(!wrap) return;
+  let c = $('#build-chip'); const b = S && S.phase==='play' && innerWidth<=920 && BUILD_CHIP[ui.mode];
+  if(!b){ if(c) c.remove(); return; }
+  if(!c){ c = document.createElement('div'); c.id = 'build-chip'; c.setAttribute('role','status'); wrap.appendChild(c); }
+  c.innerHTML = `${icImg(b[1], pcol(S.players[S.cur]), 28)}<span><b>${b[0]} selected</b><small>${b[2]}</small></span><button type="button" onclick="G.mode(null)" aria-label="Cancel building">×</button>`;
 }
 /* tapping a cat's avatar lights up their beds, towers and yarn on the map and dims everyone else's */
 function pieceHl(){
@@ -4804,7 +4820,7 @@ function renderOverlay(){
     else if(ui.modal) html = modalHTML();
   } else if(ui.modal) html = modalHTML();
   const full = html ? `<div class="overlay" role="dialog" aria-modal="true">${html}</div>` : '';
-  chatFabSync(!!full);
+  chatFabSync(/class="modal (wide )?(offer-mat|trade|barter)|class="modal handoff offer-mat/.test(html));   // only while trading: How to play and the other menus don't need the chat or music buttons
   if(full===lastOverlay) return;
   /* the same pop-up re-drawn (a colour was tapped) keeps its scroll place; a different one starts at the top */
   const kindOf = h => { const m = h && h.match(/class="modal ([\w -]+)"/); return m ? m[1] : null; };
@@ -5697,7 +5713,7 @@ const G = {
   turnAway(){ turnPromptLeave(()=>{ const r = $('#rollbar'); if(r){ r.classList.remove('nudge'); void r.offsetWidth; r.classList.add('nudge'); } }); },
   pushToggle(){ if(pushOn()) disablePush(); else enablePush(); },
   roll, endTurn, buyTreat, playTreat, undo:undoPlace, setupNext, reshuffle,
-  mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); },
+  mode(k){ if(!myTurn()) return; ui.mode = (ui.mode===k||k===null)?null:k; render(); if(ui.mode && innerWidth<=920) toMap(); },
   open(kind){
     if(kind==='bank') ui.modal={kind, give:null, get:null};
     else if(kind==='trade'){ const open = S.players.map((_,i)=>i).filter(i=>i!==S.cur && !S.players[i].noTrade); ui.modal={kind, partners: S.players.length===2 ? open : [], give:emptyRes(), get:emptyRes()}; }
