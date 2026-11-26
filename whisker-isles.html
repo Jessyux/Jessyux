@@ -5716,9 +5716,14 @@ function myGamesList(busy){
   const g = myGames().sort((a,b)=>order[a.state]-order[b.state]);
   if(!g.length) return '';
   const tag = {playing:'In play', pending:'Lobby, not started', over:'Finished'};
-  const go = {playing:'Continue', pending:'Open lobby', over:'See results'};
-  const rows = g.map(x=>`<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns"><button class="btn small" ${busy?'disabled':''} onclick="${x.state==='over'?'G.seeResult':'G.rejoin'}('${esc(x.code)}')" aria-label="${go[x.state]} ${esc(x.code)}">${go[x.state]}</button><button class="btn small" onclick="G.gameHist('${esc(x.code)}')" aria-label="History for ${esc(x.code)}">History</button>${x.host ? `<button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)} for everyone">Delete</button>`
-      : `<button class="btn small" onclick="G.unlist('${esc(x.code)}')" aria-label="Remove ${esc(x.code)} from my list">Remove from my list</button>`}</span></li>`).join('');
+  const GO = {playing:'Continue', pending:'Open lobby', over:'See results'};
+  /* Delete and History first, the main step (Continue, Open lobby, See results) on the right where the thumb is */
+  const rows = g.map(x=>{
+    const del = x.host ? `<button class="btn small" onclick="G.forget('${esc(x.code)}')" aria-label="Delete ${esc(x.code)} for everyone">Delete</button>`
+      : `<button class="btn small" onclick="G.unlist('${esc(x.code)}')" aria-label="Remove ${esc(x.code)} from my list">Delete</button>`;
+    const hist = `<button class="btn small" onclick="G.gameHist('${esc(x.code)}')" aria-label="History for ${esc(x.code)}">History</button>`;
+    const go = `<button class="btn small" ${busy?'disabled':''} onclick="${x.state==='over'?'G.seeResult':'G.rejoin'}('${esc(x.code)}')" aria-label="${GO[x.state]} ${esc(x.code)}">${GO[x.state]}</button>`;
+    return `<li class="my-game"><b>${esc(x.code)}</b><span class="mg-tag ${x.state}">${tag[x.state]}</span><span class="mg-btns">${del}${hist}${go}</span></li>`; }).join('');
   return `<div class="my-games"><h3>Your online games</h3><ul>${rows}</ul></div>`;
 }
 /* ---------- saved in-person games ---------- */
