@@ -6433,7 +6433,7 @@ if(/[?&]debug/.test(location.search) || store.get('wi-debug')==='1'){
   panel.style.cssText = 'position:fixed;left:6px;right:6px;top:6px;z-index:99999;pointer-events:none';
   box.style.cssText = 'margin:0;max-height:46vh;overflow:auto;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:12px;padding:8px 52px 8px 8px;min-height:50px;box-sizing:border-box;font:700 11px/1.25 ui-monospace,monospace;white-space:pre-wrap;pointer-events:none;opacity:.94';
   shut.type = 'button'; shut.textContent = '\u00d7'; shut.setAttribute('aria-label', 'Close diagnostics');
-  shut.style.cssText = 'position:absolute;top:3px;right:3px;width:44px;height:44px;pointer-events:auto;cursor:pointer;background:#fff;color:#3A2341;border:3px solid #3A2341;border-radius:12px;padding:0;font:700 24px/1 ui-monospace,monospace';
+  shut.style.cssText = 'position:absolute;top:3px;right:3px;width:44px;height:44px;pointer-events:auto;cursor:pointer;background:transparent;color:#3A2341;border:0;border-radius:12px;padding:0;font:700 24px/1 ui-monospace,monospace';
   panel.append(box, shut); document.body.appendChild(panel);
   let prev = ''; try{ prev = localStorage.getItem('wi-debug-last') || ''; }catch(e){}
   const stat = {}, t00 = performance.now(); let last = performance.now(), worstGap = 0;
