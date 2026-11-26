@@ -4916,7 +4916,14 @@ function placeDock(){
     const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
     const a = document.activeElement, typing = a && /^(INPUT|TEXTAREA)$/.test(a.tagName);
     if(standalone && !typing && !el.classList.contains('gone')){
-      const portrait = innerHeight >= innerWidth, full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      /* the page doesn't always start at the top of the screen: with the clock and battery bar shown above it, the page is shorter than
+         the screen, and measuring against the whole screen pushed the paws off the bottom. So use the tallest the page has been in this
+         orientation (a short reading after the keyboard never lowers it), and never more than the screen itself */
+      const portrait = innerHeight >= innerWidth, scr = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      const vh = Math.round(window.visualViewport ? window.visualViewport.height : innerHeight), ok = portrait ? 'p' : 'l';
+      if(!ui.tallH || ui.tallH.o!==ok) ui.tallH = {o:ok, h:0};
+      ui.tallH.h = Math.min(scr, Math.max(ui.tallH.h, vh));
+      const full = ui.tallH.h;
       const b0 = el.style.bottom; el.style.bottom = '';
       const delta = Math.round(full - el.getBoundingClientRect().bottom);
       if(delta > 4 && delta < 400) el.style.bottom = (-delta) + 'px'; else el.style.bottom = b0;
