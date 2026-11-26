@@ -4301,9 +4301,9 @@ function render(){
     <aside class="panel"><section class="card rollbar" id="rollbar"></section><div class="panel-rest" id="panel"></div>${creditHTML()}</aside>
   </div><div class="pawdock gone" id="dock" aria-label="Your cards"></div>`;
   $('#tools-left').innerHTML = `${S.online?`<button class="code-chip" title="Copy the invite link for this game" onclick="G.copy(inviteLink('${esc(S.code)}'), this, 'Invite link copied')">${ON.offline?'Reconnecting… ':''}<span class="cc-lbl">Code </span><b>${esc(S.code)}</b>${copyIcon()}</button>`:''}${S.online && ON.lobby && ON.lobby.host===ON.me ? `<button class="btn small" onclick="G.open('host')">Host<span class="cc-lbl"> tools</span></button>` : ''}${S.online ? bellBtn() : ''}`;
-  const inPersonOnline = !S.online && S.phase!=='over';   // four buttons in person: shorter labels so they fit the side column
+  const inPersonOnline = S.phase!=='over';   // four buttons while a game is on (Play online / Play in person): shorter labels so they fit the side column
   $('.topbar').classList.toggle('stacked', !!S.online || inPersonOnline);   // on a phone the avatar row sits above the buttons
-  $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${lobbyAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?navAct('quit','Quit game','Quit',"G.open('leave')",'d-only'):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')",'d-only'):'')+navAct('newgame','New game','New',"G.open('newgame')",'d-only')}${navAct('gear','Settings','Settings',"G.open('settings')",'m-only')}</div>`;
+  $('#tools').innerHTML = `<div class="wi-acts${inPersonOnline?' many':''}">${lobbyAct()}${navAct('rules','How to play','Rules',"G.open('rules')")}${S.online?(inPersonOnline?navAct('person','Play in person','In person',"G.open('goperson')",'d-only'):'')+navAct('quit','Quit game','Quit',"G.open('leave')",'d-only'):(inPersonOnline?navAct('online','Play online','Online',"G.open('goonline')",'d-only'):'')+navAct('newgame','New game','New',"G.open('newgame')",'d-only')}${navAct('gear','Settings','Settings',"G.open('settings')",'m-only')}</div>`;
   renderBoard(); renderPanel(); renderRollbar(); renderCats(); renderOverlay(); turnPromptSync(); setupPromptSync(); playLogSounds();
   placeLogo(); placeCats();
   watchAwards();
@@ -4510,6 +4510,7 @@ const NAV_ICON = {
   leave:'<path d="M14 4h5v16h-5"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/>',
   history:'<path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v4h4"/><path d="M12 8v4l3 2"/>',
   quit:'<path d="M12 3v8"/><path d="M7.2 6.2a7 7 0 1 0 9.6 0"/>',
+  person:'<rect x="8" y="3" width="8" height="13" rx="2"/><path d="M11 13h2"/><circle cx="4.5" cy="15" r="2"/><circle cx="19.5" cy="15" r="2"/><path d="M1.5 21c.5-2 1.6-3 3-3s2.5 1 3 3M16.5 21c.5-2 1.6-3 3-3s2.5 1 3 3"/>',
   online:'<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/>',
   chat:'<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4.5 4v-4H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5Z"/><path d="M8 9.5h8M8 12.5h5"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.3"/>',
@@ -4537,6 +4538,7 @@ function settingsHTML(){
   return `<div class="modal settings"><div class="rules-head"><h2>Settings</h2><button class="btn small" onclick="G.close()">Close</button></div><div class="set-list">
     ${alerts ? `<div class="set-row">${BELL}<span><b>Turn alerts</b><small>${how}</small></span>${alerts}</div>` : ''}
     ${host ? item('board', 'Host tools', 'Manage cats and the game', "G.open('host')") : ''}
+    ${S && online && S.phase!=='over' ? item('person', 'Play in person', 'Move this game onto this one phone', "G.open('goperson')") : ''}
     ${S && !online && S.phase!=='over' ? item('online', 'Play online', 'Move this game onto everyone&#39;s own phone', "G.open('goonline')") : ''}
     ${S && !online ? item('newgame', 'New game', '', "G.open('newgame')") : ''}
     ${online ? item('quit', 'Quit game', 'Your progress will be lost', "G.open('leave')") : ''}
@@ -5529,6 +5531,15 @@ function modalHTML(){
   if(m.kind==='board'){ const rows = boardRows(), hi = S ? S.players.map(p=>nameKey(p.name)) : [];
     return `<div class="modal lb-modal"><div class="rules-head"><h2>Leaderboard</h2><button class="btn small" onclick="G.close()">Close</button></div><p class="muted">A win scores 3 points, 2nd place 2 and 3rd place 1. ${LB.state==='off'?'The shared board can\'t be reached, so this is this device\'s board.':'Shared by everyone who plays, by name.'}</p>${rows.length?lbSortHTML()+boardTable(rows, hi):LB_EMPTY}</div>`; }
   if(m.kind==='need2') return `<div class="modal"><h2>Waiting for a friend</h2><p>Requires at least 2 players to start the game. Share the game code and ask a friend to join.</p><div class="actions center"><button class="btn primary" autofocus onclick="G.close()">Got it</button></div></div>`;
+  if(m.kind==='goperson'){
+    const L = ON.lobby, host = L && L.host===ON.me, hn = L && (L.seats.find(x=>x.pid===L.host)||{}).name;
+    return host ? `<div class="modal"><h2>Play in person?</h2>
+    <p>The game moves onto this phone and everyone passes it round. Every cat keeps its name, its pieces and its cards.</p>
+    <p class="muted small">Friends on their own devices are disconnected and this game code stops working. You can move it online again any time.</p>
+    <div class="actions"><button class="btn" onclick="G.close()">Not now</button><button class="btn primary" onclick="G.goInPerson(true)">Move to this phone</button></div></div>`
+    : `<div class="modal"><h2>Play in person?</h2><p>Only the host can move the game onto one phone.${hn?` Ask ${esc(hn)} to switch it from their phone.`:''}</p>
+    <div class="actions"><button class="btn primary" onclick="G.close()">OK</button></div></div>`;
+  }
   if(m.kind==='goonline') return `<div class="modal"><h2>Play online?</h2>
     <p>Every cat needs its own phone. This game gets a cat code: you carry on as ${esc(S.players[S.cur].name)}, and each friend opens the code and picks one of the other cats, keeping its name and everything it holds.</p>
     <p class="muted small">The game waits until every cat has a phone. You can move it back to one screen any time.</p>
@@ -6098,9 +6109,10 @@ const G = {
     G.toStart(); G.where('here');
     toast('Playing in person', code ? `Your online lobby ${code} is still in your online games.` : '');
   },
-  goInPerson(){
-    if(!S || !S.online || !ON.ws || ON.ws.readyState!==1) return;
-    if(!confirm('Move back to one screen? Friends playing on their own devices will be disconnected, and every cat plays on this phone again.')) return;
+  goInPerson(asked){
+    if(!S || !S.online) return;
+    if(!ON.ws || ON.ws.readyState!==1){ toast('Not connected', 'Hang on while it reconnects, then try again.'); return; }
+    if(!asked && !confirm('Move back to one screen? Friends playing on their own devices will be disconnected, and every cat plays on this phone again.')) return;
     ON.ws.send(JSON.stringify({type:'detach', base:ON.ver, state:S}));
   },
   release(sid){ if(ON.ws && ON.ws.readyState===1) ON.ws.send(JSON.stringify({type:'release', pid:sid})); },
