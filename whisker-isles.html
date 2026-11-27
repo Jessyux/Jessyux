@@ -1553,7 +1553,7 @@ button.code-chip{font:inherit;cursor:pointer}
 
 /* ---- the start panel: a lilac quilt; saved games are butter ribbons with a paw ---- */
 .crew-rest{--fw:10px;--frame:var(--lilac);--stitch:var(--lilac-2);padding:26px 28px}
-.crew-go{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end;margin-top:20px;justify-content:stretch}
+.crew-go{display:grid;grid-template-columns:1fr;gap:14px;align-items:end;margin-top:20px;justify-content:stretch}
 .crew-go .btn{flex:none}
 .saved-games h3{font-size:1.1rem}
 .save{border:2.5px solid var(--plum);border-radius:12px;background:var(--butter-2);box-shadow:2px 2px 0 var(--plum);position:relative}
@@ -6022,7 +6022,6 @@ function startScreen(){
         ${savedGamesHTML()}
         <div class="crew-go">
           <button class="btn primary big start-cta" onclick="G.start()">Start with ${n} cats</button>
-          ${window.WI_OFFLINE ? '' : `<button class="btn big online-cta" onclick="G.where('online')">Play online</button>`}
         </div>
       </section>
       ${lbCard}
