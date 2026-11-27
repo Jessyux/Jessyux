@@ -1719,6 +1719,16 @@ button.code-chip{font:inherit;cursor:pointer}
   .start-here .saved-games{flex:0 1 auto;min-height:0;overflow:auto;padding:2px 6px 4px 2px}
   .start-here .crew-go{grid-template-columns:1fr;gap:24px}
   .start-here .lb th:nth-child(5),.start-here .lb td:nth-child(5){display:none}
+  /* online matches in person: leaderboard left, the cat corner in the middle, your cat on the right */
+  .start-online .raft{max-width:none;display:grid;grid-template-columns:minmax(260px,380px) 828px minmax(260px,380px);justify-content:center;gap:24px;padding:0 24px 58px;align-items:stretch}
+  .start-online .raft > .hint{grid-column:1/-1}
+  .start-online .start-split{display:contents}
+  .start-online .corner-frame{order:2;align-self:start;margin-bottom:0}
+  .start-online .lb-card{order:1;contain:size;padding:24px 18px 20px;font-size:.92rem}
+  .start-online .crew-online{order:3;contain:size}
+  .start-online .lb-scroll{flex:1;overflow-y:auto}
+  .start-online .saved-games{flex:0 1 auto;min-height:0;overflow:auto;padding:2px 6px 4px 2px}
+  .start-online .lb th:nth-child(5),.start-online .lb td:nth-child(5){display:none}
 }
 @media (max-width:420px){
   .crew-rest,.lb-card{--fw:7px;padding:20px 16px}
@@ -5972,18 +5982,21 @@ function startScreen(){
           : `<button class="btn big online-cta" ${busy?'disabled':''} onclick="G.join()">${ON.status==='connecting'?'Joining…':'Join with code'}</button>
           <button class="btn primary big start-cta" ${busy?'disabled':''} onclick="G.create()">${ON.status==='creating'?'Making a code…':'Create a game'}</button>`}
         </div></div>
+      <div class="start-split">
       <section class="card crew crew-rest crew-online" aria-label="Pick your cat">
         <div class="field">Pick your cat</div>
         ${breedPicker(ui.form.breed, [], 'G.formBreed')}
         ${games}
-      </section>`;
+      </section>
+      LB_CARD_SLOT
+      </div>`;
   const lbCard = `      <section class="card lb-card" aria-labelledby="lb-h">
         <div class="crew-head lb-top"><h2 id="lb-h">Leaderboard</h2>${resultsBtn()}</div>
         <p class="muted lb-sub">${LB_POINTS}</p>
         ${LB.state==='loading' ? '<p class="muted">Loading the leaderboard…</p>' : ''}${LB.state==='off' ? '<p class="muted small">The shared leaderboard can\'t be reached, so this shows games played on this device.</p>' : ''}
         ${LB.state==='loading' ? '' : rows.length ? '<div class="lb-scroll">'+boardTable(lbShown)+'</div>' + (rows.length>5 ? `<p class="center"><button class="btn small" onclick="G.lbAll()">${ui.lbAll?'Show top 5':'Show all '+rows.length}</button></p>` : '') : LB_EMPTY}
       </section>`;
-  return `<main class="start${where==='here'?' start-here':''}">
+  return `<main class="start${where==='here'?' start-here':''}${where==='online'&&online?' start-online':''}">
     <div class="sea">
       <nav class="wi-nav start-top" aria-label="Game">${backLink()}<div class="wi-acts">${navAct('rules','How to play','Rules',"G.open('rules')")}${navAct('history','Lobby history','History',"G.open('history')")}${navAct('chat','Send feedback','Feedback',"G.feedback()")}</div></nav>
       ${heroHTML()}
@@ -6014,8 +6027,8 @@ function startScreen(){
       </section>
       ${lbCard}
       </div>` : ''}
-      ${where==='online' ? online : ''}
-      ${where==='here' ? '' : lbCard}
+      ${where==='online' ? online.replace('LB_CARD_SLOT', ()=>lbCard) : ''}
+      ${where==='here' || where==='online' ? '' : lbCard}
     </div>
     <div class="lobby-chat" id="peek-chat">${chatOn() && !ON.ws ? chatBtnHTML() : ''}</div>
     ${creditHTML()}
