@@ -24,6 +24,8 @@ function copy(from, to = from) {
 ['a11y/home-float.css', 'img/floaties/home.webp', 'img/jessy-avatar.webp', 'favicon.svg'].forEach((f) => copy(f));
 // the service worker that shows push notifications has to sit at the site root
 copy('whisker-sw.js', 'sw.js');
+// the private feedback page, at /admin (locked by its API, see worker/admin.mjs)
+copy('whisker-admin.html', 'admin.html');
 // so Add to Home Screen installs the game as an app (and iPhone allows push notifications from it)
 copy('whisker-manifest.webmanifest', 'manifest.webmanifest');
 ['icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'].forEach((f) => copy('icons-game/' + f, 'icons/' + f));

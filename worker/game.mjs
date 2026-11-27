@@ -1,7 +1,9 @@
 /* The Whisker Isles Worker (whisker.jessyux.com): the online game rooms, the shared leaderboard
    and the game page. Only /api/* reaches this code (assets.run_worker_first); everything else
    is the static game in dist-game/ (built by build-game.mjs). */
-import { validateResult, listBoard, recordGame } from './leaderboard.mjs';
+import { validateResult, listBoard, recordGame, listGames } from './leaderboard.mjs';
+import { handleFeedback } from './feedback.mjs';
+import { handleAdmin } from './admin.mjs';
 import { whiskerIsles } from './whisker-room.mjs';
 export { WhiskerRoom } from './whisker-room.mjs';
 
@@ -28,7 +30,7 @@ async function leaderboard(request, env) {
   if (request.method !== 'POST') return fail(405, 'Not allowed.');
 
   const raw = await request.text();
-  if (raw.length > 4096) return fail(413, 'That result is too big.');
+  if (raw.length > 12288) return fail(413, 'That result is too big.');
   let body;
   try { body = JSON.parse(raw); } catch { return fail(400, 'That result could not be read.'); }
   const checked = validateResult(body);
@@ -79,6 +81,17 @@ export default {
     }
     if (pathname === '/api/leaderboard') {
       try { return await leaderboard(request, env); } catch (e) { console.error(e); return fail(503, 'The leaderboard can\'t be reached right now.'); }
+    }
+    if (pathname === '/api/games') {
+      if (request.method !== 'GET') return fail(405, 'Not allowed.');
+      if (!env.WHISKER_DB) return fail(503, 'Game results aren\'t set up yet.');
+      try { return json(200, { games: await listGames(env.WHISKER_DB) }); } catch (e) { console.error(e); return fail(503, 'Game results can\'t be reached right now.'); }
+    }
+    if (pathname === '/api/feedback') {
+      try { return await handleFeedback(request, env); } catch (e) { console.error(e); return fail(503, 'Feedback can\'t be sent right now.'); }
+    }
+    if (pathname === '/api/admin/feedback') {
+      try { return await handleAdmin(request, env); } catch (e) { console.error(e); return fail(503, 'Feedback can\'t be reached right now.'); }
     }
     return fail(404, 'Not found.');
   },

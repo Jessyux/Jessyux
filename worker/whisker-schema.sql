@@ -23,3 +23,33 @@ CREATE TABLE IF NOT EXISTS rate (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS rate_hash_at ON rate (hash, at);
+
+-- who played each game and where they finished (kept from when this table was added)
+CREATE TABLE IF NOT EXISTS game_players (
+  gid TEXT NOT NULL,
+  key TEXT NOT NULL,             -- lower-case name
+  name TEXT NOT NULL,
+  place INTEGER NOT NULL,
+  points INTEGER NOT NULL,       -- leaderboard points from this game
+  vp INTEGER,                    -- in-game score
+  cat TEXT,
+  PRIMARY KEY (gid, key)
+);
+CREATE INDEX IF NOT EXISTS games_at ON games (at DESC);
+
+-- the finished island of each game, as JSON of numbers and tile names
+CREATE TABLE IF NOT EXISTS game_boards (
+  gid TEXT PRIMARY KEY,
+  board TEXT NOT NULL
+);
+
+-- game feedback and bug reports sent from the game
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at INTEGER NOT NULL,
+  type TEXT NOT NULL,            -- 'game' or 'bug'
+  name TEXT,                     -- optional
+  message TEXT NOT NULL,
+  info TEXT,                     -- build, screen size and browser
+  done INTEGER NOT NULL DEFAULT 0  -- ticked off on the admin page
+);

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; img-src 'self'; form-action 'none'; base-uri 'none'">
+<title>Whisker Isles feedback</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+:root{--plum:#3A2341;--cream:#FFFBF2;--butter:#FFD36E;--lilac:#E4DAF8;--rose:#FBE1EC}
+*{box-sizing:border-box}
+body{margin:0;background:#FFEFF5;color:var(--plum);font:16px/1.45 system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:.2em 0 .6em}
+[hidden]{display:none!important}
+input,button{font:inherit;font-weight:700;color:var(--plum);border:2.5px solid var(--plum);border-radius:999px;padding:.45em 1em;background:#fff}
+input{width:100%;margin:6px 0 12px}
+button{cursor:pointer}
+button[aria-pressed="true"],.go{background:var(--butter)}
+:focus-visible{outline:3px solid #E8517E;outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+ul{list-style:none;margin:12px 0;padding:0;display:grid;gap:12px}
+li{background:var(--cream);border:2.5px solid var(--plum);border-radius:16px;padding:12px 14px}
+li.done{opacity:.65}
+.top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.85rem}
+.tag{border:2px solid var(--plum);border-radius:999px;padding:0 8px;font-weight:800;background:var(--lilac)}
+.tag.bug{background:var(--rose)}
+.msg{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}
+small{display:block;overflow-wrap:anywhere;opacity:.75;margin-bottom:8px}
+#err{color:#A3213F;font-weight:800;min-height:1.4em}
+</style>
+</head>
+<body>
+<main>
+<h1>Whisker Isles feedback</h1>
+<form id="lock">
+  <label for="key">Password</label>
+  <input id="key" type="password" autocomplete="current-password" required>
+  <button class="go" type="submit">Open</button>
+</form>
+<p id="err" role="alert"></p>
+<section id="board" hidden>
+  <div class="bar" role="group" aria-label="Type" id="types"></div>
+  <div class="bar" role="group" aria-label="Status" id="states"></div>
+  <ul id="list"></ul>
+  <div class="bar"><button type="button" id="reload">Refresh</button><button type="button" id="out">Lock</button></div>
+</section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const STORE = 'whisker-admin-key';
+let key = '', items = [], type = 'all', done = 0;
+try { key = sessionStorage.getItem(STORE) || ''; } catch (e) {}
+/* everything people typed goes in as text, never as markup */
+const el = (tag, text, cls) => { const n = document.createElement(tag); if (text) n.textContent = text; if (cls) n.className = cls; return n; };
+async function api(body) {
+  const res = await fetch('/api/admin/feedback', { method: body ? 'POST' : 'GET', headers: { authorization: 'Bearer ' + key }, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { if (res.status === 401) lock(); throw new Error(data.error || 'That didn\u2019t work.'); }
+  return data;
+}
+function lock() { key = ''; items = []; try { sessionStorage.removeItem(STORE); } catch (e) {} $('#list').replaceChildren(); $('#board').hidden = true; $('#lock').hidden = false; }
+async function load() {
+  $('#err').textContent = '';
+  try {
+    items = (await api()).items;
+    try { sessionStorage.setItem(STORE, key); } catch (e) {}
+    $('#lock').hidden = true; $('#board').hidden = false; $('#key').value = ''; draw();
+  } catch (e) { $('#err').textContent = e.message; }
+}
+function filters(box, options, current, pick) {
+  box.replaceChildren(...options.map(([value, label]) => { const b = el('button', label); b.type = 'button'; b.setAttribute('aria-pressed', value === current); b.onclick = () => { pick(value); draw(); }; return b; }));
+}
+function draw() {
+  const open = items.filter((i) => !i.done);
+  filters($('#types'), [['all', 'All'], ['game', 'Feedback (' + open.filter((i) => i.type === 'game').length + ')'], ['bug', 'Bugs (' + open.filter((i) => i.type === 'bug').length + ')']], type, (v) => { type = v; });
+  filters($('#states'), [[0, 'Open'], [1, 'Done']], done, (v) => { done = v; });
+  /* feedback first, then bugs, each newest first (the list arrives newest first and the sort keeps that) */
+  const shown = items.filter((i) => (type === 'all' || i.type === type) && i.done === done).sort((a, b) => (a.type === 'bug') - (b.type === 'bug'));
+  $('#list').replaceChildren(...(shown.length ? shown.map(card) : [el('li', done ? 'Nothing ticked off yet.' : 'Nothing open. Nap time.')]));
+}
+function card(i) {
+  const li = el('li', '', i.done ? 'done' : ''), top = el('div', '', 'top');
+  top.append(el('span', i.type === 'bug' ? 'Bug' : 'Feedback', 'tag' + (i.type === 'bug' ? ' bug' : '')), el('span', (i.name || 'Anonymous') + ' \u00b7 ' + new Date(i.at).toLocaleString()));
+  const btn = el('button', i.done ? 'Reopen' : 'Mark done'); btn.type = 'button';
+  btn.onclick = async () => { btn.disabled = true; try { await api({ id: i.id, done: !i.done }); i.done = i.done ? 0 : 1; draw(); } catch (e) { $('#err').textContent = e.message; btn.disabled = false; } };
+  li.append(top, el('p', i.message, 'msg'), el('small', i.info || ''), btn);
+  return li;
+}
+$('#lock').onsubmit = (e) => { e.preventDefault(); key = $('#key').value; load(); };
+$('#reload').onclick = load;
+$('#out').onclick = lock;
+if (key) load();
+</script>
+</body>
+</html>

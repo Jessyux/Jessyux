@@ -12,9 +12,9 @@ test('a finished game with a winner and named players passes, with names trimmed
   const r = validateResult(game([{ name: ' Jessy ', place: 1 }, { name: 'Kai', place: 2 }, { name: 'Mo', place: 2 }]));
   assert.equal(r.ok, true);
   assert.deepEqual(r.value.results, [
-    { name: 'Jessy', key: 'jessy', place: 1, points: 3, cat: null },
-    { name: 'Kai', key: 'kai', place: 2, points: 2, cat: null },
-    { name: 'Mo', key: 'mo', place: 2, points: 2, cat: null },
+    { name: 'Jessy', key: 'jessy', place: 1, points: 3, cat: null, vp: null },
+    { name: 'Kai', key: 'kai', place: 2, points: 2, cat: null, vp: null },
+    { name: 'Mo', key: 'mo', place: 2, points: 2, cat: null, vp: null },
   ]);
 });
 
